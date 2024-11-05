@@ -1,4 +1,4 @@
-import { Container, Transport } from "../shared";
+import { Container, EventService } from "../shared";
 import { AuthController } from "./controllers/authController";
 import { AuthService } from "./services/authService";
 import { User } from "./models/User";
@@ -6,12 +6,12 @@ import { CoachTrainee } from "./models/CoachTrainee";
 
 export function addToContainer(container: Container) {
   const config = container.get<any>('Config');
-  const transport = container.get<Transport>('Transport');
+  const eventService = container.get<EventService>('EventService');
   
   const authService = new AuthService(
     User,
     CoachTrainee,
-    transport,
+    eventService,
     config
   );
   

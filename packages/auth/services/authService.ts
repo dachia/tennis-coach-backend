@@ -1,7 +1,7 @@
 import { User } from '../models/User';
 import { CoachTrainee } from '../models/CoachTrainee';
 import { LoginDTO, RegisterDTO } from '../types';
-import { Transport } from '../../shared/transport/transport';
+import { EventService } from '../../shared/';
 import jwt from 'jsonwebtoken';
 import { loginSchema, registerSchema } from '../validation';
 import { DomainError } from '../../shared/errors/DomainError';
@@ -10,7 +10,7 @@ export class AuthService {
   constructor(
     private readonly userModel: typeof User,
     private readonly coachTraineeModel: typeof CoachTrainee,
-    private readonly transport: Transport,
+    private readonly eventService: EventService,
     private readonly config: { jwtSecret: string }
   ) {}
 
@@ -33,8 +33,8 @@ export class AuthService {
 
     const token = this.generateToken(user);
 
-    await this.transport.send('auth.user.registered', {
-      type: 'USER_REGISTERED',
+    await this.eventService.publishDomainEvent({
+      eventName: 'auth.user.registered',
       payload: {
         userId: user._id,
         role: user.role
@@ -60,8 +60,8 @@ export class AuthService {
 
     const token = this.generateToken(user);
 
-    await this.transport.send('auth.user.logged_in', {
-      type: 'USER_LOGGED_IN',
+    await this.eventService.publishDomainEvent({
+      eventName: 'auth.user.logged_in',
       payload: {
         userId: user._id,
         role: user.role
