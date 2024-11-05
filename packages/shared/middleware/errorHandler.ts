@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { createResponse } from '../utils/response.utils';
+import { DomainError } from '../errors/DomainError';
 
 export function globalErrorHandler(
   err: Error,
@@ -8,6 +9,14 @@ export function globalErrorHandler(
   next: NextFunction
 ) {
   // Log the error
+
+  if (err instanceof DomainError) {
+    console.error('Domain error:', err.message);
+    return res.status(err.statusCode).json(
+      createResponse('fail', err.message)
+    );
+  }
+
   console.error('Unhandled error:', {
     error: err.message,
     stack: err.stack,
@@ -17,8 +26,7 @@ export function globalErrorHandler(
     headers: req.headers,
   });
 
-  // Send a generic error response to the client
-
+  // Send a generic error response for unexpected errors
   res.status(500).json(
     createResponse('error', 'An unexpected error occurred', null, {
       message: err.message,

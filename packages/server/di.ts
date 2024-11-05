@@ -1,4 +1,4 @@
-import { Container, InMemoryEventService, InMemoryEventStorage } from "../shared";
+import { Container, InMemoryEventService, InMemoryTransport} from "../shared";
 import { config as Config } from "./config";
 
 export function createContainer(config: typeof Config) {
@@ -6,8 +6,9 @@ export function createContainer(config: typeof Config) {
   container.register('Config', config);
 
   // Setup event system
-  const eventStorage = new InMemoryEventStorage();
-  const eventService = new InMemoryEventService(eventStorage);
+  const transport = new InMemoryTransport();
+  container.register('Transport', transport);
+  const eventService = new InMemoryEventService(transport);
   container.register('EventService', eventService);
 
   return container;

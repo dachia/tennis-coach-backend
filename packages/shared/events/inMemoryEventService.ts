@@ -1,22 +1,27 @@
 import { DomainEvent, EventService } from './eventService';
-import { EventStorage } from './eventStorage';
+import { Transport, TransportMessage } from '../transport/transport';
 
-// Modified EventService to use storage
 export class InMemoryEventService implements EventService {
-  constructor(private storage: EventStorage) {}
+  constructor(private transport: Transport) {}
 
   async publishDomainEvent<E extends DomainEvent<any, any>>(event: E): Promise<void> {
-    await this.storage.notifySubscribers(event.eventName, event.payload);
+    const message: TransportMessage<E['payload']> = {
+      type: event.eventName,
+      payload: event.payload
+    };
+    await this.transport.send(event.eventName, message);
   }
 
   async subscribeToDomainEvent<E extends DomainEvent<any, any>>(
     eventName: E['eventName'],
     callback: (payload: E['payload']) => void
   ): Promise<void> {
-    await this.storage.addSubscriber(eventName, callback);
+    await this.transport.subscribe(eventName, async (message) => {
+      callback(message.payload);
+    });
   }
 
   async unsubscribeFromDomainEvent(eventName: string): Promise<void> {
-    await this.storage.removeSubscriber(eventName);
+    await this.transport.unsubscribe(eventName);
   }
 }
