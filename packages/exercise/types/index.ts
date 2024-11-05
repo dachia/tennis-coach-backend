@@ -38,3 +38,50 @@ export interface SharedResourceDTO {
   sharedWith: string;
   sharedBy: string;
 }
+
+export interface CreateExerciseDTO {
+  title: string;
+  description: string;
+  media?: string[];
+  kpis?: Array<{
+    goalValue: number;
+    unit: string;
+    performanceGoal: PerformanceGoal;
+  }>;
+  userId: string;
+}
+
+export interface CreateTemplateDTO {
+  title: string;
+  description: string;
+  exerciseIds: string[];
+  userId: string;
+}
+
+export interface ShareResourceDTO {
+  resourceType: ResourceType;
+  resourceId: string;
+  sharedWithId: string;
+  userId: string;
+}
+
+export interface UpdateExerciseDTO {
+  title?: string;
+  description?: string;
+  media?: string[];
+  userId: string;
+}
+
+export interface UpdateKpiDTO {
+  goalValue?: number;
+  unit?: string;
+  performanceGoal?: PerformanceGoal;
+  userId: string;
+}
+
+export interface UpdateTemplateDTO {
+  title?: string;
+  description?: string;
+  exerciseIds?: string[];
+  userId: string;
+}
