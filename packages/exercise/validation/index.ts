@@ -1,0 +1,73 @@
+import * as yup from 'yup';
+import { PerformanceGoal, ResourceType } from '../types';
+
+export const kpiSchema = yup.object({
+  goalValue: yup.number().required('Goal value is required'),
+  unit: yup.string().required('Unit is required'),
+  performanceGoal: yup.string()
+    .oneOf(Object.values(PerformanceGoal), 'Invalid performance goal')
+    .required('Performance goal is required')
+});
+
+export const createExerciseSchema = yup.object({
+  title: yup.string()
+    .min(3, 'Title must be at least 3 characters')
+    .max(100, 'Title must not exceed 100 characters')
+    .required('Title is required'),
+  description: yup.string()
+    .min(10, 'Description must be at least 10 characters')
+    .required('Description is required'),
+  media: yup.array().of(yup.string().url('Media must be valid URLs')),
+  kpis: yup.array().of(kpiSchema)
+});
+
+export const createTemplateSchema = yup.object({
+  title: yup.string()
+    .min(3, 'Title must be at least 3 characters')
+    .max(100, 'Title must not exceed 100 characters')
+    .required('Title is required'),
+  description: yup.string()
+    .min(10, 'Description must be at least 10 characters')
+    .required('Description is required'),
+  exerciseIds: yup.array()
+    .of(yup.string().required())
+    .min(1, 'Template must contain at least one exercise')
+    .required('Exercise IDs are required')
+});
+
+export const shareResourceSchema = yup.object({
+  resourceType: yup.string()
+    .oneOf(Object.values(ResourceType), 'Invalid resource type')
+    .required('Resource type is required'),
+  resourceId: yup.string()
+    .required('Resource ID is required'),
+  sharedWithId: yup.string()
+    .required('Shared with user ID is required')
+});
+
+export const updateExerciseSchema = yup.object({
+  title: yup.string()
+    .min(3, 'Title must be at least 3 characters')
+    .max(100, 'Title must not exceed 100 characters'),
+  description: yup.string()
+    .min(10, 'Description must be at least 10 characters'),
+  media: yup.array().of(yup.string().url('Media must be valid URLs'))
+});
+
+export const updateKpiSchema = yup.object({
+  goalValue: yup.number(),
+  unit: yup.string(),
+  performanceGoal: yup.string()
+    .oneOf(Object.values(PerformanceGoal), 'Invalid performance goal')
+});
+
+export const updateTemplateSchema = yup.object({
+  title: yup.string()
+    .min(3, 'Title must be at least 3 characters')
+    .max(100, 'Title must not exceed 100 characters'),
+  description: yup.string()
+    .min(10, 'Description must be at least 10 characters'),
+  exerciseIds: yup.array()
+    .of(yup.string())
+    .min(1, 'Template must contain at least one exercise')
+}); 

@@ -1,7 +1,9 @@
 import { Express } from 'express';
 import { bootstrapApp as bootstrapExpress, Container } from '../shared';
-import { addToContainer } from '../auth/di';
-import { buildRoutes } from '../auth/routes';
+import { addToContainer as addAuthServicesToContainer } from '../auth/di';
+import { addToContainer as addExerciseServicesToContainer } from '../exercise/di';
+import { buildRoutes as buildAuthRoutes } from '../auth/routes';
+import { buildRoutes as buildExerciseRoutes } from '../exercise/routes';
 import { connectToDatabase } from '../shared/utils/db';
 
 interface AppConfig {
@@ -14,13 +16,13 @@ export async function bootstrapApp(config: AppConfig, container: Container) {
   const app: Express = bootstrapExpress();
 
   // Add auth services to container
-  addToContainer(container);
-
+  addAuthServicesToContainer(container);
+  addExerciseServicesToContainer(container);
   // Connect to database
   await connectToDatabase(config.mongoUri);
 
   // Mount routes
-  app.use('/auth', buildRoutes(container));
-
+  app.use('/auth', buildAuthRoutes(container));
+  app.use('/exercise', buildExerciseRoutes(container));
   return app;
 }
