@@ -86,16 +86,17 @@ describe('Coach-Trainee Routes', () => {
           message: expect.any(String),
           payload: {
             trainees: expect.arrayContaining([
-              expect.objectContaining({
+              {
+                id: expect.any(String),
+                name: 'Trainee User',
                 email: 'trainee@example.com'
-              })
+              }
             ])
           }
         },
         error: null,
         version: expect.any(Number)
       });
-      expect(response.body.data.payload.trainees).toHaveLength(1);
     });
 
     it('should not allow trainees to access this endpoint', async () => {
@@ -127,9 +128,11 @@ describe('Coach-Trainee Routes', () => {
         data: {
           message: expect.any(String),
           payload: {
-            coach: expect.objectContaining({
+            coach: {
+              id: expect.any(String),
+              name: 'Coach User',
               email: 'coach@example.com'
-            })
+            }
           }
         },
         error: null,

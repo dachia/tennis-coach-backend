@@ -21,14 +21,16 @@ export class AuthController {
   }
 
   async getTraineesByCoach(req: AuthRequest, res: Response) {
-    const trainees = await this.authService.getTraineesByCoach(req.user._id);
+    const trainees: Array<{ id: string; name: string; email: string }> = 
+      await this.authService.getTraineesByCoach(req.user._id);
     res.json(
       createResponse('success', 'Trainees retrieved successfully', { trainees })
     );
   }
 
   async getCoachByTrainee(req: AuthRequest, res: Response) {
-    const coach = await this.authService.getCoachByTrainee(req.user._id);
+    const coach: { id: string; name: string; email: string } = 
+      await this.authService.getCoachByTrainee(req.user._id);
     res.json(
       createResponse('success', 'Coach retrieved successfully', { coach })
     );

@@ -74,21 +74,29 @@ export class AuthService {
   async getTraineesByCoach(coachId: string) {
     const coachTrainees = await this.coachTraineeModel
       .find({ coachId })
-      .populate('traineeId', 'name email');
+      .populate('traineeId', 'name email _id');
 
-    return coachTrainees.map(ct => ct.traineeId);
+    return coachTrainees.map((ct: any) => ({
+      id: ct.traineeId._id.toString(),
+      name: ct.traineeId.name,
+      email: ct.traineeId.email
+    }));
   }
 
   async getCoachByTrainee(traineeId: string) {
     const coachTrainee = await this.coachTraineeModel
       .findOne({ traineeId })
-      .populate('coachId', 'name email');
+      .populate('coachId', 'name email _id');
 
     if (!coachTrainee) {
       throw new DomainError('No coach found for this trainee', 404);
     }
 
-    return coachTrainee.coachId;
+    return {
+      id: coachTrainee.coachId._id.toString(),
+      name: (coachTrainee.coachId as any).name,
+      email: (coachTrainee.coachId as any).email
+    };
   }
 
   async addTraineeToCoach(coachId: string, traineeEmail: string): Promise<void> {
