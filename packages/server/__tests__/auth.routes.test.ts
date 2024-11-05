@@ -1,11 +1,11 @@
 import request from 'supertest';
 import { Express } from 'express';
-import { bootstrapApp, Container, EventService, InMemoryEventService, InMemoryEventStorage } from '../../shared';
-import { addToContainer } from '../../auth/di';
-import { setupTestDatabase, setupTestServer } from '../../shared/tests';
-import { buildRoutes } from '../../auth/routes';
+import { setupTestDatabase } from '../../shared/tests';
 import { UserRole } from '../../auth/types';
 import mongoose from 'mongoose';
+import { bootstrapServer } from '../server';
+import { testConfig } from '../config';
+import { createTestContainer } from '../di';
 
 describe('Auth Routes', () => {
   let app: Express;
@@ -21,21 +21,11 @@ describe('Auth Routes', () => {
     // Connect to test database
     await mongoose.connect(uri);
 
-    // Setup application with DI container
-    app = bootstrapApp();
-    const container = new Container();
-    const config = { jwtSecret: 'test-secret' };
-    container.register('Config', config);
-    const eventStorage = new InMemoryEventStorage();
-    const eventService = new InMemoryEventService(eventStorage);
-    container.register('EventService', eventService);
-    addToContainer(container);
-
-    // Add routes
-    app.use('/auth', buildRoutes(container));
-
-    // Start test server
-    const { server: testServer, closeServer: closeServerFn } = await setupTestServer(app);
+    const { app: testApp, server: testServer, closeServer: closeServerFn } = await bootstrapServer({
+      ...testConfig,
+      mongoUri: uri,
+    }, createTestContainer(testConfig));
+    app = testApp;
     server = testServer;
     closeServer = closeServerFn;
   });
@@ -64,7 +54,17 @@ describe('Auth Routes', () => {
         .send(userData);
 
       expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty('token');
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: expect.any(String),
+          payload: {
+            token: expect.any(String)
+          }
+        },
+        error: null,
+        version: expect.any(Number)
+      });
     });
 
     it('should return 400 for duplicate email', async () => {
@@ -86,7 +86,14 @@ describe('Auth Routes', () => {
         .send(userData);
 
       expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('message', 'Email already registered');
+      expect(response.body).toMatchObject({
+        status: 'fail',
+        data: null,
+        error: {
+          message: 'Email already registered'
+        },
+        version: expect.any(Number)
+      });
     });
 
     it('should return 400 for invalid data', async () => {
@@ -102,7 +109,14 @@ describe('Auth Routes', () => {
         .send(invalidData);
 
       expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('message');
+      expect(response.body).toMatchObject({
+        status: 'fail',
+        data: null,
+        error: {
+          message: expect.any(String)
+        },
+        version: expect.any(Number)
+      });
     });
   });
 
@@ -132,7 +146,17 @@ describe('Auth Routes', () => {
         .send(loginData);
 
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('token');
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: expect.any(String),
+          payload: {
+            token: expect.any(String)
+          }
+        },
+        error: null,
+        version: expect.any(Number)
+      });
     });
 
     it('should return 401 for incorrect password', async () => {
@@ -146,7 +170,14 @@ describe('Auth Routes', () => {
         .send(loginData);
 
       expect(response.status).toBe(401);
-      expect(response.body).toHaveProperty('message', 'Invalid credentials');
+      expect(response.body).toMatchObject({
+        status: 'fail',
+        data: null,
+        error: {
+          message: 'Invalid credentials'
+        },
+        version: expect.any(Number)
+      });
     });
 
     it('should return 401 for non-existent user', async () => {
@@ -160,7 +191,14 @@ describe('Auth Routes', () => {
         .send(loginData);
 
       expect(response.status).toBe(401);
-      expect(response.body).toHaveProperty('message', 'Invalid credentials');
+      expect(response.body).toMatchObject({
+        status: 'fail',
+        data: null,
+        error: {
+          message: 'Invalid credentials'
+        },
+        version: expect.any(Number)
+      });
     });
   });
 });

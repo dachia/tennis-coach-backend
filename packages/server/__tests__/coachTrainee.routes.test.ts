@@ -1,14 +1,14 @@
 import request from 'supertest';
 import { Express } from 'express';
-import { bootstrapApp, Container, InMemoryEventService, InMemoryEventStorage } from '../../shared';
-import { addToContainer } from '../../auth/di';
-import { setupTestDatabase, setupTestServer } from '../../shared/tests';
-import { buildRoutes } from '../../auth/routes';
+import { setupTestDatabase } from '../../shared/tests';
 import { UserRole } from '../../auth/types';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import { User } from '../../auth/models/User';
 import { CoachTrainee } from '../../auth/models/CoachTrainee';
+import { createTestContainer } from '../di';
+import { testConfig } from '../config';
+import { bootstrapServer } from '../server';
 
 describe('Coach-Trainee Routes', () => {
   let app: Express;
@@ -22,23 +22,18 @@ describe('Coach-Trainee Routes', () => {
   const jwtSecret = 'test-secret';
 
   beforeAll(async () => {
+
     const { uri, closeDatabase: closeDatabaseFn } = await setupTestDatabase();
     closeDatabase = closeDatabaseFn;
+
+    // Connect to test database
     await mongoose.connect(uri);
 
-    app = bootstrapApp();
-    const container = new Container();
-    const config = { jwtSecret };
-    container.register('Config', config);
-
-    const eventStorage = new InMemoryEventStorage();
-    const eventService = new InMemoryEventService(eventStorage);
-    container.register('EventService', eventService);
-    addToContainer(container);
-
-    app.use('/auth', buildRoutes(container));
-
-    const { server: testServer, closeServer: closeServerFn } = await setupTestServer(app);
+    const { app: testApp, server: testServer, closeServer: closeServerFn } = await bootstrapServer({
+      ...testConfig,
+      mongoUri: uri,
+    }, createTestContainer(testConfig));
+    app = testApp;
     server = testServer;
     closeServer = closeServerFn;
   });
@@ -85,8 +80,22 @@ describe('Coach-Trainee Routes', () => {
         .set('Authorization', `Bearer ${coachToken}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.trainees).toHaveLength(1);
-      expect(response.body.trainees[0].email).toBe('trainee@example.com');
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: expect.any(String),
+          payload: {
+            trainees: expect.arrayContaining([
+              expect.objectContaining({
+                email: 'trainee@example.com'
+              })
+            ])
+          }
+        },
+        error: null,
+        version: expect.any(Number)
+      });
+      expect(response.body.data.payload.trainees).toHaveLength(1);
     });
 
     it('should not allow trainees to access this endpoint', async () => {
@@ -95,6 +104,14 @@ describe('Coach-Trainee Routes', () => {
         .set('Authorization', `Bearer ${traineeToken}`);
 
       expect(response.status).toBe(403);
+      expect(response.body).toMatchObject({
+        status: 'error',
+        data: null,
+        error: {
+          message: expect.any(String)
+        },
+        version: expect.any(Number)
+      });
     });
   });
 
@@ -105,7 +122,19 @@ describe('Coach-Trainee Routes', () => {
         .set('Authorization', `Bearer ${traineeToken}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.coach.email).toBe('coach@example.com');
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: expect.any(String),
+          payload: {
+            coach: expect.objectContaining({
+              email: 'coach@example.com'
+            })
+          }
+        },
+        error: null,
+        version: expect.any(Number)
+      });
     });
 
     it('should not allow coaches to access this endpoint', async () => {
@@ -114,6 +143,14 @@ describe('Coach-Trainee Routes', () => {
         .set('Authorization', `Bearer ${coachToken}`);
 
       expect(response.status).toBe(403);
+      expect(response.body).toMatchObject({
+        status: 'error',
+        data: null,
+        error: {
+          message: expect.any(String)
+        },
+        version: expect.any(Number)
+      });
     });
   });
 }); 

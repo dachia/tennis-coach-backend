@@ -1,7 +1,7 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
-import { startServer } from '../utils/startHttpServer';
-import { Express } from 'express';
+import { testConfig } from '../../server/config';
+import { bootstrapServer } from '../../server/server';
 
 export async function setupTestDatabase() {
   const mongod = await MongoMemoryServer.create();
@@ -12,20 +12,6 @@ export async function setupTestDatabase() {
     closeDatabase: async () => {
       await mongoose.disconnect();
       await mongod.stop();
-    }
-  };
-}
-export async function setupTestServer(app: Express) {
-  const testConfig = {
-    port: 0,
-  };
-  const server = await startServer(app, testConfig);
-
-  return {
-    app,
-    server,
-    closeServer: async () => {
-      await new Promise<void>((resolve) => server.close(() => resolve()));
     }
   };
 }

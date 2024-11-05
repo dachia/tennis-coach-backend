@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import { createResponse } from '../utils/response.utils';
+
 export interface AuthRequest extends Request {
   user?: any;
 }
@@ -17,14 +19,20 @@ export const createAuthMiddleware = (getUserById: (id: string) => Promise<any>, 
     req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Authentication required' });
+    res.status(401).json(createResponse(
+      'error',
+      'Authentication required'
+    ));
   }
 };
 
 export const requireRole = (roles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({ message: 'Forbidden' });
+      return res.status(403).json(createResponse(
+        'error',
+        'Forbidden'
+      ));
     }
     next();
   };
