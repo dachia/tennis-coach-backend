@@ -32,5 +32,19 @@ export function buildRoutes(container: Container) {
     authController.getCoachByTrainee.bind(authController)
   );
 
+  router.post(
+    '/coach/trainees',
+    authMiddleware,
+    requireRole([UserRole.COACH]),
+    authController.addTraineeToCoach.bind(authController)
+  );
+
+  router.delete(
+    '/coach/trainees',
+    authMiddleware,
+    requireRole([UserRole.COACH]),
+    authController.removeTraineeFromCoach.bind(authController)
+  );
+
   return router;
 }

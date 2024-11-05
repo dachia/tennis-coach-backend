@@ -153,4 +153,87 @@ describe('Coach-Trainee Routes', () => {
       });
     });
   });
+
+  describe('POST /auth/coach/trainees', () => {
+    let newTrainee: any;
+
+    beforeEach(async () => {
+      newTrainee = await User.create({
+        email: 'newtrainee@example.com',
+        password: 'password123',
+        name: 'New Trainee',
+        role: UserRole.TRAINEE
+      });
+    });
+
+    it('should allow coach to add a trainee by email', async () => {
+      const response = await request(app)
+        .post('/auth/coach/trainees')
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send({ traineeEmail: newTrainee.email });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: 'Trainee added successfully'
+        },
+        error: null,
+        version: expect.any(Number)
+      });
+
+      // Verify relationship was created
+      const relation = await CoachTrainee.findOne({
+        coachId: coach._id,
+        traineeId: newTrainee._id
+      });
+      expect(relation).toBeTruthy();
+    });
+
+    it('should return 404 for non-existent trainee email', async () => {
+      const response = await request(app)
+        .post('/auth/coach/trainees')
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send({ traineeEmail: 'nonexistent@example.com' });
+
+      expect(response.status).toBe(404);
+      expect(response.body.error.message).toBe('Invalid trainee email');
+    });
+  });
+
+  describe('DELETE /auth/coach/trainees', () => {
+    it('should allow coach to remove a trainee by email', async () => {
+      const response = await request(app)
+        .delete('/auth/coach/trainees')
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send({ traineeEmail: trainee.email });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: 'Trainee removed successfully'
+        },
+        error: null,
+        version: expect.any(Number)
+      });
+
+      // Verify relationship was deleted
+      const relation = await CoachTrainee.findOne({
+        coachId: coach._id,
+        traineeId: trainee._id
+      });
+      expect(relation).toBeNull();
+    });
+
+    it('should return 404 when relationship does not exist', async () => {
+      const response = await request(app)
+        .delete('/auth/coach/trainees')
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send({ traineeEmail: 'nonexistent@example.com' });
+
+      expect(response.status).toBe(404);
+      expect(response.body.error.message).toBe('Trainee not found');
+    });
+  });
 }); 

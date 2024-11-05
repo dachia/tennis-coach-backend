@@ -91,6 +91,72 @@ export class AuthService {
     return coachTrainee.coachId;
   }
 
+  async addTraineeToCoach(coachId: string, traineeEmail: string): Promise<void> {
+    // Verify coach exists and has correct role
+    const coach = await this.userModel.findById(coachId);
+    if (!coach || coach.role !== 'coach') {
+      throw new DomainError('Invalid coach ID', 404);
+    }
+
+    // Find trainee by email
+    const trainee = await this.userModel.findOne({ email: traineeEmail });
+    if (!trainee || trainee.role !== 'trainee') {
+      throw new DomainError('Invalid trainee email', 404);
+    }
+
+    // Check if trainee already has a coach
+    const existingRelation = await this.coachTraineeModel.findOne({ traineeId: trainee._id });
+    if (existingRelation) {
+      throw new DomainError('Trainee already has a coach', 400);
+    }
+
+    // Create the relationship
+    await this.coachTraineeModel.create({ 
+      coachId, 
+      traineeId: trainee._id 
+    });
+
+    await this.eventService.publishDomainEvent({
+      eventName: 'auth.trainee.assigned',
+      payload: {
+        coachId,
+        traineeId: trainee._id,
+        traineeEmail
+      }
+    });
+  }
+
+  async removeTraineeFromCoach(coachId: string, traineeEmail: string): Promise<void> {
+    // Find trainee by email
+    const trainee = await this.userModel.findOne({ email: traineeEmail });
+    if (!trainee) {
+      throw new DomainError('Trainee not found', 404);
+    }
+
+    const relation = await this.coachTraineeModel.findOne({ 
+      coachId, 
+      traineeId: trainee._id 
+    });
+    
+    if (!relation) {
+      throw new DomainError('Coach-trainee relationship not found', 404);
+    }
+
+    await this.coachTraineeModel.deleteOne({ 
+      coachId, 
+      traineeId: trainee._id 
+    });
+
+    await this.eventService.publishDomainEvent({
+      eventName: 'auth.trainee.unassigned',
+      payload: {
+        coachId,
+        traineeId: trainee._id,
+        traineeEmail
+      }
+    });
+  }
+
   private generateToken(user: any): string {
     return jwt.sign(
       { sub: user._id, role: user.role },

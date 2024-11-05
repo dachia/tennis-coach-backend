@@ -43,6 +43,26 @@ export class AuthTransportRouter {
         return this.authService.getCoachByTrainee(traineeId);
       }
     );
+
+    this.router.register<{ coachId: string, traineeEmail: string }, void>(
+      'auth.coach.addTrainee',
+      async (payload) => {
+        return this.authService.addTraineeToCoach(
+          payload.coachId, 
+          payload.traineeEmail
+        );
+      }
+    );
+
+    this.router.register<{ coachId: string, traineeEmail: string }, void>(
+      'auth.coach.removeTrainee',
+      async (payload) => {
+        return this.authService.removeTraineeFromCoach(
+          payload.coachId, 
+          payload.traineeEmail
+        );
+      }
+    );
   }
 
   /**

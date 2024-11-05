@@ -33,4 +33,24 @@ export class AuthController {
       createResponse('success', 'Coach retrieved successfully', { coach })
     );
   }
+
+  async addTraineeToCoach(req: AuthRequest, res: Response) {
+    await this.authService.addTraineeToCoach(
+      req.user._id, 
+      req.body.traineeEmail
+    );
+    res.json(
+      createResponse('success', 'Trainee added successfully')
+    );
+  }
+
+  async removeTraineeFromCoach(req: AuthRequest, res: Response) {
+    await this.authService.removeTraineeFromCoach(
+      req.user._id, 
+      req.body.traineeEmail
+    );
+    res.json(
+      createResponse('success', 'Trainee removed successfully')
+    );
+  }
 } 
