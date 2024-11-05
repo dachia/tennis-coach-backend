@@ -38,4 +38,43 @@ export interface ExerciseLogDTO {
 export interface ProgressComparisonDTO {
   logId: string;
   comparisonValue: number;
+}
+
+export interface CreateWorkoutDTO {
+  workoutDate: Date;
+  startTimestamp: Date;
+  endTimestamp?: Date;
+  templateId?: string;
+  notes?: string;
+  media?: string[];
+  userId: string;
+}
+
+export interface CreateExerciseLogDTO {
+  workoutId: string;
+  exerciseId: string;
+  actualValue: number;
+  duration: number;
+  notes?: string;
+  media?: string[];
+  userId: string;
+}
+
+export interface UpdateWorkoutDTO {
+  workoutDate?: Date;
+  startTimestamp?: Date;
+  endTimestamp?: Date;
+  status?: WorkoutStatus;
+  notes?: string;
+  media?: string[];
+  userId: string;
+}
+
+export interface UpdateExerciseLogDTO {
+  actualValue?: number;
+  duration?: number;
+  status?: ExerciseLogStatus;
+  notes?: string;
+  media?: string[];
+  userId: string;
 } 

@@ -23,8 +23,6 @@ export function addToContainer(container: Container) {
   container.register('AuthService', authService);
   container.register('AuthController', authController);
   container.register('AuthTransportRouter', authTransportRouter);
-  container.register('User', User);
-  container.register('CoachTrainee', CoachTrainee);
   
   return container;
 }
