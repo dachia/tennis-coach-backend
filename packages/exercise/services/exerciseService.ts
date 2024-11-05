@@ -11,7 +11,7 @@ import {
   UpdateKpiDTO,
   UpdateTemplateDTO
 } from '../types';
-import { EventService } from '../../shared';
+import { AuthError, EventService } from '../../shared';
 import { DomainError } from '../../shared/errors/DomainError';
 import {
   createExerciseSchema,
@@ -32,10 +32,15 @@ export class ExerciseService {
   ) {}
 
   async createExercise(data: CreateExerciseDTO): Promise<{ exercise: IExercise }> {
-    const validatedData = await createExerciseSchema.validate(data, {
-      abortEarly: false,
-      stripUnknown: true
-    });
+    let validatedData;
+    try {
+      validatedData = await createExerciseSchema.validate(data, {
+        abortEarly: false,
+        stripUnknown: true
+      });
+    } catch (err: any) {
+      throw new DomainError(err.message);
+    }
 
     const exercise = await this.exerciseModel.create({
       ...validatedData,
@@ -60,10 +65,15 @@ export class ExerciseService {
   }
 
   async createTemplate(data: CreateTemplateDTO): Promise<{ template: ITrainingTemplate }> {
-    const validatedData = await createTemplateSchema.validate(data, {
-      abortEarly: false,
-      stripUnknown: true
-    });
+    let validatedData;
+    try {
+      validatedData = await createTemplateSchema.validate(data, {
+        abortEarly: false,
+        stripUnknown: true
+      });
+    } catch (err: any) {
+      throw new DomainError(err.message);
+    }
 
     const template = await this.templateModel.create({
       ...validatedData,
@@ -79,10 +89,15 @@ export class ExerciseService {
   }
 
   async shareResource(data: ShareResourceDTO): Promise<{ sharedResource: ISharedResource }> {
-    const validatedData = await shareResourceSchema.validate(data, {
-      abortEarly: false,
-      stripUnknown: true
-    });
+    let validatedData;
+    try {
+      validatedData = await shareResourceSchema.validate(data, {
+        abortEarly: false,
+        stripUnknown: true
+      });
+    } catch (err: any) {
+      throw new DomainError(err.message);
+    }
 
     // Validate that the resource exists
     let resource;
@@ -98,7 +113,7 @@ export class ExerciseService {
     }
 
     if (!resource) {
-      throw new DomainError('Resource not found');
+      throw new DomainError('Resource not found', 404);
     }
 
     const sharedResource = await this.sharedResourceModel.create({
@@ -118,10 +133,15 @@ export class ExerciseService {
   }
 
   async updateExercise(id: string, data: UpdateExerciseDTO): Promise<{ exercise: IExercise | null }> {
-    const validatedData = await updateExerciseSchema.validate(data, {
-      abortEarly: false,
-      stripUnknown: true
-    });
+    let validatedData;
+    try {
+      validatedData = await updateExerciseSchema.validate(data, {
+        abortEarly: false,
+        stripUnknown: true
+      });
+    } catch (err: any) {
+      throw new DomainError(err.message);
+    }
 
     const exercise = await this.exerciseModel.findOneAndUpdate(
       { _id: id, createdBy: data.userId },
@@ -130,7 +150,7 @@ export class ExerciseService {
     );
 
     if (!exercise) {
-      throw new DomainError('Exercise not found or unauthorized');
+      throw new DomainError('Exercise not found or unauthorized', 404);
     }
 
     await this.eventService.publishDomainEvent({
@@ -142,19 +162,24 @@ export class ExerciseService {
   }
 
   async updateKpi(id: string, data: UpdateKpiDTO): Promise<{ kpi: IKPI | null }> {
-    const validatedData = await updateKpiSchema.validate(data, {
-      abortEarly: false,
-      stripUnknown: true
-    });
+    let validatedData;
+    try {
+      validatedData = await updateKpiSchema.validate(data, {
+        abortEarly: false,
+        stripUnknown: true
+      });
+    } catch (err: any) {
+      throw new DomainError(err.message);
+    }
 
     const kpi = await this.kpiModel.findById(id);
     if (!kpi) {
-      throw new DomainError('KPI not found');
+      throw new DomainError('KPI not found', 404);
     }
 
     const exercise = await this.exerciseModel.findById(kpi.exerciseId);
     if (!exercise || exercise.createdBy.toString() !== data.userId.toString()) {
-      throw new DomainError('Unauthorized to modify this KPI');
+      throw new AuthError('Unauthorized to modify this KPI', 403);
     }
 
     const updatedKpi = await this.kpiModel.findByIdAndUpdate(
@@ -172,10 +197,15 @@ export class ExerciseService {
   }
 
   async updateTemplate(id: string, data: UpdateTemplateDTO): Promise<{ template: ITrainingTemplate | null }> {
-    const validatedData = await updateTemplateSchema.validate(data, {
-      abortEarly: false,
-      stripUnknown: true
-    });
+    let validatedData;
+    try {
+      validatedData = await updateTemplateSchema.validate(data, {
+        abortEarly: false,
+        stripUnknown: true
+      });
+    } catch (err: any) {
+      throw new DomainError(err.message);
+    }
 
     const template = await this.templateModel.findOneAndUpdate(
       { _id: id, createdBy: data.userId },
@@ -199,14 +229,14 @@ export class ExerciseService {
     const sharedResource = await this.sharedResourceModel.findById(id);
 
     if (!sharedResource) {
-      throw new DomainError('Shared resource not found');
+      throw new DomainError('Shared resource not found', 404);
     }
 
     if (
       sharedResource.sharedById.toString() !== userId.toString() &&
       sharedResource.sharedWithId.toString() !== userId.toString()
     ) {
-      throw new DomainError('Unauthorized to delete this shared resource');
+      throw new AuthError('Unauthorized to delete this shared resource', 403);
     }
 
     await this.sharedResourceModel.findByIdAndDelete(id);

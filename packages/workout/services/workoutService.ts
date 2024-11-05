@@ -27,10 +27,15 @@ export class WorkoutService {
   ) {}
 
   async createWorkout(data: CreateWorkoutDTO) {
-    const validatedData = await createWorkoutSchema.validate(data, {
-      abortEarly: false,
-      stripUnknown: true
-    });
+    let validatedData;
+    try {
+      validatedData = await createWorkoutSchema.validate(data, {
+        abortEarly: false,
+        stripUnknown: true
+      });
+    } catch (err: any) {
+      throw new DomainError(err.message);
+    }
 
     const workout = await this.workoutModel.create({
       ...validatedData,
@@ -50,10 +55,15 @@ export class WorkoutService {
   }
 
   async createExerciseLog(data: CreateExerciseLogDTO) {
-    const validatedData = await createExerciseLogSchema.validate(data, {
-      abortEarly: false,
-      stripUnknown: true
-    });
+    let validatedData;
+    try {
+      validatedData = await createExerciseLogSchema.validate(data, {
+        abortEarly: false,
+        stripUnknown: true
+      });
+    } catch (err: any) {
+      throw new DomainError(err.message);
+    }
 
     const workout = await this.workoutModel.findOne({
       _id: validatedData.workoutId,
@@ -61,7 +71,7 @@ export class WorkoutService {
     });
 
     if (!workout) {
-      throw new DomainError('Workout not found or unauthorized');
+      throw new DomainError('Workout not found or unauthorized', 404);
     }
 
     const exerciseLog = await this.exerciseLogModel.create({
@@ -96,10 +106,15 @@ export class WorkoutService {
   }
 
   async updateWorkout(id: string, data: UpdateWorkoutDTO) {
-    const validatedData = await updateWorkoutSchema.validate(data, {
-      abortEarly: false,
-      stripUnknown: true
-    });
+    let validatedData;
+    try {
+      validatedData = await updateWorkoutSchema.validate(data, {
+        abortEarly: false,
+        stripUnknown: true
+      });
+    } catch (err: any) {
+      throw new DomainError(err.message);
+    }
 
     const workout = await this.workoutModel.findOneAndUpdate(
       { _id: id, traineeId: data.userId },
@@ -120,10 +135,15 @@ export class WorkoutService {
   }
 
   async updateExerciseLog(id: string, data: UpdateExerciseLogDTO) {
-    const validatedData = await updateExerciseLogSchema.validate(data, {
-      abortEarly: false,
-      stripUnknown: true
-    });
+    let validatedData;
+    try {
+      validatedData = await updateExerciseLogSchema.validate(data, {
+        abortEarly: false,
+        stripUnknown: true
+      });
+    } catch (err: any) {
+      throw new DomainError(err.message);
+    }
 
     const exerciseLog = await this.exerciseLogModel.findOneAndUpdate(
       { _id: id, traineeId: data.userId },

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { createResponse } from '../utils/response.utils';
 import { DomainError } from '../errors/DomainError';
+import { AuthError } from '../errors';
 
 export function globalErrorHandler(
   err: Error,
@@ -12,6 +13,12 @@ export function globalErrorHandler(
 
   if (err instanceof DomainError) {
     console.error('Domain error:', err.message);
+    return res.status(err.statusCode).json(
+      createResponse('fail', err.message)
+    );
+  }
+  if (err instanceof AuthError) {
+    console.error('Auth error:', err.message);
     return res.status(err.statusCode).json(
       createResponse('fail', err.message)
     );
