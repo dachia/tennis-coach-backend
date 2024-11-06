@@ -1,7 +1,6 @@
 import { Transport, TransportRouter } from '../../shared/transport';
-import { IProgressComparison } from '../models/ProgressComparison';
-import { ITotalProgress } from '../models/TotalProgress';
 import { ReportingService } from '../services/reportingService';
+import { CalculateProgressComparisonParams, CalculateProgressComparisonResponseDTO, CalculateTotalProgressParams, CalculateTotalProgressResponseDTO } from '../types';
 
 export class ReportingTransportRouter {
   private router: TransportRouter;
@@ -15,14 +14,14 @@ export class ReportingTransportRouter {
   }
 
   private registerRoutes() {
-    this.router.register<any, { progressComparisons: IProgressComparison[] }>(
+    this.router.register<CalculateProgressComparisonParams, CalculateProgressComparisonResponseDTO>(
       'progress.calculate.comparison',
       async (payload) => {
         return this.reportingService.calculateProgressComparison(payload);
       }
     );
 
-    this.router.register<any, { totalProgress: ITotalProgress }>(
+    this.router.register<CalculateTotalProgressParams, CalculateTotalProgressResponseDTO>(
       'progress.calculate.total',
       async (payload) => {
         return this.reportingService.calculateTotalProgress(payload);

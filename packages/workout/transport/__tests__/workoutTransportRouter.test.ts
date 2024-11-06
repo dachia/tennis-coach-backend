@@ -8,7 +8,9 @@ const mockWorkoutService = {
   createWorkout: jest.fn(),
   createExerciseLog: jest.fn(),
   updateWorkout: jest.fn(),
-  updateExerciseLog: jest.fn()
+  updateExerciseLog: jest.fn(),
+  getExerciseLogById: jest.fn(),
+  getExerciseLogsByDateRange: jest.fn()
 } as unknown as WorkoutService;
 
 describe('WorkoutTransportRouter', () => {
@@ -169,6 +171,91 @@ describe('WorkoutTransportRouter', () => {
         updateData.id,
         { actualValue: updateData.actualValue, status: updateData.status, userId: updateData.userId }
       );
+    });
+  });
+
+  describe('exerciseLog.get', () => {
+    it('should handle exercise log fetch requests', async () => {
+      const fetchData = {
+        id: 'log123',
+        userId: 'user123'
+      };
+
+      const expectedResponse = {
+        exerciseLog: {
+          _id: fetchData.id,
+          workoutId: 'workout123',
+          exerciseId: 'exercise123',
+          actualValue: 100,
+          duration: 300,
+          status: ExerciseLogStatus.COMPLETED
+        }
+      };
+
+      jest.spyOn(mockWorkoutService, 'getExerciseLogById').mockResolvedValue(expectedResponse as any);
+
+      const response = await transport.request(
+        'exerciseLog.get',
+        {
+          type: 'GET_EXERCISE_LOG',
+          payload: fetchData
+        }
+      );
+
+      expect(response).toEqual(expectedResponse);
+      expect(mockWorkoutService.getExerciseLogById).toHaveBeenCalledWith(
+        fetchData.id,
+        fetchData.userId
+      );
+    });
+  });
+
+  describe('exerciseLog.getByDateRange', () => {
+    it('should handle exercise log fetch by date range requests', async () => {
+      const startDate = new Date('2024-01-01');
+      const endDate = new Date('2024-01-31');
+      
+      const fetchData = {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        userId: 'user123',
+        kpiId: 'kpi123'
+      };
+
+      const expectedResponse = {
+        exerciseLogs: [
+          {
+            _id: 'log123',
+            workoutId: 'workout123',
+            exerciseId: 'exercise123',
+            kpiId: 'kpi123',
+            actualValue: 100,
+            duration: 300,
+            logDate: startDate,
+            status: ExerciseLogStatus.COMPLETED
+          }
+        ]
+      };
+
+      jest.spyOn(mockWorkoutService, 'getExerciseLogsByDateRange')
+        .mockResolvedValue(expectedResponse as any);
+
+      const response = await transport.request(
+        'exerciseLog.getByDateRange',
+        {
+          type: 'GET_EXERCISE_LOGS_BY_DATE_RANGE',
+          payload: fetchData
+        }
+      );
+
+      expect(response).toEqual(expectedResponse);
+      expect(mockWorkoutService.getExerciseLogsByDateRange)
+        .toHaveBeenCalledWith({
+          startDate: new Date(fetchData.startDate),
+          endDate: new Date(fetchData.endDate),
+          userId: fetchData.userId,
+          kpiId: fetchData.kpiId
+        });
     });
   });
 }); 

@@ -55,4 +55,30 @@ export class WorkoutController {
       createResponse('success', 'Exercise log updated successfully', result)
     );
   }
+
+  async getExerciseLog(req: AuthRequest, res: Response) {
+    const result = await this.workoutService.getExerciseLogById(
+      req.params.id,
+      req.user._id
+    );
+    
+    res.json(
+      createResponse('success', 'Exercise log retrieved successfully', result)
+    );
+  }
+
+  async getExerciseLogsByDateRange(req: AuthRequest, res: Response) {
+    const { startDate, endDate, kpiId } = req.query;
+
+    const result = await this.workoutService.getExerciseLogsByDateRange({
+      startDate: new Date(startDate as string),
+      endDate: new Date(endDate as string),
+      userId: req.user._id,
+      kpiId: kpiId as string
+    });
+    
+    res.json(
+      createResponse('success', 'Exercise logs retrieved successfully', result)
+    );
+  }
 } 

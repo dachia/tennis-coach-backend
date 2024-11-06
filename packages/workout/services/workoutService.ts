@@ -144,4 +144,37 @@ export class WorkoutService {
 
     return { exerciseLog };
   }
+
+  async getExerciseLogById(logId: string, userId: string) {
+    const exerciseLog = await this.exerciseLogModel.findOne({
+      _id: logId,
+      traineeId: userId
+    });
+
+    if (!exerciseLog) {
+      throw new DomainError('Exercise log not found or unauthorized', 404);
+    }
+
+    return { exerciseLog };
+  }
+
+  async getExerciseLogsByDateRange(params: {
+    startDate: Date;
+    endDate: Date;
+    userId: string;
+    kpiId: string;
+  }) {
+    const { startDate, endDate, userId, kpiId } = params;
+
+    const exerciseLogs = await this.exerciseLogModel.find({
+      traineeId: userId,
+      kpiId: kpiId,
+      logDate: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    }).sort({ logDate: 1 });
+
+    return { exerciseLogs };
+  }
 } 

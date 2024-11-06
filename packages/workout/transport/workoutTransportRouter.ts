@@ -52,6 +52,32 @@ export class WorkoutTransportRouter {
         return this.workoutService.updateExerciseLog(id, data);
       }
     );
+
+    this.router.register<{ id: string; userId: string }, { exerciseLog: IExerciseLog | null }>(
+      'exerciseLog.get',
+      async (payload) => {
+        const { id, userId } = payload;
+        return this.workoutService.getExerciseLogById(id, userId);
+      }
+    );
+
+    this.router.register<{
+      startDate: string;
+      endDate: string;
+      userId: string;
+      kpiId: string;
+    }, { exerciseLogs: IExerciseLog[] }>(
+      'exerciseLog.getByDateRange',
+      async (payload) => {
+        const { startDate, endDate, userId, kpiId } = payload;
+        return this.workoutService.getExerciseLogsByDateRange({
+          startDate: new Date(startDate),
+          endDate: new Date(endDate),
+          userId,
+          kpiId
+        });
+      }
+    );
   }
   async listen() {
     await this.router.listen();

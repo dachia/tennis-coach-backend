@@ -44,5 +44,19 @@ export function buildRoutes(container: Container) {
     workoutController.updateExerciseLog.bind(workoutController)
   );
 
+  router.get(
+    '/log/:id',
+    authMiddleware,
+    requireRole([UserRole.TRAINEE]),
+    workoutController.getExerciseLog.bind(workoutController)
+  );
+
+  router.get(
+    '/logs',
+    authMiddleware,
+    requireRole([UserRole.TRAINEE]),
+    workoutController.getExerciseLogsByDateRange.bind(workoutController)
+  );
+
   return router;
 } 
