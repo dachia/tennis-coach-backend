@@ -1,6 +1,6 @@
 import { User } from '../models/User';
 import { CoachTrainee } from '../models/CoachTrainee';
-import { LoginDTO, RegisterDTO } from '../types';
+import { GetCoachResponseDTO, GetProfileResponseDTO, GetTraineesResponseDTO, LoginDTO, RegisterDTO, UserResponseDTO } from '../types';
 import { EventService } from '../../shared/';
 import jwt from 'jsonwebtoken';
 import { loginSchema, registerSchema } from '../validation';
@@ -71,31 +71,37 @@ export class AuthService {
     return { token };
   }
 
-  async getTraineesByCoach(coachId: string) {
+  async getTraineesByCoach(coachId: string): Promise<GetTraineesResponseDTO> {
     const coachTrainees = await this.coachTraineeModel
       .find({ coachId })
-      .populate('traineeId', 'name email _id');
+      .populate('traineeId', 'name email _id role') as unknown as { traineeId: UserResponseDTO }[];
 
-    return coachTrainees.map((ct: any) => ({
-      id: ct.traineeId._id.toString(),
-      name: ct.traineeId.name,
-      email: ct.traineeId.email
-    }));
+    return {
+      trainees: coachTrainees.map((ct: any) => ({
+        _id: ct.traineeId._id.toString(),
+        name: ct.traineeId.name,
+        email: ct.traineeId.email,
+        role: ct.traineeId.role
+      }))
+    };
   }
 
-  async getCoachByTrainee(traineeId: string) {
+  async getCoachByTrainee(traineeId: string): Promise<GetCoachResponseDTO> {
     const coachTrainee = await this.coachTraineeModel
       .findOne({ traineeId })
-      .populate('coachId', 'name email _id');
+      .populate('coachId', 'name email _id role') as unknown as { coachId: UserResponseDTO };
 
     if (!coachTrainee) {
       throw new DomainError('No coach found for this trainee', 404);
     }
 
     return {
-      id: coachTrainee.coachId._id.toString(),
-      name: (coachTrainee.coachId as any).name,
-      email: (coachTrainee.coachId as any).email
+      coach: {
+        _id: coachTrainee.coachId._id.toString(),
+        name: (coachTrainee.coachId as any).name,
+        email: (coachTrainee.coachId as any).email,
+        role: (coachTrainee.coachId as any).role
+      }
     };
   }
 
@@ -163,6 +169,22 @@ export class AuthService {
         traineeEmail
       }
     });
+  }
+
+  async getOwnProfile(userId: string): Promise<GetProfileResponseDTO> {
+    const user = await this.userModel.findById(userId).select('name email _id role') as UserResponseDTO;
+    if (!user) {
+      throw new DomainError('User not found', 404);
+    }
+
+    return {
+      user: {
+        _id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    };
   }
 
   private generateToken(user: any): string {

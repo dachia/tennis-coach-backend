@@ -201,4 +201,55 @@ describe('Auth Routes', () => {
       });
     });
   });
+
+  describe('GET /auth/profile', () => {
+    let authToken: string;
+
+    beforeEach(async () => {
+      // Create a test user and get token
+      const userData = {
+        email: 'test@example.com',
+        password: 'password123',
+        name: 'Test User',
+        role: UserRole.COACH
+      };
+
+      const response = await request(app)
+        .post('/auth/register')
+        .send(userData);
+
+      authToken = response.body.data.payload.token;
+    });
+
+    it('should return user profile when authenticated', async () => {
+      const response = await request(app)
+        .get('/auth/profile')
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: expect.any(String),
+          payload: {
+            user: {
+              _id: expect.any(String),
+              name: 'Test User',
+              email: 'test@example.com',
+              role: UserRole.COACH
+            }
+          }
+        },
+        error: null,
+        version: expect.any(Number)
+      });
+    });
+
+    it('should return 401 when not authenticated', async () => {
+      const response = await request(app)
+        .get('/auth/profile');
+
+      expect(response.status).toBe(401);
+    });
+  });
 });

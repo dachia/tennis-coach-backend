@@ -87,9 +87,10 @@ describe('Coach-Trainee Routes', () => {
           payload: {
             trainees: expect.arrayContaining([
               {
-                id: expect.any(String),
+                _id: expect.any(String),
                 name: 'Trainee User',
-                email: 'trainee@example.com'
+                email: 'trainee@example.com',
+                role: UserRole.TRAINEE
               }
             ])
           }
@@ -129,9 +130,10 @@ describe('Coach-Trainee Routes', () => {
           message: expect.any(String),
           payload: {
             coach: {
-              id: expect.any(String),
+              _id: expect.any(String),
               name: 'Coach User',
-              email: 'coach@example.com'
+              email: 'coach@example.com',
+              role: UserRole.COACH
             }
           }
         },

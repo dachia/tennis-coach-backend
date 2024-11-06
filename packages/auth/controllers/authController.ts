@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { AuthService } from '../services/authService';
 import { AuthRequest } from '../../shared/middleware/auth';
 import { createResponse } from '../../shared/utils/response.utils';
+import { GetCoachResponseDTO, GetTraineesResponseDTO } from '../types';
 
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -21,18 +22,18 @@ export class AuthController {
   }
 
   async getTraineesByCoach(req: AuthRequest, res: Response) {
-    const trainees: Array<{ id: string; name: string; email: string }> = 
+    const trainees: GetTraineesResponseDTO = 
       await this.authService.getTraineesByCoach(req.user._id);
     res.json(
-      createResponse('success', 'Trainees retrieved successfully', { trainees })
+      createResponse('success', 'Trainees retrieved successfully', trainees)
     );
   }
 
   async getCoachByTrainee(req: AuthRequest, res: Response) {
-    const coach: { id: string; name: string; email: string } = 
+    const coach: GetCoachResponseDTO = 
       await this.authService.getCoachByTrainee(req.user._id);
     res.json(
-      createResponse('success', 'Coach retrieved successfully', { coach })
+      createResponse('success', 'Coach retrieved successfully', coach)
     );
   }
 
@@ -53,6 +54,13 @@ export class AuthController {
     );
     res.json(
       createResponse('success', 'Trainee removed successfully')
+    );
+  }
+
+  async getOwnProfile(req: AuthRequest, res: Response) {
+    const user = await this.authService.getOwnProfile(req.user._id);
+    res.json(
+      createResponse('success', 'Profile retrieved successfully', user )
     );
   }
 } 

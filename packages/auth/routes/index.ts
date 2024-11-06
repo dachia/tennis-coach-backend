@@ -46,5 +46,11 @@ export function buildRoutes(container: Container) {
     authController.removeTraineeFromCoach.bind(authController)
   );
 
+  router.get(
+    '/profile',
+    authMiddleware,
+    authController.getOwnProfile.bind(authController)
+  );
+
   return router;
 }
