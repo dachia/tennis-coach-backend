@@ -107,4 +107,12 @@ export class ExerciseController {
       createResponse('success', 'Exercise and KPIs updated successfully', result)
     );
   }
+
+  async getExercises(req: AuthRequest, res: Response) {
+    const result = await this.exerciseService.getExercisesWithKPIs(req.user._id);
+    
+    res.json(
+      createResponse('success', 'Exercises retrieved successfully', result)
+    );
+  }
 } 

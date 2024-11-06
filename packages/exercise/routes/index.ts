@@ -67,5 +67,12 @@ export function buildRoutes(container: Container) {
     exerciseController.updateExerciseWithKPIs.bind(exerciseController)
   );
 
+  // Add this route after existing routes
+  router.get(
+    '/exercises',
+    authMiddleware,
+    exerciseController.getExercises.bind(exerciseController)
+  );
+
   return router;
 } 

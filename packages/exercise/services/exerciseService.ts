@@ -325,4 +325,13 @@ export class ExerciseService {
 
     return { exercise };
   }
+
+  async getExercisesWithKPIs(userId: string): Promise<{ exercises: IExercise[] }> {
+    const exercises = await this.exerciseModel
+      .find({ createdBy: userId })
+      .populate('kpis')
+      .exec();
+
+    return { exercises };
+  }
 }

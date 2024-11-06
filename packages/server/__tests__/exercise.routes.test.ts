@@ -636,4 +636,92 @@ describe('Exercise Routes', () => {
       expect(response.body.error.message).toBeTruthy();
     });
   });
+
+  describe('GET /exercise/exercises', () => {
+    let exercises: any[];
+    let kpis: any[];
+
+    beforeEach(async () => {
+      // Create test exercises
+      exercises = await Promise.all([
+        Exercise.create({
+          title: 'Exercise 1',
+          description: 'Description 1',
+          media: ['https://example.com/1.mp4'],
+          createdBy: coach._id
+        }),
+        Exercise.create({
+          title: 'Exercise 2',
+          description: 'Description 2',
+          media: ['https://example.com/2.mp4'],
+          createdBy: coach._id
+        })
+      ]);
+
+      // Create KPIs for exercises
+      kpis = await Promise.all([
+        KPI.create({
+          exerciseId: exercises[0]._id,
+          goalValue: 10,
+          unit: 'repetitions',
+          performanceGoal: 'maximize'
+        }),
+        KPI.create({
+          exerciseId: exercises[1]._id,
+          goalValue: 15,
+          unit: 'minutes',
+          performanceGoal: 'minimize'
+        })
+      ]);
+    });
+
+    it('should fetch all exercises with KPIs for the authenticated user', async () => {
+      const response = await request(app)
+        .get('/exercise/exercises')
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: expect.any(String),
+          payload: {
+            exercises: expect.arrayContaining([
+              expect.objectContaining({
+                _id: exercises[0]._id.toString(),
+                title: exercises[0].title,
+                kpis: expect.arrayContaining([
+                  expect.objectContaining({
+                    _id: kpis[0]._id.toString(),
+                    goalValue: kpis[0].goalValue
+                  })
+                ])
+              }),
+              expect.objectContaining({
+                _id: exercises[1]._id.toString(),
+                title: exercises[1].title,
+                kpis: expect.arrayContaining([
+                  expect.objectContaining({
+                    _id: kpis[1]._id.toString(),
+                    goalValue: kpis[1].goalValue
+                  })
+                ])
+              })
+            ])
+          }
+        },
+        error: null,
+        version: expect.any(Number)
+      });
+    });
+
+    it('should return empty array when user has no exercises', async () => {
+      const response = await request(app)
+        .get('/exercise/exercises')
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.payload.exercises).toHaveLength(0);
+    });
+  });
 }); 

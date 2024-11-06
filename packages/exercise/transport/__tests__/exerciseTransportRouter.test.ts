@@ -18,7 +18,8 @@ const mockExerciseService = {
   updateKpi: jest.fn(),
   updateTemplate: jest.fn(),
   deleteSharedResource: jest.fn(),
-  updateExerciseWithKPIs: jest.fn()
+  updateExerciseWithKPIs: jest.fn(),
+  getExercisesWithKPIs: jest.fn()
 } as unknown as ExerciseService;
 
 describe('ExerciseTransportRouter', () => {
@@ -318,6 +319,46 @@ describe('ExerciseTransportRouter', () => {
 
       expect(error.message).toBe('Validation failed');
       expect(error.code).toBe('INTERNAL_ERROR');
+    });
+  });
+
+  describe('exercises.get', () => {
+    it('should handle exercises fetch requests', async () => {
+      const fetchData = {
+        userId: 'user123'
+      };
+
+      const expectedResponse = {
+        exercises: [
+          {
+            _id: 'exercise1',
+            title: 'Exercise 1',
+            description: 'Description 1',
+            kpis: [
+              {
+                _id: 'kpi1',
+                goalValue: 10,
+                unit: 'repetitions'
+              }
+            ]
+          }
+        ]
+      };
+
+      jest.spyOn(mockExerciseService, 'getExercisesWithKPIs')
+        .mockResolvedValue(expectedResponse as any);
+
+      const response = await transport.request(
+        'exercises.get',
+        {
+          type: 'GET_EXERCISES',
+          payload: fetchData
+        }
+      );
+
+      expect(response).toEqual(expectedResponse);
+      expect(mockExerciseService.getExercisesWithKPIs)
+        .toHaveBeenCalledWith(fetchData.userId);
     });
   });
 });

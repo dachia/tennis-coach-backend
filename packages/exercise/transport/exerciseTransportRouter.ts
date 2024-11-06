@@ -118,6 +118,16 @@ export class ExerciseTransportRouter {
         return this.exerciseService.updateExerciseWithKPIs(id, data);
       }
     );
+
+    this.router.register<
+      { userId: string },
+      { exercises: IExercise[] }
+    >(
+      'exercises.get',
+      async (payload) => {
+        return this.exerciseService.getExercisesWithKPIs(payload.userId);
+      }
+    );
   }
 
   async listen() {
