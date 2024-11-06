@@ -4,7 +4,6 @@ import { WorkoutService } from "./services/workoutService";
 import { WorkoutTransportRouter } from "./transport/workoutTransportRouter";
 import { Workout } from "./models/Workout";
 import { ExerciseLog } from "./models/ExerciseLog";
-import { ProgressComparison } from "./models/ProgressComparison";
 
 export function addToContainer(container: Container) {
   const eventService = container.get<EventService>('EventService');
@@ -13,7 +12,6 @@ export function addToContainer(container: Container) {
   const workoutService = new WorkoutService(
     Workout,
     ExerciseLog,
-    ProgressComparison,
     eventService
   );
   

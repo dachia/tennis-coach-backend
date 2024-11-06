@@ -1,6 +1,5 @@
 import { Workout } from '../models/Workout';
 import { ExerciseLog } from '../models/ExerciseLog';
-import { ProgressComparison } from '../models/ProgressComparison';
 import { EventService } from '../../shared';
 import { DomainError } from '../../shared/errors/DomainError';
 import {
@@ -22,7 +21,6 @@ export class WorkoutService {
   constructor(
     private readonly workoutModel: typeof Workout,
     private readonly exerciseLogModel: typeof ExerciseLog,
-    private readonly progressComparisonModel: typeof ProgressComparison,
     private readonly eventService: EventService,
   ) {}
 
@@ -80,22 +78,6 @@ export class WorkoutService {
       logDate: new Date(),
       status: ExerciseLogStatus.COMPLETED
     });
-
-    const previousLog = await this.exerciseLogModel
-      .findOne({
-        exerciseId: validatedData.exerciseId,
-        traineeId: data.userId,
-        _id: { $ne: exerciseLog._id }
-      })
-      .sort({ logDate: -1 });
-
-    if (previousLog) {
-      const comparisonValue = ((exerciseLog.actualValue - previousLog.actualValue) / previousLog.actualValue) * 100;
-      await this.progressComparisonModel.create({
-        logId: exerciseLog._id,
-        comparisonValue
-      });
-    }
 
     await this.eventService.publishDomainEvent({
       eventName: 'exerciseLog.created',
