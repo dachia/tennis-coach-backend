@@ -26,6 +26,7 @@ export interface ExerciseLogDTO {
   id: string;
   workoutId: string;
   exerciseId: string;
+  kpiId: string;
   traineeId: string;
   logDate: Date;
   actualValue: number;

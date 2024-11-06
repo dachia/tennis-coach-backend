@@ -19,6 +19,7 @@ export const createWorkoutSchema = yup.object({
 export const createExerciseLogSchema = yup.object({
   workoutId: yup.string().required('Workout ID is required'),
   exerciseId: yup.string().required('Exercise ID is required'),
+  kpiId: yup.string().required('KPI ID is required'),
   actualValue: yup.number().required('Actual value is required'),
   duration: yup.number()
     .min(0, 'Duration must be positive')

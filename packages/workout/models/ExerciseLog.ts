@@ -4,6 +4,7 @@ import { ExerciseLogStatus } from '../types';
 export interface IExerciseLog extends Document {
   workoutId: mongoose.Types.ObjectId;
   exerciseId: mongoose.Types.ObjectId;
+  kpiId: mongoose.Types.ObjectId;
   traineeId: mongoose.Types.ObjectId;
   logDate: Date;
   actualValue: number;
@@ -23,6 +24,11 @@ const exerciseLogSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'Exercise',
     required: true 
+  },
+  kpiId: { 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'KPI',
+    required: true
   },
   traineeId: { 
     type: mongoose.Schema.Types.ObjectId, 

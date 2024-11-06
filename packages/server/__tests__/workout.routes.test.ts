@@ -9,10 +9,10 @@ import { createTestContainer } from '../di';
 import jwt from 'jsonwebtoken';
 import { User } from '../../auth/models/User';
 import { Workout } from '../../workout/models/Workout';
-import { ExerciseLog } from '../../workout/models/ExerciseLog';
 import { WorkoutStatus, ExerciseLogStatus } from '../../workout/types';
 import { Exercise } from '../../exercise/models/Exercise';
 import { TrainingTemplate } from '../../exercise/models/TrainingTemplate';
+import { KPI } from '../../exercise/models/KPI';
 
 describe('Workout Routes', () => {
   let app: Express;
@@ -149,6 +149,7 @@ describe('Workout Routes', () => {
   describe('POST /workout/log', () => {
     let workout: any;
     let exercise: any;
+    let kpi: any;
 
     beforeEach(async () => {
       exercise = await Exercise.create({
@@ -156,6 +157,13 @@ describe('Workout Routes', () => {
         description: 'Test Description',
         media: ['https://example.com/test.mp4'],
         createdBy: coach._id
+      });
+
+      kpi = await KPI.create({
+        exerciseId: exercise._id,
+        goalValue: 10,
+        unit: 'repetitions',
+        performanceGoal: 'maximize'
       });
 
       workout = await Workout.create({
@@ -170,6 +178,7 @@ describe('Workout Routes', () => {
       const logData = {
         workoutId: workout._id,
         exerciseId: exercise._id,
+        kpiId: kpi._id,
         actualValue: 10,
         duration: 300,
         notes: 'Test log',
@@ -188,6 +197,7 @@ describe('Workout Routes', () => {
           message: expect.any(String),
           payload: {
             exerciseLog: expect.objectContaining({
+              kpiId: kpi._id.toString(),
               actualValue: logData.actualValue,
               duration: logData.duration,
               status: ExerciseLogStatus.COMPLETED
@@ -203,6 +213,7 @@ describe('Workout Routes', () => {
       const logData = {
         workoutId: new mongoose.Types.ObjectId(),
         exerciseId: exercise._id,
+        kpiId: kpi._id,
         actualValue: 10,
         duration: 300
       };
