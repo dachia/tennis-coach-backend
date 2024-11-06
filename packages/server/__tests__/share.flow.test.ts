@@ -138,7 +138,15 @@ describe("Share Flow", () => {
         error: null,
         version: expect.any(Number)
       });
+      // Verify trainee can see the shared exercise
+      const traineeExercisesResponse = await request(app)
+        .get('/exercise/exercises')
+        .set('Authorization', `Bearer ${traineeToken}`);
 
+      expect(traineeExercisesResponse.status).toBe(200);
+      expect(traineeExercisesResponse.body.data.payload.exercises).toHaveLength(1);
+      expect(traineeExercisesResponse.body.data.payload.exercises[0].isShared).toBe(true);
+      
       // Type check the response
       const shares: ShareDTO[] = sharesResponse.body.data.payload.shares;
       expect(shares).toHaveLength(1);
