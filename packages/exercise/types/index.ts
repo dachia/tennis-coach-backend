@@ -94,3 +94,13 @@ export interface UpdateExerciseWithKPIsDTO extends UpdateExerciseDTO {
     performanceGoal: PerformanceGoal;
   }>;
 }
+
+export interface ShareDTO {
+  email: string;
+  name: string;
+  sharedAt: Date;
+}
+
+export interface GetResourceSharesResponseDTO {
+  shares: ShareDTO[];
+}

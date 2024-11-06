@@ -126,4 +126,15 @@ export class ExerciseController {
       createResponse('success', 'Exercise deleted successfully')
     );
   }
+
+  async getResourceShares(req: AuthRequest, res: Response) {
+    const result = await this.exerciseService.getResourceShares(
+      req.params.id,
+      req.user._id
+    );
+
+    res.json(
+      createResponse('success', 'Resource shares retrieved successfully', result)
+    );
+  }
 } 

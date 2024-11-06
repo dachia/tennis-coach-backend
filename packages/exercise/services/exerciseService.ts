@@ -10,7 +10,8 @@ import {
   UpdateExerciseDTO,
   UpdateKpiDTO,
   UpdateTemplateDTO,
-  UpdateExerciseWithKPIsDTO
+  UpdateExerciseWithKPIsDTO,
+  GetResourceSharesResponseDTO
 } from '../types';
 import { AuthError, EventService } from '../../shared';
 import { DomainError } from '../../shared/errors/DomainError';
@@ -23,6 +24,7 @@ import {
   updateTemplateSchema,
   updateExerciseWithKPIsSchema
 } from '../validation';
+import { IUser } from '../../auth/models/User';
 
 export class ExerciseService {
   constructor(
@@ -354,5 +356,34 @@ export class ExerciseService {
     });
 
     return true;
+  }
+
+  async getResourceShares(resourceId: string, userId: string): Promise<GetResourceSharesResponseDTO> {
+    // Verify the resource exists and user has access
+    const exercise = await this.exerciseModel.findOne({
+      _id: resourceId,
+      createdBy: userId
+    });
+
+    if (!exercise) {
+      throw new DomainError('Exercise not found or unauthorized', 404);
+    }
+
+    // Find all shares for this resource
+    const shares = await this.sharedResourceModel
+      .find({ 
+        resourceId,
+        resourceType: ResourceType.EXERCISE 
+      })
+      .populate('sharedWithId', 'email name')
+      .sort({ createdAt: 1 }) as unknown as (Omit<ISharedResource, 'sharedWithId'> & { sharedWithId: IUser })[];
+
+    return {
+      shares: shares.map(share => ({
+        email: share.sharedWithId.email,
+        name: share.sharedWithId.name,
+        sharedAt: share.createdAt
+      }))
+    };
   }
 }

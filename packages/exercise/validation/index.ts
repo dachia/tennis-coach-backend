@@ -89,4 +89,14 @@ export const updateExerciseWithKPIsSchema = yup.object({
         .required('Performance goal is required')
     })
   )
+});
+
+export const shareResponseSchema = yup.object({
+  shares: yup.array().of(
+    yup.object({
+      email: yup.string().email().required(),
+      name: yup.string().required(),
+      sharedAt: yup.date().required()
+    })
+  ).required()
 }); 

@@ -6,6 +6,8 @@ export interface ISharedResource extends Document {
   resourceId: mongoose.Types.ObjectId;
   sharedWithId: mongoose.Types.ObjectId;
   sharedById: mongoose.Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const sharedResourceSchema = new Schema({
