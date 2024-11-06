@@ -145,4 +145,12 @@ export class ExerciseController {
       createResponse('success', 'Template deleted successfully')
     );
   }
+
+  async getTemplates(req: AuthRequest, res: Response) {
+    const result = await this.exerciseService.getTemplatesWithExercises(req.user._id);
+    
+    res.json(
+      createResponse('success', 'Templates retrieved successfully', result)
+    );
+  }
 } 

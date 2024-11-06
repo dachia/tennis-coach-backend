@@ -12,7 +12,8 @@ import {
   UpdateTemplateDTO,
   UpdateExerciseWithKPIsDTO,
   GetResourceSharesResponseDTO,
-  GetExercisesResponseDTO
+  GetExercisesResponseDTO,
+  GetTemplatesResponseDTO
 } from '../types';
 import { AuthError, EventService } from '../../shared';
 import { DomainError } from '../../shared/errors/DomainError';
@@ -473,5 +474,78 @@ export class ExerciseService {
     });
 
     return true;
+  }
+
+  async getTemplatesWithExercises(userId: string): Promise<GetTemplatesResponseDTO> {
+    // Get templates created by user
+    const ownedTemplates = await this.templateModel
+      .find({ createdBy: userId })
+      .populate({
+        path: 'exerciseIds',
+        populate: {
+          path: 'kpis'
+        }
+      })
+      .lean()
+      .exec();
+
+    // Get shared templates
+    const sharedResources = await this.sharedResourceModel
+      .find({ 
+        sharedWithId: userId,
+        resourceType: ResourceType.TEMPLATE 
+      })
+      .exec();
+
+    const sharedTemplateIds = sharedResources.map(share => share.resourceId);
+
+    const sharedTemplates = await this.templateModel
+      .find({ 
+        _id: { $in: sharedTemplateIds }
+      })
+      .populate({
+        path: 'exerciseIds',
+        populate: {
+          path: 'kpis'
+        }
+      })
+      .lean()
+      .exec();
+
+    // Convert ObjectIds to strings and add flags
+    const mappedOwnedTemplates = ownedTemplates.map(template => ({
+      ...template,
+      isShared: false
+    }));
+
+    const mappedSharedTemplates = sharedTemplates.map(template => ({
+      ...template,
+      isShared: true
+    }));
+
+    return { 
+      templates: [...mappedOwnedTemplates, ...mappedSharedTemplates].map(template => ({
+        _id: template._id.toString(),
+        title: template.title,
+        description: template.description,
+        createdBy: template.createdBy.toString(),
+        isShared: template.isShared,
+        exercises: template.exerciseIds.map((exercise: any) => ({
+          _id: exercise._id.toString(),
+          title: exercise.title,
+          description: exercise.description,
+          media: exercise.media,
+          kpis: exercise.kpis.map((kpi: any) => ({
+            _id: kpi._id.toString(),
+            goalValue: kpi.goalValue,
+            unit: kpi.unit,
+            performanceGoal: kpi.performanceGoal,
+            exerciseId: kpi.exerciseId.toString()
+          }))
+        })),
+        createdAt: template.createdAt,
+        updatedAt: template.updatedAt
+      }))
+    };
   }
 }

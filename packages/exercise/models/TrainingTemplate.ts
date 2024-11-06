@@ -5,6 +5,8 @@ export interface ITrainingTemplate extends Document {
   description: string;
   createdBy: mongoose.Types.ObjectId;
   exerciseIds: mongoose.Types.ObjectId[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const trainingTemplateSchema = new Schema({

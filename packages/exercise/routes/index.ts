@@ -92,5 +92,12 @@ export function buildRoutes(container: Container) {
     exerciseController.deleteTemplate.bind(exerciseController)
   );
 
+  // Add this route after existing routes
+  router.get(
+    '/templates',
+    authMiddleware,
+    exerciseController.getTemplates.bind(exerciseController)
+  );
+
   return router;
 } 

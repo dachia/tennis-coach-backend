@@ -124,3 +124,28 @@ export interface GetExercisesResponseDTO {
     updatedAt: Date;
   }>;
 }
+
+export interface GetTemplatesResponseDTO {
+  templates: Array<{
+    _id: string;
+    title: string;
+    description: string;
+    createdBy: string;
+    isShared: boolean;
+    exercises: Array<{
+      _id: string;
+      title: string;
+      description: string;
+      media: string[];
+      kpis: Array<{
+        _id: string;
+        goalValue: number;
+        unit: string;
+        performanceGoal: string;
+        exerciseId: string;
+      }>;
+    }>;
+    createdAt: Date;
+    updatedAt: Date;
+  }>;
+}

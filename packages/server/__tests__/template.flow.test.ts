@@ -10,6 +10,7 @@ import { createTestContainer } from '../di';
 import { testConfig } from '../config';
 import { bootstrapServer } from '../server';
 import jwt from 'jsonwebtoken';
+import { ResourceType } from '../../exercise/types';
 
 describe("Template Flow", () => {
   let app: Express;
@@ -179,6 +180,101 @@ describe("Template Flow", () => {
         .set('Authorization', `Bearer ${coachToken}`);
 
       expect(deleteResponse.status).toBe(404);
+    });
+  });
+
+  it("should fetch own and shared templates with exercises", async () => {
+    // Create an exercise first
+    const exerciseData = {
+      title: 'Template Exercise',
+      description: 'Exercise for template testing',
+      media: ['https://example.com/exercise.mp4'],
+      kpis: [{
+        goalValue: 10,
+        unit: 'repetitions',
+        performanceGoal: 'maximize'
+      }]
+    };
+
+    const exerciseResponse = await request(app)
+      .post('/exercise/exercise')
+      .set('Authorization', `Bearer ${coachToken}`)
+      .send(exerciseData);
+
+    const exerciseId = exerciseResponse.body.data.payload.exercise._id;
+
+    // Create a template
+    const templateData = {
+      title: 'Workout Template',
+      description: 'Template for testing',
+      exerciseIds: [exerciseId]
+    };
+
+    const templateResponse = await request(app)
+      .post('/exercise/template')
+      .set('Authorization', `Bearer ${coachToken}`)
+      .send(templateData);
+
+    expect(templateResponse.status).toBe(201);
+    const templateId = templateResponse.body.data.payload.template._id;
+
+    // Share template with trainee
+    const shareData = {
+      resourceType: ResourceType.TEMPLATE,
+      resourceId: templateId,
+      sharedWithId: trainee._id
+    };
+
+    await request(app)
+      .post('/exercise/share')
+      .set('Authorization', `Bearer ${coachToken}`)
+      .send(shareData);
+
+    // Fetch templates as coach (should see owned template)
+    const coachTemplatesResponse = await request(app)
+      .get('/exercise/templates')
+      .set('Authorization', `Bearer ${coachToken}`);
+
+    expect(coachTemplatesResponse.status).toBe(200);
+    expect(coachTemplatesResponse.body.data.payload.templates).toHaveLength(1);
+    expect(coachTemplatesResponse.body.data.payload.templates[0]).toMatchObject({
+      _id: templateId,
+      title: templateData.title,
+      description: templateData.description,
+      isShared: false,
+      exercises: [{
+        _id: exerciseId,
+        title: exerciseData.title,
+        description: exerciseData.description,
+        media: exerciseData.media,
+        kpis: expect.arrayContaining([
+          expect.objectContaining({
+            goalValue: exerciseData.kpis[0].goalValue,
+            unit: exerciseData.kpis[0].unit,
+            performanceGoal: exerciseData.kpis[0].performanceGoal
+          })
+        ])
+      }]
+    });
+
+    // Fetch templates as trainee (should see shared template)
+    const traineeTemplatesResponse = await request(app)
+      .get('/exercise/templates')
+      .set('Authorization', `Bearer ${traineeToken}`);
+
+    expect(traineeTemplatesResponse.status).toBe(200);
+    expect(traineeTemplatesResponse.body.data.payload.templates).toHaveLength(1);
+    expect(traineeTemplatesResponse.body.data.payload.templates[0]).toMatchObject({
+      _id: templateId,
+      title: templateData.title,
+      description: templateData.description,
+      isShared: true,
+      exercises: [{
+        _id: exerciseId,
+        title: exerciseData.title,
+        description: exerciseData.description,
+        media: exerciseData.media
+      }]
     });
   });
 });
