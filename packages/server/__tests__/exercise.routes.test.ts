@@ -724,4 +724,75 @@ describe('Exercise Routes', () => {
       expect(response.body.data.payload.exercises).toHaveLength(0);
     });
   });
+
+  describe('DELETE /exercise/exercise/:id', () => {
+    let exercise: any;
+    let kpi: any;
+
+    beforeEach(async () => {
+      exercise = await Exercise.create({
+        title: 'Test Exercise',
+        description: 'Test Description',
+        media: ['https://storage.googleapis.com/bucket-name/test.mp4'],
+        createdBy: coach._id
+      });
+
+      kpi = await KPI.create({
+        exerciseId: exercise._id,
+        goalValue: 10,
+        unit: 'repetitions',
+        performanceGoal: 'maximize'
+      });
+    });
+
+    it('should delete an exercise and its KPIs successfully', async () => {
+      const response = await request(app)
+        .delete(`/exercise/exercise/${exercise._id}`)
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: 'Exercise deleted successfully'
+        },
+        error: null,
+        version: expect.any(Number)
+      });
+
+      // Verify exercise was deleted
+      const deletedExercise = await Exercise.findById(exercise._id);
+      expect(deletedExercise).toBeNull();
+
+      // Verify KPIs were deleted
+      const deletedKpis = await KPI.find({ exerciseId: exercise._id });
+      expect(deletedKpis).toHaveLength(0);
+    });
+
+    it('should return 404 when deleting non-existent exercise', async () => {
+      const nonExistentId = new mongoose.Types.ObjectId();
+      const response = await request(app)
+        .delete(`/exercise/exercise/${nonExistentId}`)
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body).toMatchObject({
+        status: 'fail',
+        data: null,
+        error: {
+          message: 'Exercise not found or unauthorized'
+        },
+        version: expect.any(Number)
+      });
+    });
+
+    it('should return 404 when unauthorized user tries to delete', async () => {
+      const response = await request(app)
+        .delete(`/exercise/exercise/${exercise._id}`)
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.error.message).toBe('Exercise not found or unauthorized');
+    });
+  });
 }); 

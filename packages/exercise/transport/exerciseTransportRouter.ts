@@ -128,6 +128,14 @@ export class ExerciseTransportRouter {
         return this.exerciseService.getExercisesWithKPIs(payload.userId);
       }
     );
+
+    this.router.register<{ id: string; userId: string }, boolean>(
+      'exercise.delete',
+      async (payload) => {
+        const { id, userId } = payload;
+        return this.exerciseService.deleteExercise(id, userId);
+      }
+    );
   }
 
   async listen() {

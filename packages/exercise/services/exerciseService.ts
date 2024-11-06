@@ -334,4 +334,25 @@ export class ExerciseService {
 
     return { exercises };
   }
+
+  async deleteExercise(id: string, userId: string): Promise<boolean> {
+    const exercise = await this.exerciseModel.findOne({ _id: id, createdBy: userId });
+    
+    if (!exercise) {
+      throw new DomainError('Exercise not found or unauthorized', 404);
+    }
+
+    // Delete all associated KPIs
+    await this.kpiModel.deleteMany({ exerciseId: id });
+
+    // Delete the exercise
+    await this.exerciseModel.findByIdAndDelete(id);
+
+    await this.eventService.publishDomainEvent({
+      eventName: 'exercise.deleted',
+      payload: { exerciseId: id }
+    });
+
+    return true;
+  }
 }

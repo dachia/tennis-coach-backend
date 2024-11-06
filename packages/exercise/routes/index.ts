@@ -74,5 +74,11 @@ export function buildRoutes(container: Container) {
     exerciseController.getExercises.bind(exerciseController)
   );
 
+  router.delete(
+    '/exercise/:id',
+    authMiddleware,
+    exerciseController.deleteExercise.bind(exerciseController)
+  );
+
   return router;
 } 

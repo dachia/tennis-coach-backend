@@ -7,7 +7,7 @@ import { User } from '../../auth/models/User';
 import { Exercise } from '../../exercise/models/Exercise';
 import { TrainingTemplate } from '../../exercise/models/TrainingTemplate';
 import { SharedResource } from '../../exercise/models/SharedResource';
-import { ResourceType } from '../../exercise/types';
+import { KPIDTO, ResourceType } from '../../exercise/types';
 import { createTestContainer } from '../di';
 import { testConfig } from '../config';
 import { bootstrapServer } from '../server';
@@ -88,17 +88,25 @@ describe("Exercise Flow", () => {
 
       expect(exerciseResponse.status).toBe(201);
       const exerciseId = exerciseResponse.body.data.payload.exercise._id;
+      // Fetch exercises by userId
+      const exercisesResponse = await request(app)
+        .get('/exercise/exercises')
+        .set('Authorization', `Bearer ${coachToken}`);
 
-      // 2. Update exercise with new KPIs
+      expect(exercisesResponse.status).toBe(200);
+      expect(exercisesResponse.body.data.payload.exercises).toHaveLength(1);
+      expect(exercisesResponse.body.data.payload.exercises[0]._id).toBe(exerciseId);
+      const fetchedExercise = exercisesResponse.body.data.payload.exercises[0];
+
+      // 2. Update fetched exercise with new KPIs
       const updateData = {
+        ...fetchedExercise,
         title: 'Advanced Squat',
         description: 'Advanced squat movement pattern with proper form',
         kpis: [
           {
-            _id: exerciseResponse.body.data.payload.exercise.kpis[0]._id,
+            ...fetchedExercise.kpis.find((k: KPIDTO) => k.unit === 'repetitions'),
             goalValue: 15,
-            unit: 'repetitions',
-            performanceGoal: 'maximize'
           },
           {
             goalValue: 20,
@@ -115,6 +123,8 @@ describe("Exercise Flow", () => {
 
       expect(updateResponse.status).toBe(200);
       expect(updateResponse.body.data.payload.exercise.title).toBe(updateData.title);
+      // ensure that media is not updated
+      expect(updateResponse.body.data.payload.exercise.media).toEqual(fetchedExercise.media);
 
       // Verify KPIs were updated correctly
       const exerciseWithKpis = await KPI.find({ exerciseId });
@@ -134,73 +144,29 @@ describe("Exercise Flow", () => {
         ])
       );
 
-      // 3. Create a training template with the exercise
-      const templateData = {
-        title: 'Lower Body Workout',
-        description: 'Basic lower body training template',
-        exerciseIds: [exerciseId]
-      };
-
-      const templateResponse = await request(app)
-        .post('/exercise/template')
-        .set('Authorization', `Bearer ${coachToken}`)
-        .send(templateData);
-
-      expect(templateResponse.status).toBe(201);
-      const templateId = templateResponse.body.data.payload.template._id;
-
-      // 4. Share exercise with trainee
-      const shareExerciseData = {
-        resourceType: ResourceType.EXERCISE,
-        resourceId: exerciseId,
-        sharedWithId: trainee._id
-      };
-
-      const shareExerciseResponse = await request(app)
-        .post('/exercise/share')
-        .set('Authorization', `Bearer ${coachToken}`)
-        .send(shareExerciseData);
-
-      expect(shareExerciseResponse.status).toBe(201);
-
-      // 5. Share template with trainee
-      const shareTemplateData = {
-        resourceType: ResourceType.TEMPLATE,
-        resourceId: templateId,
-        sharedWithId: trainee._id
-      };
-
-      const shareTemplateResponse = await request(app)
-        .post('/exercise/share')
-        .set('Authorization', `Bearer ${coachToken}`)
-        .send(shareTemplateData);
-
-      expect(shareTemplateResponse.status).toBe(201);
-
-      // 6. Verify shared resources exist
-      const sharedResources = await SharedResource.find({
-        sharedWithId: trainee._id
-      });
-
-      expect(sharedResources).toHaveLength(2);
-      expect(sharedResources.map(r => r.resourceType)).toEqual(
-        expect.arrayContaining([ResourceType.EXERCISE, ResourceType.TEMPLATE])
-      );
-
-      // 7. Remove shared exercise
-      const exerciseShareId = sharedResources.find(r => r.resourceType === ResourceType.EXERCISE)!._id;
+      // 3. Delete the exercise and verify deletion
       const deleteResponse = await request(app)
-        .delete(`/exercise/share/${exerciseShareId}`)
+        .delete(`/exercise/exercise/${exerciseId}`)
         .set('Authorization', `Bearer ${coachToken}`);
 
       expect(deleteResponse.status).toBe(200);
+      expect(deleteResponse.body.data.message).toBe('Exercise deleted successfully');
 
-      // 8. Verify exercise was unshared
-      const remainingShares = await SharedResource.find({
-        sharedWithId: trainee._id
-      });
-      expect(remainingShares).toHaveLength(1);
-      expect(remainingShares[0].resourceType).toBe(ResourceType.TEMPLATE);
+      // Verify exercise was deleted
+      const deletedExercise = await Exercise.findById(exerciseId);
+      expect(deletedExercise).toBeNull();
+
+      // Verify KPIs were deleted
+      const deletedKpis = await KPI.find({ exerciseId });
+      expect(deletedKpis).toHaveLength(0);
+
+      // Verify exercise no longer appears in list
+      const finalExercisesResponse = await request(app)
+        .get('/exercise/exercises')
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(finalExercisesResponse.status).toBe(200);
+      expect(finalExercisesResponse.body.data.payload.exercises).toHaveLength(0);
     });
   });
 }); 

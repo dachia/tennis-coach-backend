@@ -115,4 +115,15 @@ export class ExerciseController {
       createResponse('success', 'Exercises retrieved successfully', result)
     );
   }
+
+  async deleteExercise(req: AuthRequest, res: Response) {
+    await this.exerciseService.deleteExercise(
+      req.params.id,
+      req.user._id
+    );
+
+    res.json(
+      createResponse('success', 'Exercise deleted successfully')
+    );
+  }
 } 

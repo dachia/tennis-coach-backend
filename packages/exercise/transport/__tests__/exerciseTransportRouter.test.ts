@@ -19,7 +19,8 @@ const mockExerciseService = {
   updateTemplate: jest.fn(),
   deleteSharedResource: jest.fn(),
   updateExerciseWithKPIs: jest.fn(),
-  getExercisesWithKPIs: jest.fn()
+  getExercisesWithKPIs: jest.fn(),
+  deleteExercise: jest.fn()
 } as unknown as ExerciseService;
 
 describe('ExerciseTransportRouter', () => {
@@ -359,6 +360,51 @@ describe('ExerciseTransportRouter', () => {
       expect(response).toEqual(expectedResponse);
       expect(mockExerciseService.getExercisesWithKPIs)
         .toHaveBeenCalledWith(fetchData.userId);
+    });
+  });
+
+  describe('exercise.delete', () => {
+    it('should handle exercise deletion requests', async () => {
+      const deleteData = {
+        id: 'exercise123',
+        userId: 'user123'
+      };
+
+      jest.spyOn(mockExerciseService, 'deleteExercise')
+        .mockResolvedValue(true);
+
+      const response = await transport.request(
+        'exercise.delete',
+        {
+          type: 'DELETE_EXERCISE',
+          payload: deleteData
+        }
+      );
+
+      expect(response).toBe(true);
+      expect(mockExerciseService.deleteExercise)
+        .toHaveBeenCalledWith(deleteData.id, deleteData.userId);
+    });
+
+    it('should handle exercise deletion errors', async () => {
+      const deleteData = {
+        id: 'nonexistent123',
+        userId: 'user123'
+      };
+
+      jest.spyOn(mockExerciseService, 'deleteExercise')
+        .mockRejectedValue(new DomainError('Exercise not found', 404));
+
+      const error: any = await transport.request(
+        'exercise.delete',
+        {
+          type: 'DELETE_EXERCISE',
+          payload: deleteData
+        }
+      );
+
+      expect(error.message).toBe('Exercise not found');
+      expect(error.code).toBe('INTERNAL_ERROR');
     });
   });
 });
