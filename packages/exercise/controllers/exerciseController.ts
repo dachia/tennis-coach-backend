@@ -9,7 +9,7 @@ export class ExerciseController {
   ) {}
 
   async createExercise(req: AuthRequest, res: Response) {
-    const result = await this.exerciseService.createExercise({
+    const result = await this.exerciseService.createExerciseWithKPIs({
       ...req.body,
       userId: req.user._id
     });
@@ -91,6 +91,20 @@ export class ExerciseController {
 
     res.json(
       createResponse('success', 'Shared resource deleted successfully')
+    );
+  }
+
+  async updateExerciseWithKPIs(req: AuthRequest, res: Response) {
+    const result = await this.exerciseService.updateExerciseWithKPIs(
+      req.params.id,
+      {
+        ...req.body,
+        userId: req.user._id
+      }
+    );
+
+    res.json(
+      createResponse('success', 'Exercise and KPIs updated successfully', result)
     );
   }
 } 

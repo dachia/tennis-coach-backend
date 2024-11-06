@@ -70,4 +70,23 @@ export const updateTemplateSchema = yup.object({
   exerciseIds: yup.array()
     .of(yup.string())
     .min(1, 'Template must contain at least one exercise')
+});
+
+export const updateExerciseWithKPIsSchema = yup.object({
+  title: yup.string()
+    .min(3, 'Title must be at least 3 characters')
+    .max(100, 'Title must not exceed 100 characters'),
+  description: yup.string()
+    .min(10, 'Description must be at least 10 characters'),
+  media: yup.array().of(yup.string().url('Media must be valid URLs')),
+  kpis: yup.array().of(
+    yup.object({
+      _id: yup.string(),
+      goalValue: yup.number().required('Goal value is required'),
+      unit: yup.string().required('Unit is required'),
+      performanceGoal: yup.string()
+        .oneOf(Object.values(PerformanceGoal), 'Invalid performance goal')
+        .required('Performance goal is required')
+    })
+  )
 }); 

@@ -9,7 +9,8 @@ import {
   KPIDTO,
   TrainingTemplateDTO,
   SharedResourceDTO,
-  ResourceType
+  ResourceType,
+  PerformanceGoal
 } from '../types';
 
 interface CreateExercisePayload {
@@ -48,7 +49,7 @@ export class ExerciseTransportRouter {
     this.router.register<CreateExercisePayload, { exercise: IExercise }>(
       'exercise.create',
       async (payload) => {
-        return this.exerciseService.createExercise(payload);
+        return this.exerciseService.createExerciseWithKPIs(payload);
       }
     );
 
@@ -99,6 +100,22 @@ export class ExerciseTransportRouter {
       async (payload) => {
         const { id, userId } = payload;
         return this.exerciseService.deleteSharedResource(id, userId);
+      }
+    );
+
+    this.router.register<
+      { id: string; userId: string } & Partial<ExerciseDTO> & { kpis?: Array<{
+        _id?: string;
+        goalValue: number;
+        unit: string;
+        performanceGoal: PerformanceGoal;
+      }> },
+      { exercise: IExercise | null }
+    >(
+      'exercise.updateWithKPIs',
+      async (payload) => {
+        const { id, ...data } = payload;
+        return this.exerciseService.updateExerciseWithKPIs(id, data);
       }
     );
   }

@@ -85,3 +85,12 @@ export interface UpdateTemplateDTO {
   exerciseIds?: string[];
   userId: string;
 }
+
+export interface UpdateExerciseWithKPIsDTO extends UpdateExerciseDTO {
+  kpis?: Array<{
+    _id?: string;
+    goalValue: number;
+    unit: string;
+    performanceGoal: PerformanceGoal;
+  }>;
+}

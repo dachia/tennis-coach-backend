@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 import { PerformanceGoal } from '../types';
 
 export interface IKPI extends Document {
+  _id: mongoose.Types.ObjectId;
   exerciseId: mongoose.Types.ObjectId;
   goalValue: number;
   unit: string;

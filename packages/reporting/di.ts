@@ -12,7 +12,8 @@ export function addToContainer(container: Container) {
   const reportingService = new ReportingService(
     ProgressComparison,
     TotalProgress,
-    eventService
+    eventService,
+    transport
   );
   
   const reportingController = new ReportingController(reportingService);

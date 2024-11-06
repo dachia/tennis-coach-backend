@@ -61,5 +61,11 @@ export function buildRoutes(container: Container) {
     exerciseController.deleteSharedResource.bind(exerciseController)
   );
 
+  router.put(
+    '/exercise/:id/with-kpis',
+    authMiddleware,
+    exerciseController.updateExerciseWithKPIs.bind(exerciseController)
+  );
+
   return router;
 } 

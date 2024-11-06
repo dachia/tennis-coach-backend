@@ -11,13 +11,14 @@ import { IKPI } from '../../models/KPI';
 
 // Mock ExerciseService
 const mockExerciseService = {
-  createExercise: jest.fn(),
+  createExerciseWithKPIs: jest.fn(),
   createTemplate: jest.fn(),
   shareResource: jest.fn(),
   updateExercise: jest.fn(),
   updateKpi: jest.fn(),
   updateTemplate: jest.fn(),
-  deleteSharedResource: jest.fn()
+  deleteSharedResource: jest.fn(),
+  updateExerciseWithKPIs: jest.fn()
 } as unknown as ExerciseService;
 
 describe('ExerciseTransportRouter', () => {
@@ -55,7 +56,7 @@ describe('ExerciseTransportRouter', () => {
         }
       };
 
-      jest.spyOn(mockExerciseService, 'createExercise').mockResolvedValue(expectedResponse as any);
+      jest.spyOn(mockExerciseService, 'createExerciseWithKPIs').mockResolvedValue(expectedResponse as any);
 
       const response = await transport.request(
         'exercise.create',
@@ -66,7 +67,7 @@ describe('ExerciseTransportRouter', () => {
       );
 
       expect(response).toEqual(expectedResponse);
-      expect(mockExerciseService.createExercise).toHaveBeenCalledWith(exerciseData);
+      expect(mockExerciseService.createExerciseWithKPIs).toHaveBeenCalledWith(exerciseData);
     });
 
     it('should handle exercise creation errors', async () => {
@@ -77,7 +78,7 @@ describe('ExerciseTransportRouter', () => {
         userId: 'user123'
       };
 
-      jest.spyOn(mockExerciseService, 'createExercise').mockRejectedValue(
+      jest.spyOn(mockExerciseService, 'createExerciseWithKPIs').mockRejectedValue(
         new DomainError('Invalid exercise data')
       );
 
@@ -226,6 +227,97 @@ describe('ExerciseTransportRouter', () => {
         deleteData.id,
         deleteData.userId
       );
+    });
+  });
+
+  describe('exercise.updateWithKPIs', () => {
+    it('should handle exercise update with KPIs requests', async () => {
+      const updateData = {
+        id: 'exercise123',
+        title: 'Updated Exercise',
+        description: 'Updated Description',
+        userId: 'user123',
+        kpis: [
+          {
+            _id: 'kpi123',
+            goalValue: 15,
+            unit: 'minutes',
+            performanceGoal: 'minimize'
+          },
+          {
+            goalValue: 20,
+            unit: 'repetitions',
+            performanceGoal: 'maximize'
+          }
+        ]
+      };
+
+      const expectedResponse = {
+        exercise: {
+          _id: updateData.id,
+          title: updateData.title,
+          description: updateData.description,
+          __v: 0
+        }
+      };
+
+      const mockExercise = {
+        _id: updateData.id,
+        title: updateData.title,
+        description: updateData.description,
+        __v: 0
+      } as any;
+
+      jest.spyOn(mockExerciseService, 'updateExerciseWithKPIs')
+        .mockResolvedValue({ exercise: mockExercise });
+
+      const response = await transport.request(
+        'exercise.updateWithKPIs',
+        {
+          type: 'UPDATE_EXERCISE_WITH_KPIS',
+          payload: updateData
+        }
+      );
+
+      expect(response).toEqual(expectedResponse);
+      expect(mockExerciseService.updateExerciseWithKPIs).toHaveBeenCalledWith(
+        updateData.id,
+        {
+          title: updateData.title,
+          description: updateData.description,
+          userId: updateData.userId,
+          kpis: updateData.kpis
+        }
+      );
+    });
+
+    it('should handle validation errors', async () => {
+      const updateData = {
+        id: 'exercise123',
+        title: '', // Invalid title
+        userId: 'user123',
+        kpis: [
+          {
+            goalValue: -5, // Invalid negative value
+            unit: '',     // Missing unit
+            performanceGoal: 'invalid' // Invalid performance goal
+          }
+        ]
+      };
+
+      jest.spyOn(mockExerciseService, 'updateExerciseWithKPIs')
+        .mockRejectedValue(new DomainError('Validation failed'));
+
+      const error: any = await transport.request(
+        'exercise.updateWithKPIs',
+        {
+          type: 'UPDATE_EXERCISE_WITH_KPIS',
+          payload: updateData
+        }
+      );
+
+      expect(error.message).toBe('Validation failed');
+      expect(error.code).toBe('INTERNAL_ERROR');
     });
   });
 });

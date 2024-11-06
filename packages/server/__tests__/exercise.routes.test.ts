@@ -102,7 +102,14 @@ describe('Exercise Routes', () => {
             exercise: expect.objectContaining({
               title: exerciseData.title,
               description: exerciseData.description,
-              media: exerciseData.media
+              media: exerciseData.media,
+              kpis: expect.arrayContaining([
+                expect.objectContaining({
+                  goalValue: exerciseData.kpis[0].goalValue,
+                  unit: exerciseData.kpis[0].unit,
+                  performanceGoal: exerciseData.kpis[0].performanceGoal
+                })
+              ])
             })
           }
         },
@@ -496,6 +503,137 @@ describe('Exercise Routes', () => {
         },
         version: expect.any(Number)
       });
+    });
+  });
+
+  describe('PUT /exercise/exercise/:id/with-kpis', () => {
+    let exercise: any;
+    let kpi: any;
+
+    beforeEach(async () => {
+      exercise = await Exercise.create({
+        title: 'Test Exercise',
+        description: 'Test Description',
+        media: ['https://storage.googleapis.com/bucket-name/test.mp4'],
+        createdBy: coach._id
+      });
+
+      kpi = await KPI.create({
+        exerciseId: exercise._id,
+        goalValue: 10,
+        unit: 'repetitions',
+        performanceGoal: 'maximize'
+      });
+    });
+
+    it('should update exercise with KPIs successfully', async () => {
+      const updateData = {
+        title: 'Updated Exercise',
+        description: 'Updated Description',
+        media: ['https://storage.googleapis.com/bucket-name/updated.mp4'],
+        kpis: [
+          {
+            _id: kpi._id.toString(),
+            goalValue: 15,
+            unit: 'minutes',
+            performanceGoal: 'minimize'
+          },
+          {
+            goalValue: 20,
+            unit: 'repetitions',
+            performanceGoal: 'maximize'
+          }
+        ]
+      };
+
+      const response = await request(app)
+        .put(`/exercise/exercise/${exercise._id}/with-kpis`)
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send(updateData);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: expect.any(String),
+          payload: {
+            exercise: expect.objectContaining({
+              title: updateData.title,
+              description: updateData.description,
+              media: updateData.media
+            })
+          }
+        },
+        error: null,
+        version: expect.any(Number)
+      });
+
+      // Verify KPIs were updated
+      const updatedKpis = await KPI.find({ exerciseId: exercise._id });
+      expect(updatedKpis).toHaveLength(2);
+      
+      // Verify existing KPI was updated
+      const updatedExistingKpi = updatedKpis.find(k => k._id.toString() === kpi._id.toString());
+      expect(updatedExistingKpi).toMatchObject({
+        goalValue: updateData.kpis[0].goalValue,
+        unit: updateData.kpis[0].unit,
+        performanceGoal: updateData.kpis[0].performanceGoal
+      });
+
+      // Verify new KPI was created
+      const newKpi = updatedKpis.find(k => k._id.toString() !== kpi._id.toString());
+      expect(newKpi).toMatchObject({
+        goalValue: updateData.kpis[1].goalValue,
+        unit: updateData.kpis[1].unit,
+        performanceGoal: updateData.kpis[1].performanceGoal
+      });
+    });
+
+    it('should return 404 when updating non-existent exercise', async () => {
+      const nonExistentId = new mongoose.Types.ObjectId();
+      const updateData = {
+        title: 'Updated Exercise',
+        description: 'Updated Description',
+        kpis: []
+      };
+
+      const response = await request(app)
+        .put(`/exercise/exercise/${nonExistentId}/with-kpis`)
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send(updateData);
+
+      expect(response.status).toBe(404);
+      expect(response.body).toMatchObject({
+        status: 'fail',
+        data: null,
+        error: {
+          message: 'Exercise not found or unauthorized'
+        },
+        version: expect.any(Number)
+      });
+    });
+
+    it('should return 400 for invalid KPI data', async () => {
+      const updateData = {
+        title: 'Updated Exercise',
+        kpis: [
+          {
+            _id: kpi._id.toString(),
+            goalValue: -1, // Invalid negative value
+            unit: '', // Missing unit
+            performanceGoal: 'invalid' // Invalid performance goal
+          }
+        ]
+      };
+
+      const response = await request(app)
+        .put(`/exercise/exercise/${exercise._id}/with-kpis`)
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send(updateData);
+
+      expect(response.status).toBe(400);
+      expect(response.body.status).toBe('fail');
+      expect(response.body.error.message).toBeTruthy();
     });
   });
 }); 
