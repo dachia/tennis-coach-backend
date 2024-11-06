@@ -69,11 +69,27 @@ describe("Exercise Flow", () => {
 
   describe("Complete Exercise Flow", () => {
     it("should handle the complete flow of creating and sharing exercises", async () => {
-      // 1. Create an exercise
+      // 0. Get presigned URL for media upload
+      const mediaResponse = await request(app)
+        .post('/media/presigned-url')
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send({
+          fileType: 'video/mp4'
+        });
+
+      expect(mediaResponse.status).toBe(200);
+      expect(mediaResponse.body.data.payload).toMatchObject({
+        uploadUrl: expect.any(String),
+        fileUrl: expect.stringMatching(/^https:\/\/.*\.amazonaws\.com\/uploads\/.*\.mp4$/)
+      });
+
+      const mediaUrl = mediaResponse.body.data.payload.fileUrl;
+
+      // 1. Create an exercise with uploaded media
       const exerciseData = {
         title: 'Squat Exercise',
         description: 'Basic squat movement pattern',
-        media: ['https://example.com/squat.mp4'],
+        media: [mediaUrl],
         kpis: [{
           goalValue: 10,
           unit: 'repetitions',
