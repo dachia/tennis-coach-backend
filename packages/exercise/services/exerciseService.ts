@@ -2,8 +2,8 @@ import { Exercise, IExercise } from '../models/Exercise';
 import { IKPI, KPI } from '../models/KPI';
 import { ITrainingTemplate, TrainingTemplate } from '../models/TrainingTemplate';
 import { ISharedResource, SharedResource } from '../models/SharedResource';
-import { 
-  ResourceType, 
+import {
+  ResourceType,
   CreateExerciseDTO,
   CreateTemplateDTO,
   ShareResourceDTO,
@@ -13,7 +13,8 @@ import {
   UpdateExerciseWithKPIsDTO,
   GetResourceSharesResponseDTO,
   GetExercisesResponseDTO,
-  GetTemplatesResponseDTO
+  GetTemplatesResponseDTO,
+  ExerciseWithKPIsDTO
 } from '../types';
 import { AuthError, EventService } from '../../shared';
 import { DomainError } from '../../shared/errors/DomainError';
@@ -35,7 +36,7 @@ export class ExerciseService {
     private readonly templateModel: typeof TrainingTemplate,
     private readonly sharedResourceModel: typeof SharedResource,
     private readonly eventService: EventService,
-  ) {}
+  ) { }
 
   async createExerciseWithKPIs(data: CreateExerciseDTO): Promise<{ exercise: IExercise }> {
     let validatedData;
@@ -145,7 +146,7 @@ export class ExerciseService {
 
     await this.eventService.publishDomainEvent({
       eventName: 'resource.shared',
-      payload: { 
+      payload: {
         resourceId: sharedResource.resourceId,
         resourceType: sharedResource.resourceType
       }
@@ -275,7 +276,7 @@ export class ExerciseService {
 
     await this.eventService.publishDomainEvent({
       eventName: 'resource.unshared',
-      payload: { 
+      payload: {
         resourceId: sharedResource.resourceId,
         resourceType: sharedResource.resourceType
       }
@@ -361,16 +362,16 @@ export class ExerciseService {
 
     // Get shared exercises
     const sharedResources = await this.sharedResourceModel
-      .find({ 
+      .find({
         sharedWithId: userId,
-        resourceType: ResourceType.EXERCISE 
+        resourceType: ResourceType.EXERCISE
       })
       .exec();
 
     const sharedExerciseIds = sharedResources.map(share => share.resourceId);
 
     const sharedExercises = await this.exerciseModel
-      .find({ 
+      .find({
         _id: { $in: sharedExerciseIds }
       })
       .populate('kpis')
@@ -388,7 +389,7 @@ export class ExerciseService {
       isShared: true
     }));
 
-    return { 
+    return {
       exercises: [...mappedOwnedExercises, ...mappedSharedExercises].map(exercise => ({
         _id: exercise._id.toString(),
         title: exercise.title,
@@ -411,7 +412,7 @@ export class ExerciseService {
 
   async deleteExercise(id: string, userId: string): Promise<boolean> {
     const exercise = await this.exerciseModel.findOne({ _id: id, createdBy: userId });
-    
+
     if (!exercise) {
       throw new DomainError('Exercise not found or unauthorized', 404);
     }
@@ -443,15 +444,16 @@ export class ExerciseService {
 
     // Find all shares for this resource
     const shares = await this.sharedResourceModel
-      .find({ 
+      .find({
         resourceId,
-        resourceType: ResourceType.EXERCISE 
+        resourceType: ResourceType.EXERCISE
       })
-      .populate('sharedWithId', 'email name')
+      .populate('sharedWithId', '_id email name')
       .sort({ createdAt: 1 }) as unknown as (Omit<ISharedResource, 'sharedWithId'> & { sharedWithId: IUser })[];
 
     return {
       shares: shares.map(share => ({
+        _id: share._id.toString(),
         email: share.sharedWithId.email,
         name: share.sharedWithId.name,
         sharedAt: share.createdAt
@@ -461,7 +463,7 @@ export class ExerciseService {
 
   async deleteTemplate(id: string, userId: string): Promise<boolean> {
     const template = await this.templateModel.findOne({ _id: id, createdBy: userId });
-    
+
     if (!template) {
       throw new DomainError('Template not found or unauthorized', 404);
     }
@@ -491,16 +493,16 @@ export class ExerciseService {
 
     // Get shared templates
     const sharedResources = await this.sharedResourceModel
-      .find({ 
+      .find({
         sharedWithId: userId,
-        resourceType: ResourceType.TEMPLATE 
+        resourceType: ResourceType.TEMPLATE
       })
       .exec();
 
     const sharedTemplateIds = sharedResources.map(share => share.resourceId);
 
     const sharedTemplates = await this.templateModel
-      .find({ 
+      .find({
         _id: { $in: sharedTemplateIds }
       })
       .populate({
@@ -523,7 +525,7 @@ export class ExerciseService {
       isShared: true
     }));
 
-    return { 
+    return {
       templates: [...mappedOwnedTemplates, ...mappedSharedTemplates].map(template => ({
         _id: template._id.toString(),
         title: template.title,
@@ -546,6 +548,35 @@ export class ExerciseService {
         createdAt: template.createdAt,
         updatedAt: template.updatedAt
       }))
+    };
+  }
+
+  async getExerciseById(id: string, userId: string): Promise<{ exercise: ExerciseWithKPIsDTO | null }> {
+    // Get exercise created by user or shared with user
+    const exercise = await this.exerciseModel
+      .findOne({
+        _id: id, createdBy: userId
+      })
+      .populate('kpis')
+      .lean();
+
+    if (!exercise) {
+      throw new DomainError('Exercise not found or unauthorized', 404);
+    }
+
+    return {
+      exercise: {
+        ...exercise,
+        _id: exercise._id.toString(),
+        createdBy: exercise.createdBy.toString(),
+        kpis: exercise.kpis!.map(kpi => ({
+          _id: kpi._id.toString(),
+          goalValue: kpi.goalValue,
+          unit: kpi.unit,
+          performanceGoal: kpi.performanceGoal,
+          exerciseId: kpi.exerciseId.toString()
+        }))
+      }
     };
   }
 }

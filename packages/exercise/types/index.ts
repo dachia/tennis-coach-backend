@@ -9,19 +9,22 @@ export enum ResourceType {
 }
 
 export interface ExerciseDTO {
-  id: string;
+  _id: string;
   title: string;
   description: string;
   media: string[];
   createdBy: string;
+  isShared?: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface KPIDTO {
-  id: string;
-  exerciseId: string;
+  _id: string;
   goalValue: number;
   unit: string;
   performanceGoal: PerformanceGoal;
+  exerciseId: string;
 }
 
 export interface TrainingTemplateDTO {
@@ -105,24 +108,12 @@ export interface GetResourceSharesResponseDTO {
   shares: ShareDTO[];
 }
 
+export interface ExerciseWithKPIsDTO extends ExerciseDTO {
+  kpis: KPIDTO[];
+}
+
 export interface GetExercisesResponseDTO {
-  exercises: Array<{
-    _id: string;
-    title: string;
-    description: string;
-    media: string[];
-    createdBy: string;
-    isShared: boolean;
-    kpis: Array<{
-      _id: string;
-      goalValue: number;
-      unit: string;
-      performanceGoal: PerformanceGoal;
-      exerciseId: string;
-    }>;
-    createdAt: Date;
-    updatedAt: Date;
-  }>;
+  exercises: Array<ExerciseWithKPIsDTO>;
 }
 
 export interface GetTemplatesResponseDTO {

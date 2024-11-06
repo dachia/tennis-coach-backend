@@ -99,5 +99,11 @@ export function buildRoutes(container: Container) {
     exerciseController.getTemplates.bind(exerciseController)
   );
 
+  router.get(
+    '/exercise/:id',
+    authMiddleware,
+    exerciseController.getExercise.bind(exerciseController)
+  );
+
   return router;
 } 

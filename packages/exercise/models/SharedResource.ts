@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 import { ResourceType } from '../types';
 
 export interface ISharedResource extends Document {
+  _id: mongoose.Types.ObjectId;
   resourceType: ResourceType;
   resourceId: mongoose.Types.ObjectId;
   sharedWithId: mongoose.Types.ObjectId;

@@ -153,4 +153,15 @@ export class ExerciseController {
       createResponse('success', 'Templates retrieved successfully', result)
     );
   }
+
+  async getExercise(req: AuthRequest, res: Response) {
+    const result = await this.exerciseService.getExerciseById(
+      req.params.id,
+      req.user._id
+    );
+    
+    res.json(
+      createResponse('success', 'Exercise retrieved successfully', result)
+    );
+  }
 } 

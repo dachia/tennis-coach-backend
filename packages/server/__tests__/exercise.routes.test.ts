@@ -906,4 +906,76 @@ describe('Exercise Routes', () => {
       expect(response.body.error.message).toBe('Template not found or unauthorized');
     });
   });
+
+  describe('GET /exercise/exercise/:id', () => {
+    let exercise: any;
+    let kpi: any;
+
+    beforeEach(async () => {
+      exercise = await Exercise.create({
+        title: 'Test Exercise',
+        description: 'Test Description',
+        media: ['https://example.com/test.mp4'],
+        createdBy: coach._id
+      });
+
+      kpi = await KPI.create({
+        exerciseId: exercise._id,
+        goalValue: 10,
+        unit: 'repetitions',
+        performanceGoal: 'maximize'
+      });
+    });
+
+    it('should get an exercise by id successfully', async () => {
+      const response = await request(app)
+        .get(`/exercise/exercise/${exercise._id}`)
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: 'Exercise retrieved successfully',
+          payload: {
+            exercise: {
+              _id: exercise._id.toString(),
+              title: exercise.title,
+              description: exercise.description,
+              media: exercise.media,
+              createdBy: coach._id.toString(),
+              kpis: [{
+                _id: kpi._id.toString(),
+                goalValue: kpi.goalValue,
+                unit: kpi.unit,
+                performanceGoal: kpi.performanceGoal,
+                exerciseId: exercise._id.toString()
+              }]
+            }
+          }
+        },
+        error: null,
+        version: expect.any(Number)
+      });
+    });
+
+    it('should return 404 when exercise not found', async () => {
+      const nonExistentId = new mongoose.Types.ObjectId();
+      const response = await request(app)
+        .get(`/exercise/exercise/${nonExistentId}`)
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.error.message).toBe('Exercise not found or unauthorized');
+    });
+
+    it('should return 404 when unauthorized user tries to access', async () => {
+      const response = await request(app)
+        .get(`/exercise/exercise/${exercise._id}`)
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.error.message).toBe('Exercise not found or unauthorized');
+    });
+  });
 }); 
