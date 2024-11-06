@@ -137,6 +137,14 @@ export class ExerciseTransportRouter {
         return this.exerciseService.deleteExercise(id, userId);
       }
     );
+
+    this.router.register<{ id: string; userId: string }, boolean>(
+      'template.delete',
+      async (payload) => {
+        const { id, userId } = payload;
+        return this.exerciseService.deleteTemplate(id, userId);
+      }
+    );
   }
 
   async listen() {

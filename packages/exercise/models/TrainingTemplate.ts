@@ -4,7 +4,7 @@ export interface ITrainingTemplate extends Document {
   title: string;
   description: string;
   createdBy: mongoose.Types.ObjectId;
-  exercises: mongoose.Types.ObjectId[];
+  exerciseIds: mongoose.Types.ObjectId[];
 }
 
 const trainingTemplateSchema = new Schema({
@@ -15,7 +15,7 @@ const trainingTemplateSchema = new Schema({
     ref: 'User',
     required: true 
   },
-  exercises: [{ 
+  exerciseIds: [{ 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'Exercise' 
   }]

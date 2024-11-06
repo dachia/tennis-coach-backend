@@ -137,4 +137,12 @@ export class ExerciseController {
       createResponse('success', 'Resource shares retrieved successfully', result)
     );
   }
+
+  async deleteTemplate(req: AuthRequest, res: Response) {
+    await this.exerciseService.deleteTemplate(req.params.id, req.user._id);
+
+    res.json(
+      createResponse('success', 'Template deleted successfully')
+    );
+  }
 } 

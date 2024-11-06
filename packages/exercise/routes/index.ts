@@ -86,5 +86,11 @@ export function buildRoutes(container: Container) {
     exerciseController.getResourceShares.bind(exerciseController)
   );
 
+  router.delete(
+    '/template/:id',
+    authMiddleware,
+    exerciseController.deleteTemplate.bind(exerciseController)
+  );
+
   return router;
 } 

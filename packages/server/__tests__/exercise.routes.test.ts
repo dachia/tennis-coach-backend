@@ -840,4 +840,70 @@ describe('Exercise Routes', () => {
       expect(response.body.error.message).toBe('Exercise not found or unauthorized');
     });
   });
+
+  describe('DELETE /exercise/template/:id', () => {
+    let template: any;
+
+    beforeEach(async () => {
+      const exercise = await Exercise.create({
+        title: 'Test Exercise',
+        description: 'Test Description',
+        media: ['https://storage.googleapis.com/bucket-name/test.mp4'],
+        createdBy: coach._id
+      });
+
+      template = await TrainingTemplate.create({
+        title: 'Test Template',
+        description: 'Test Description',
+        exercises: [exercise._id],
+        createdBy: coach._id
+      });
+    });
+
+    it('should delete a template successfully', async () => {
+      const response = await request(app)
+        .delete(`/exercise/template/${template._id}`)
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: 'Template deleted successfully'
+        },
+        error: null,
+        version: expect.any(Number)
+      });
+
+      // Verify template was deleted
+      const deletedTemplate = await TrainingTemplate.findById(template._id);
+      expect(deletedTemplate).toBeNull();
+    });
+
+    it('should return 404 when deleting non-existent template', async () => {
+      const nonExistentId = new mongoose.Types.ObjectId();
+      const response = await request(app)
+        .delete(`/exercise/template/${nonExistentId}`)
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body).toMatchObject({
+        status: 'fail',
+        data: null,
+        error: {
+          message: 'Template not found or unauthorized'
+        },
+        version: expect.any(Number)
+      });
+    });
+
+    it('should return 404 when unauthorized user tries to delete', async () => {
+      const response = await request(app)
+        .delete(`/exercise/template/${template._id}`)
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.error.message).toBe('Template not found or unauthorized');
+    });
+  });
 }); 

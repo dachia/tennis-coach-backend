@@ -85,6 +85,16 @@ export class ExerciseService {
     } catch (err: any) {
       throw new DomainError(err.message);
     }
+    // Validate that all exercises exist if exerciseIds are provided
+    if (validatedData.exerciseIds?.length) {
+      const exercises = await this.exerciseModel.find({
+        _id: { $in: validatedData.exerciseIds }
+      });
+
+      if (exercises.length !== validatedData.exerciseIds.length) {
+        throw new DomainError('One or more exercises not found');
+      }
+    }
 
     const template = await this.templateModel.create({
       ...validatedData,
@@ -217,6 +227,16 @@ export class ExerciseService {
     } catch (err: any) {
       throw new DomainError(err.message);
     }
+    // Validate that all exercises exist if exerciseIds are provided
+    if (validatedData.exerciseIds?.length) {
+      const exercises = await this.exerciseModel.find({
+        _id: { $in: validatedData.exerciseIds }
+      });
+
+      if (exercises.length !== validatedData.exerciseIds.length) {
+        throw new DomainError('One or more exercises not found');
+      }
+    }
 
     const template = await this.templateModel.findOneAndUpdate(
       { _id: id, createdBy: data.userId },
@@ -225,7 +245,7 @@ export class ExerciseService {
     );
 
     if (!template) {
-      throw new DomainError('Template not found or unauthorized');
+      throw new DomainError('Template not found or unauthorized', 404);
     }
 
     await this.eventService.publishDomainEvent({
@@ -436,5 +456,22 @@ export class ExerciseService {
         sharedAt: share.createdAt
       }))
     };
+  }
+
+  async deleteTemplate(id: string, userId: string): Promise<boolean> {
+    const template = await this.templateModel.findOne({ _id: id, createdBy: userId });
+    
+    if (!template) {
+      throw new DomainError('Template not found or unauthorized', 404);
+    }
+
+    await this.templateModel.findByIdAndDelete(id);
+
+    await this.eventService.publishDomainEvent({
+      eventName: 'template.deleted',
+      payload: { templateId: id }
+    });
+
+    return true;
   }
 }
