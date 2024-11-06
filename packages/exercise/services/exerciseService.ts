@@ -11,7 +11,8 @@ import {
   UpdateKpiDTO,
   UpdateTemplateDTO,
   UpdateExerciseWithKPIsDTO,
-  GetResourceSharesResponseDTO
+  GetResourceSharesResponseDTO,
+  GetExercisesResponseDTO
 } from '../types';
 import { AuthError, EventService } from '../../shared';
 import { DomainError } from '../../shared/errors/DomainError';
@@ -64,6 +65,7 @@ export class ExerciseService {
       .findById(exercise._id)
       .populate('kpis')
       .exec();
+    console.log(JSON.stringify(populatedExercise, null, 2));
 
     await this.eventService.publishDomainEvent({
       eventName: 'exercise.created',
@@ -328,13 +330,62 @@ export class ExerciseService {
     return { exercise };
   }
 
-  async getExercisesWithKPIs(userId: string): Promise<{ exercises: IExercise[] }> {
-    const exercises = await this.exerciseModel
+  async getExercisesWithKPIs(userId: string): Promise<GetExercisesResponseDTO> {
+    // Get exercises created by user
+    const ownedExercises = await this.exerciseModel
       .find({ createdBy: userId })
       .populate('kpis')
+      .lean()
       .exec();
 
-    return { exercises };
+    // Get shared exercises
+    const sharedResources = await this.sharedResourceModel
+      .find({ 
+        sharedWithId: userId,
+        resourceType: ResourceType.EXERCISE 
+      })
+      .exec();
+
+    const sharedExerciseIds = sharedResources.map(share => share.resourceId);
+
+    const sharedExercises = await this.exerciseModel
+      .find({ 
+        _id: { $in: sharedExerciseIds }
+      })
+      .populate('kpis')
+      .lean()
+      .exec();
+
+    // Convert ObjectIds to strings and add flags
+    const mappedOwnedExercises = ownedExercises.map(exercise => ({
+      ...exercise,
+      isShared: false
+    }));
+
+    const mappedSharedExercises = sharedExercises.map(exercise => ({
+      ...exercise,
+      isShared: true
+    }));
+
+    return { 
+      exercises: [...mappedOwnedExercises, ...mappedSharedExercises].map(exercise => ({
+        _id: exercise._id.toString(),
+        title: exercise.title,
+        description: exercise.description,
+        media: exercise.media,
+        createdBy: exercise.createdBy.toString(),
+        isShared: exercise.isShared,
+        kpis: exercise.kpis!.map(kpi => ({
+          _id: kpi._id.toString(),
+          goalValue: kpi.goalValue,
+          unit: kpi.unit,
+          performanceGoal: kpi.performanceGoal,
+          exerciseId: kpi.exerciseId.toString()
+        })),
+        createdAt: exercise.createdAt,
+        updatedAt: exercise.updatedAt
+      }))
+    }
   }
 
   async deleteExercise(id: string, userId: string): Promise<boolean> {

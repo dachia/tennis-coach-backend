@@ -10,7 +10,8 @@ import {
   TrainingTemplateDTO,
   SharedResourceDTO,
   ResourceType,
-  PerformanceGoal
+  PerformanceGoal,
+  GetExercisesResponseDTO
 } from '../types';
 
 interface CreateExercisePayload {
@@ -121,7 +122,7 @@ export class ExerciseTransportRouter {
 
     this.router.register<
       { userId: string },
-      { exercises: IExercise[] }
+      GetExercisesResponseDTO
     >(
       'exercises.get',
       async (payload) => {

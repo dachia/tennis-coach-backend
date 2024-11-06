@@ -104,3 +104,23 @@ export interface ShareDTO {
 export interface GetResourceSharesResponseDTO {
   shares: ShareDTO[];
 }
+
+export interface GetExercisesResponseDTO {
+  exercises: Array<{
+    _id: string;
+    title: string;
+    description: string;
+    media: string[];
+    createdBy: string;
+    isShared: boolean;
+    kpis: Array<{
+      _id: string;
+      goalValue: number;
+      unit: string;
+      performanceGoal: PerformanceGoal;
+      exerciseId: string;
+    }>;
+    createdAt: Date;
+    updatedAt: Date;
+  }>;
+}

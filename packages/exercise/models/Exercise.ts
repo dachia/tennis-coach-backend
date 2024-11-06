@@ -8,6 +8,8 @@ export interface IExercise extends Document {
   media: string[];
   createdBy: mongoose.Types.ObjectId;
   kpis?: IKPI[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const exerciseSchema = new Schema({
@@ -21,8 +23,7 @@ const exerciseSchema = new Schema({
   }
 }, { 
   timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  toJSON: { virtuals: true }
 });
 
 exerciseSchema.virtual('kpis', {

@@ -642,6 +642,9 @@ describe('Exercise Routes', () => {
     let kpis: any[];
 
     beforeEach(async () => {
+    });
+
+    it('should fetch all exercises with KPIs for the authenticated user', async () => {
       // Create test exercises
       exercises = await Promise.all([
         Exercise.create({
@@ -673,9 +676,6 @@ describe('Exercise Routes', () => {
           performanceGoal: 'minimize'
         })
       ]);
-    });
-
-    it('should fetch all exercises with KPIs for the authenticated user', async () => {
       const response = await request(app)
         .get('/exercise/exercises')
         .set('Authorization', `Bearer ${coachToken}`);
@@ -722,6 +722,51 @@ describe('Exercise Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.data.payload.exercises).toHaveLength(0);
+    });
+
+    it('should fetch both owned and shared exercises with correct flags', async () => {
+      // Create an exercise owned by coach
+      const ownedExercise = await Exercise.create({
+        title: 'Owned Exercise',
+        description: 'Description',
+        media: ['https://example.com/1.mp4'],
+        createdBy: coach._id
+      });
+
+      // Create an exercise by trainee and share with coach
+      const sharedExercise = await Exercise.create({
+        title: 'Shared Exercise',
+        description: 'Description',
+        media: ['https://example.com/2.mp4'],
+        createdBy: trainee._id
+      });
+
+      // Share the exercise with coach
+      await SharedResource.create({
+        resourceType: ResourceType.EXERCISE,
+        resourceId: sharedExercise._id,
+        sharedWithId: coach._id,
+        sharedById: trainee._id
+      });
+
+      const response = await request(app)
+        .get('/exercise/exercises')
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(200);
+      console.log(JSON.stringify(response.body, null, 2));
+      expect(response.body.data.payload.exercises).toHaveLength(2);
+      
+      const exercises = response.body.data.payload.exercises;
+      const foundOwnedExercise = exercises.find(
+        (e: any) => e._id === ownedExercise._id.toString()
+      );
+      const foundSharedExercise = exercises.find(
+        (e: any) => e._id === sharedExercise._id.toString()
+      );
+
+      expect(foundOwnedExercise.isShared).toBe(false);
+      expect(foundSharedExercise.isShared).toBe(true);
     });
   });
 
