@@ -52,5 +52,12 @@ export function buildRoutes(container: Container) {
     authController.getOwnProfile.bind(authController)
   );
 
+  router.get(
+    '/coach/trainees/:traineeId/check',
+    authMiddleware,
+    requireRole([UserRole.COACH]),
+    authController.checkCoachTraineeRelationship.bind(authController)
+  );
+
   return router;
 }

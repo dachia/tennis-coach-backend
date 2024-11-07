@@ -63,4 +63,18 @@ export class AuthController {
       createResponse('success', 'Profile retrieved successfully', user )
     );
   }
+
+  async checkCoachTraineeRelationship(req: AuthRequest, res: Response) {
+    const { traineeId } = req.params;
+    const coachId = req.user._id;
+
+    const hasRelationship = await this.authService.checkCoachTraineeRelationship(
+      coachId,
+      traineeId
+    );
+
+    res.json(
+      createResponse('success', 'Relationship check completed', { hasRelationship })
+    );
+  }
 } 

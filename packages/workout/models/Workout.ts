@@ -9,6 +9,7 @@ export interface IWorkout extends Document {
   templateId?: mongoose.Types.ObjectId;
   notes?: string;
   media?: string[];
+  exerciseLogs?: any[];
 }
 
 const workoutSchema = new Schema({
@@ -35,6 +36,15 @@ const workoutSchema = new Schema({
   },
   notes: { type: String },
   media: [{ type: String }]
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: { virtuals: true }
+});
+
+workoutSchema.virtual('exerciseLogs', {
+  ref: 'ExerciseLog',
+  localField: '_id',
+  foreignField: 'workoutId'
+});
 
 export const Workout = mongoose.model<IWorkout>('Workout', workoutSchema); 

@@ -18,6 +18,8 @@ import {
 } from '../validation';
 import { Transport } from '../../shared';
 import { GetTemplateByIdResponseDTO } from '../../exercise/types';
+import { dateRangeSchema } from '../validation';
+import * as yup from 'yup';
 
 export class WorkoutService {
   constructor(
@@ -154,11 +156,6 @@ export class WorkoutService {
       throw new DomainError(err.message);
     }
 
-    // If startTimestamp is being updated, recalculate status
-    if (validatedData.startTimestamp) {
-      validatedData.status = this.determineWorkoutStatus(validatedData.startTimestamp);
-    }
-
     const workout = await this.workoutModel.findOneAndUpdate(
       { _id: id, traineeId: data.userId },
       validatedData,
@@ -225,7 +222,23 @@ export class WorkoutService {
     userId: string;
     kpiId: string;
   }) {
-    const { startDate, endDate, userId, kpiId } = params;
+    // Add validation for kpiId
+    const exerciseLogDateRangeSchema = dateRangeSchema.shape({
+      kpiId: yup.string().required('KPI ID is required')
+    });
+
+    let validatedData;
+    try {
+      validatedData = await exerciseLogDateRangeSchema.validate(params, {
+        abortEarly: false,
+        stripUnknown: true
+      });
+    } catch (err: any) {
+      console.log(err);
+      throw new DomainError(err.message);
+    }
+
+    const { startDate, endDate, userId, kpiId } = validatedData;
 
     const exerciseLogs = await this.exerciseLogModel.find({
       traineeId: userId,
@@ -237,5 +250,92 @@ export class WorkoutService {
     }).sort({ logDate: 1 });
 
     return { exerciseLogs };
+  }
+
+  async getWorkoutById(workoutId: string, userId: string) {
+    // First try to find workout where user is the trainee
+    let workout = await this.workoutModel
+      .findOne({
+        _id: workoutId,
+        traineeId: userId
+      })
+      .populate('exerciseLogs');
+
+    // If not found, check if user is a coach for the workout's trainee
+    if (!workout) {
+      workout = await this.workoutModel.findById(workoutId).populate('exerciseLogs');
+      if (workout) {
+        const coachTrainee = await this.transport.request<
+          { traineeId: string; coachId: string },
+          { hasRelationship: boolean }
+        >('auth.checkCoachTrainee', {
+          type: 'CHECK_COACH_TRAINEE',
+          payload: {
+            traineeId: workout.traineeId.toString(),
+            coachId: userId
+          }
+        });
+
+        if (!coachTrainee.hasRelationship) {
+          throw new DomainError('Workout not found or unauthorized', 404);
+        }
+      } else {
+        throw new DomainError('Workout not found or unauthorized', 404);
+      }
+    }
+
+    return { workout };
+  }
+
+  async getWorkoutsByDateRange(params: {
+    startDate: Date;
+    endDate: Date;
+    userId: string;
+    traineeId?: string;
+  }) {
+    // Validate the input parameters
+    let validatedData;
+    try {
+      validatedData = await dateRangeSchema.validate(params, {
+        abortEarly: false,
+        stripUnknown: true
+      });
+    } catch (err: any) {
+      console.log(err);
+      throw new DomainError(err.errors.join(', '));
+    }
+
+    const { startDate, endDate, userId, traineeId } = validatedData;
+
+    // If traineeId is provided, verify coach-trainee relationship
+    if (traineeId) {
+      const coachTrainee = await this.transport.request<
+        { traineeId: string; coachId: string },
+        { hasRelationship: boolean }
+      >('auth.checkCoachTrainee', {
+        type: 'CHECK_COACH_TRAINEE',
+        payload: {
+          traineeId,
+          coachId: userId
+        }
+      });
+
+      if (!coachTrainee.hasRelationship) {
+        throw new DomainError('Unauthorized to access trainee workouts', 403);
+      }
+    }
+
+    const workouts = await this.workoutModel
+      .find({
+        traineeId: traineeId || userId,
+        startTimestamp: {
+          $gte: startDate,
+          $lte: endDate
+        }
+      })
+      .populate('exerciseLogs')
+      .sort({ startTimestamp: 1 });
+
+    return { workouts };
   }
 } 

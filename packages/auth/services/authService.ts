@@ -194,4 +194,13 @@ export class AuthService {
       { expiresIn: '7d' }
     );
   }
+
+  async checkCoachTraineeRelationship(coachId: string, traineeId: string): Promise<boolean> {
+    const relationship = await this.coachTraineeModel.findOne({
+      coachId,
+      traineeId
+    });
+    
+    return !!relationship;
+  }
 } 

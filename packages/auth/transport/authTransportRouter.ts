@@ -63,6 +63,17 @@ export class AuthTransportRouter {
         );
       }
     );
+
+    this.router.register<{ coachId: string, traineeId: string }, { hasRelationship: boolean }>(
+      'auth.checkCoachTrainee',
+      async (payload) => {
+        const hasRelationship = await this.authService.checkCoachTraineeRelationship(
+          payload.coachId,
+          payload.traineeId
+        );
+        return { hasRelationship };
+      }
+    );
   }
 
   /**

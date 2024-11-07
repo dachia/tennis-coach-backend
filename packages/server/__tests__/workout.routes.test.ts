@@ -16,6 +16,7 @@ import { KPI } from '../../exercise/models/KPI';
 import { ExerciseLog } from '../../workout/models/ExerciseLog';
 import { SharedResource } from '../../exercise/models/SharedResource';
 import { ResourceType } from '../../exercise/types';
+import { CoachTrainee } from '../../auth/models/CoachTrainee';
 
 describe('Workout Routes', () => {
   let app: Express;
@@ -401,6 +402,176 @@ describe('Workout Routes', () => {
         error: null,
         version: expect.any(Number)
       });
+    });
+  });
+
+  describe('GET /workout/workout/:id', () => {
+    let workout: any;
+
+    beforeEach(async () => {
+      workout = await Workout.create({
+        traineeId: trainee._id,
+        startTimestamp: new Date(),
+        status: WorkoutStatus.PLANNED
+      });
+    });
+
+    it('should allow trainee to get their own workout', async () => {
+      const response = await request(app)
+        .get(`/workout/workout/${workout._id}`)
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: 'Workout retrieved successfully',
+          payload: {
+            workout: {
+              _id: workout._id.toString(),
+              traineeId: trainee._id.toString(),
+              status: WorkoutStatus.PLANNED
+            }
+          }
+        }
+      });
+    });
+
+    it('should allow coach to get their trainee\'s workout', async () => {
+      // Create coach-trainee relationship
+      await CoachTrainee.create({
+        coachId: coach._id,
+        traineeId: trainee._id
+      });
+
+      const response = await request(app)
+        .get(`/workout/workout/${workout._id}`)
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.payload.workout).toMatchObject({
+        _id: workout._id.toString(),
+        traineeId: trainee._id.toString()
+      });
+    });
+
+    it('should not allow unauthorized access to workout', async () => {
+      const unauthorizedCoach = await User.create({
+        email: 'unauthorized@example.com',
+        password: 'password123',
+        name: 'Unauthorized Coach',
+        role: UserRole.COACH
+      });
+      const unauthorizedToken = jwt.sign(
+        { sub: unauthorizedCoach._id, role: unauthorizedCoach.role },
+        testConfig.jwtSecret
+      );
+
+      const response = await request(app)
+        .get(`/workout/workout/${workout._id}`)
+        .set('Authorization', `Bearer ${unauthorizedToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.error.message).toBe('Workout not found or unauthorized');
+    });
+  });
+
+  describe('GET /workout/workouts', () => {
+    beforeEach(async () => {
+      // Create coach-trainee relationship
+      await CoachTrainee.create({
+        coachId: coach._id,
+        traineeId: trainee._id
+      });
+
+      // Create multiple workouts for different dates
+      const dates = [
+        new Date(),
+        new Date(Date.now() - 86400000), // Yesterday
+        new Date(Date.now() - 172800000) // Day before yesterday
+      ];
+
+      for (const date of dates) {
+        await Workout.create({
+          traineeId: trainee._id,
+          startTimestamp: date,
+          status: WorkoutStatus.COMPLETED
+        });
+      }
+    });
+
+    it('should allow trainee to get their workouts by date range', async () => {
+      const startDate = new Date(Date.now() - 200000000);
+      const endDate = new Date();
+
+      const response = await request(app)
+        .get('/workout/workouts')
+        .query({
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString()
+        })
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.payload.workouts).toHaveLength(3);
+      expect(response.body.data.payload.workouts[0]).toMatchObject({
+        traineeId: trainee._id.toString(),
+        status: WorkoutStatus.COMPLETED
+      });
+    });
+
+    it('should allow coach to get trainee workouts by date range', async () => {
+      const startDate = new Date(Date.now() - 200000000);
+      const endDate = new Date();
+
+      const response = await request(app)
+        .get('/workout/workouts')
+        .query({
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          traineeId: trainee._id.toString()
+        })
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.payload.workouts).toHaveLength(3);
+    });
+
+    it('should not allow coach to get workouts for non-assigned trainee', async () => {
+      const unauthorizedTrainee = await User.create({
+        email: 'unauthorized.trainee@example.com',
+        password: 'password123',
+        name: 'Unauthorized Trainee',
+        role: UserRole.TRAINEE
+      }) as any;
+
+      const startDate = new Date(Date.now() - 200000000);
+      const endDate = new Date();
+
+      const response = await request(app)
+        .get('/workout/workouts')
+        .query({
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          traineeId: unauthorizedTrainee._id.toString()
+        })
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(403);
+      expect(response.body.error.message).toBe('Unauthorized to access trainee workouts');
+    });
+
+    it('should validate date range parameters', async () => {
+      const response = await request(app)
+        .get('/workout/workouts')
+        .query({
+          startDate: 'invalid-date',
+          endDate: 'invalid-date'
+        })
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.message).toContain('Invalid date format');
     });
   });
 });

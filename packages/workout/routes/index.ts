@@ -58,5 +58,20 @@ export function buildRoutes(container: Container) {
     workoutController.getExerciseLogsByDateRange.bind(workoutController)
   );
 
+  // Add these routes inside buildRoutes function
+  router.get(
+    '/workout/:id',
+    authMiddleware,
+    requireRole([UserRole.TRAINEE, UserRole.COACH]),
+    workoutController.getWorkout.bind(workoutController)
+  );
+
+  router.get(
+    '/workouts',
+    authMiddleware,
+    requireRole([UserRole.TRAINEE, UserRole.COACH]),
+    workoutController.getWorkoutsByDateRange.bind(workoutController)
+  );
+
   return router;
 } 

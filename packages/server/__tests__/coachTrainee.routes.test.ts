@@ -241,4 +241,49 @@ describe('Coach-Trainee Routes', () => {
       expect(response.body.error.message).toBe('Trainee not found');
     });
   });
+
+  describe('GET /auth/coach/trainees/:traineeId/check', () => {
+    it('should return true when relationship exists', async () => {
+      const response = await request(app)
+        .get(`/auth/coach/trainees/${trainee._id}/check`)
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: 'Relationship check completed',
+          payload: {
+            hasRelationship: true
+          }
+        },
+        error: null,
+        version: expect.any(Number)
+      });
+    });
+
+    it('should return false when relationship does not exist', async () => {
+      const otherTrainee = await User.create({
+        email: 'other@example.com',
+        password: 'password123',
+        name: 'Other Trainee',
+        role: UserRole.TRAINEE
+      });
+
+      const response = await request(app)
+        .get(`/auth/coach/trainees/${otherTrainee._id}/check`)
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.payload.hasRelationship).toBe(false);
+    });
+
+    it('should not allow trainees to access this endpoint', async () => {
+      const response = await request(app)
+        .get(`/auth/coach/trainees/${trainee._id}/check`)
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(403);
+    });
+  });
 }); 
