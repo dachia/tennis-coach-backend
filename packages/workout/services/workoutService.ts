@@ -377,7 +377,7 @@ export class WorkoutService {
       const coachTraineeResponse = await this.transport.request<
         { coachId: string },
         { trainees: { _id: string; email: string; name: string }[] }
-      >('auth.getTrainees', {
+      >('auth.coach.trainees', {
         type: 'GET_TRAINEES',
         payload: {
           coachId: userId

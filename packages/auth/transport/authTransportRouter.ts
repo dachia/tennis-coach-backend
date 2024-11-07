@@ -30,17 +30,17 @@ export class AuthTransportRouter {
       }
     );
 
-    this.router.register<string, any>(
+    this.router.register<{ coachId: string }, { trainees: { _id: string; email: string; name: string }[] }>(
       'auth.coach.trainees',
-      async (coachId) => {
-        return this.authService.getTraineesByCoach(coachId);
+      async (payload) => {
+        return this.authService.getTraineesByCoach(payload.coachId);
       }
     );
 
-    this.router.register<string, any>(
+    this.router.register<{ traineeId: string }, { coach: { _id: string; email: string; name: string } }>(
       'auth.trainee.coach',
-      async (traineeId) => {
-        return this.authService.getCoachByTrainee(traineeId);
+      async (payload) => {
+        return this.authService.getCoachByTrainee(payload.traineeId);
       }
     );
 
