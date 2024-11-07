@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 import { WorkoutStatus } from '../types';
 
 export interface IWorkout extends Document {
+  _id: mongoose.Types.ObjectId;
   traineeId: mongoose.Types.ObjectId;
   startTimestamp: Date;
   endTimestamp?: Date;

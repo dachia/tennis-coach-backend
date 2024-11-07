@@ -11,9 +11,8 @@ export enum ExerciseLogStatus {
 }
 
 export interface WorkoutDTO {
-  id: string;
+  _id: string;
   traineeId: string;
-  workoutDate: Date;
   startTimestamp: Date;
   endTimestamp?: Date;
   status: WorkoutStatus;
@@ -77,4 +76,13 @@ export interface UpdateExerciseLogDTO {
   notes?: string;
   media?: string[];
   userId: string;
+}
+
+export interface EnrichedWorkoutDTO extends WorkoutDTO {
+  traineeEmail?: string;
+  traineeName?: string;
+}
+
+export interface GetCompletedWorkoutsResponseDTO {
+  workouts: EnrichedWorkoutDTO[];
 } 

@@ -20,6 +20,7 @@ import { Transport } from '../../shared';
 import { GetTemplateByIdResponseDTO } from '../../exercise/types';
 import { dateRangeSchema } from '../validation';
 import * as yup from 'yup';
+import { EnrichedWorkoutDTO, GetCompletedWorkoutsResponseDTO } from '../types';
 
 export class WorkoutService {
   constructor(
@@ -27,12 +28,12 @@ export class WorkoutService {
     private readonly exerciseLogModel: typeof ExerciseLog,
     private readonly eventService: EventService,
     private readonly transport: Transport
-  ) {}
+  ) { }
 
   private determineWorkoutStatus(startTimestamp: Date): WorkoutStatus {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     const workoutDate = new Date(startTimestamp);
     workoutDate.setHours(0, 0, 0, 0);
 
@@ -80,7 +81,7 @@ export class WorkoutService {
         });
 
         const exerciseLogs = await Promise.all(
-          templateResponse.template.exercises.map(exercise => 
+          templateResponse.template.exercises.map(exercise =>
             this.exerciseLogModel.create({
               workoutId: workout._id,
               exerciseId: exercise._id,
@@ -101,9 +102,9 @@ export class WorkoutService {
 
     await this.eventService.publishDomainEvent({
       eventName: 'workout.created',
-      payload: { 
+      payload: {
         workoutId: workout._id,
-        templateId: validatedData.templateId 
+        templateId: validatedData.templateId
       }
     });
 
@@ -337,5 +338,106 @@ export class WorkoutService {
       .sort({ startTimestamp: 1 });
 
     return { workouts };
+  }
+
+  async getWorkoutsByDay(params: {
+    date: Date;
+    userId: string;
+    traineeId?: string;
+  }) {
+    // Create start and end of day timestamps
+    const startOfDay = new Date(params.date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(params.date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Reuse existing date range functionality
+    return this.getWorkoutsByDateRange({
+      startDate: startOfDay,
+      endDate: endOfDay,
+      userId: params.userId,
+      traineeId: params.traineeId
+    });
+  }
+
+  async getCompletedWorkouts(userId: string): Promise<GetCompletedWorkoutsResponseDTO> {
+    const query = {
+      status: WorkoutStatus.COMPLETED,
+      traineeId: userId
+    };
+
+    let workouts = await this.workoutModel
+      .find(query)
+      .populate('exerciseLogs')
+      .sort({ startTimestamp: -1 });
+
+    // If user is a coach, get their trainees' workouts too
+    try {
+      const coachTraineeResponse = await this.transport.request<
+        { coachId: string },
+        { trainees: { _id: string; email: string; name: string }[] }
+      >('auth.getTrainees', {
+        type: 'GET_TRAINEES',
+        payload: {
+          coachId: userId
+        }
+      });
+
+      if (coachTraineeResponse.trainees.length > 0) {
+        const traineeIds = coachTraineeResponse.trainees.map(trainee => trainee._id);
+        const traineeMap = new Map(
+          coachTraineeResponse.trainees.map(trainee => [trainee._id, trainee])
+        );
+
+        const traineeWorkouts = await this.workoutModel
+          .find({
+            status: WorkoutStatus.COMPLETED,
+            traineeId: { $in: traineeIds }
+          })
+          .populate('exerciseLogs')
+          .sort({ startTimestamp: -1 });
+
+        // Add trainee information to each workout
+        const enrichedTraineeWorkouts = traineeWorkouts.map(workout => {
+          const traineeInfo = traineeMap.get(workout.traineeId.toString());
+          const workoutObj = workout.toObject();
+          const enrichedWorkout: EnrichedWorkoutDTO = {
+            ...workoutObj,
+            _id: workoutObj._id.toString(), // Convert ObjectId to string
+            traineeId: workout.traineeId.toString(), // Convert ObjectId to string
+            templateId: workoutObj.templateId?.toString(), // Convert ObjectId to string
+            traineeEmail: traineeInfo?.email,
+            traineeName: traineeInfo?.name
+          };
+          return enrichedWorkout;
+        });
+
+        const allWorkouts = [...workouts, ...enrichedTraineeWorkouts].sort((a, b) =>
+          b.startTimestamp.getTime() - a.startTimestamp.getTime()
+        );
+
+        return {
+          workouts: allWorkouts.map(workout => ({
+            ...workout,
+            _id: workout._id.toString(),
+            traineeId: workout.traineeId.toString(),
+            templateId: workout.templateId?.toString()
+          }))
+        };
+      }
+    } catch (err) {
+      // If error occurs while fetching trainees, just return user's own workouts
+      console.log('Error fetching trainees:', err);
+    }
+
+    return {
+      workouts: workouts.map(workout => ({
+        ...workout,
+        _id: workout._id.toString(),
+        traineeId: workout.traineeId.toString(),
+        templateId: workout.templateId?.toString()
+      }))
+    };
   }
 } 

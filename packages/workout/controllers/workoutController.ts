@@ -4,14 +4,14 @@ import { createResponse } from '../../shared/utils/response.utils';
 import { WorkoutService } from '../services/workoutService';
 
 export class WorkoutController {
-  constructor(private readonly workoutService: WorkoutService) {}
+  constructor(private readonly workoutService: WorkoutService) { }
 
   async createWorkout(req: AuthRequest, res: Response) {
     const result = await this.workoutService.createWorkout({
       ...req.body,
       userId: req.user._id
     });
-    
+
     res.status(201).json(
       createResponse('success', 'Workout created successfully', result)
     );
@@ -22,7 +22,7 @@ export class WorkoutController {
       ...req.body,
       userId: req.user._id
     });
-    
+
     res.status(201).json(
       createResponse('success', 'Exercise log created successfully', result)
     );
@@ -36,7 +36,7 @@ export class WorkoutController {
         userId: req.user._id
       }
     );
-    
+
     res.json(
       createResponse('success', 'Workout updated successfully', result)
     );
@@ -50,7 +50,7 @@ export class WorkoutController {
         userId: req.user._id
       }
     );
-    
+
     res.json(
       createResponse('success', 'Exercise log updated successfully', result)
     );
@@ -61,7 +61,7 @@ export class WorkoutController {
       req.params.id,
       req.user._id
     );
-    
+
     res.json(
       createResponse('success', 'Exercise log retrieved successfully', result)
     );
@@ -76,7 +76,7 @@ export class WorkoutController {
       userId: req.user._id,
       kpiId: kpiId as string
     });
-    
+
     res.json(
       createResponse('success', 'Exercise logs retrieved successfully', result)
     );
@@ -87,7 +87,7 @@ export class WorkoutController {
       req.params.id,
       req.user._id
     );
-    
+
     res.json(
       createResponse('success', 'Workout retrieved successfully', result)
     );
@@ -102,9 +102,30 @@ export class WorkoutController {
       userId: req.user._id,
       traineeId: traineeId as string
     });
-    
+
     res.json(
       createResponse('success', 'Workouts retrieved successfully', result)
+    );
+  }
+
+  async getWorkoutsByDay(req: AuthRequest, res: Response) {
+    const { date, traineeId } = req.query;
+
+    const result = await this.workoutService.getWorkoutsByDay({
+      date: new Date(date as string),
+      userId: req.user._id,
+      traineeId: traineeId as string
+    });
+
+    res.json(
+      createResponse('success', 'Workouts retrieved successfully', result)
+    );
+  }
+  async getCompletedWorkouts(req: AuthRequest, res: Response) {
+    const result = await this.workoutService.getCompletedWorkouts(req.user._id);
+
+    res.json(
+      createResponse('success', 'Completed workouts retrieved successfully', result)
     );
   }
 } 

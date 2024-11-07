@@ -574,4 +574,104 @@ describe('Workout Routes', () => {
       expect(response.body.error.message).toContain('Invalid date format');
     });
   });
+
+  describe('GET /workout/workouts/day', () => {
+    beforeEach(async () => {
+      // Create coach-trainee relationship
+      await CoachTrainee.create({
+        coachId: coach._id,
+        traineeId: trainee._id
+      });
+
+      // Create workouts for different times of the day
+      const today = new Date();
+      const times = [
+        new Date(today.setHours(9, 0, 0, 0)),
+        new Date(today.setHours(14, 0, 0, 0)),
+        new Date(today.setHours(18, 0, 0, 0))
+      ];
+
+      for (const time of times) {
+        await Workout.create({
+          traineeId: trainee._id,
+          startTimestamp: time,
+          status: WorkoutStatus.COMPLETED
+        });
+      }
+
+      // Create workout for different day
+      await Workout.create({
+        traineeId: trainee._id,
+        startTimestamp: new Date(Date.now() - 86400000), // Yesterday
+        status: WorkoutStatus.COMPLETED
+      });
+    });
+
+    it('should allow trainee to get their workouts for a specific day', async () => {
+      const date = new Date();
+
+      const response = await request(app)
+        .get('/workout/workouts/day')
+        .query({
+          date: date.toISOString()
+        })
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.payload.workouts).toHaveLength(3);
+      expect(response.body.data.payload.workouts[0]).toMatchObject({
+        traineeId: trainee._id.toString(),
+        status: WorkoutStatus.COMPLETED
+      });
+    });
+
+    it('should allow coach to get trainee workouts for a specific day', async () => {
+      const date = new Date();
+
+      const response = await request(app)
+        .get('/workout/workouts/day')
+        .query({
+          date: date.toISOString(),
+          traineeId: trainee._id.toString()
+        })
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.payload.workouts).toHaveLength(3);
+    });
+
+    it('should validate date parameter', async () => {
+      const response = await request(app)
+        .get('/workout/workouts/day')
+        .query({
+          date: 'invalid-date'
+        })
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error.message).toContain('Invalid date format');
+    });
+
+    it('should not allow coach to get workouts for non-assigned trainee', async () => {
+      const unauthorizedTrainee = await User.create({
+        email: 'unauthorized.trainee@example.com',
+        password: 'password123',
+        name: 'Unauthorized Trainee',
+        role: UserRole.TRAINEE
+      }) as any;
+
+      const date = new Date();
+
+      const response = await request(app)
+        .get('/workout/workouts/day')
+        .query({
+          date: date.toISOString(),
+          traineeId: unauthorizedTrainee._id.toString()
+        })
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(403);
+      expect(response.body.error.message).toBe('Unauthorized to access trainee workouts');
+    });
+  });
 });

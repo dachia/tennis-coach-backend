@@ -73,5 +73,17 @@ export function buildRoutes(container: Container) {
     workoutController.getWorkoutsByDateRange.bind(workoutController)
   );
 
+  router.get(
+    '/workouts/day',
+    authMiddleware,
+    requireRole([UserRole.TRAINEE, UserRole.COACH]),
+    workoutController.getWorkoutsByDay.bind(workoutController)
+  );
+  router.get(
+    '/workouts/completed',
+    authMiddleware,
+    requireRole([UserRole.TRAINEE, UserRole.COACH]),
+    workoutController.getCompletedWorkouts.bind(workoutController)
+  );
   return router;
 } 
