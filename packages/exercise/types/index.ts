@@ -28,10 +28,18 @@ export interface KPIDTO {
 }
 
 export interface TrainingTemplateDTO {
-  id: string;
+  _id: string;
   title: string;
   description: string;
   createdBy: string;
+  isShared: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+
+}
+
+export interface TrainingTemplateWithExercisesDTO extends TrainingTemplateDTO {
+  exercises: ExerciseWithKPIsDTO[];
 }
 
 export interface SharedResourceDTO {
@@ -117,26 +125,13 @@ export interface GetExercisesResponseDTO {
 }
 
 export interface GetTemplatesResponseDTO {
-  templates: Array<{
-    _id: string;
-    title: string;
-    description: string;
-    createdBy: string;
-    isShared: boolean;
-    exercises: Array<{
-      _id: string;
-      title: string;
-      description: string;
-      media: string[];
-      kpis: Array<{
-        _id: string;
-        goalValue: number;
-        unit: string;
-        performanceGoal: string;
-        exerciseId: string;
-      }>;
-    }>;
-    createdAt: Date;
-    updatedAt: Date;
-  }>;
+  templates: Array<TrainingTemplateWithExercisesDTO>;
+}
+
+export interface GetExerciseByIdResponseDTO {
+  exercise: ExerciseWithKPIsDTO;
+}
+
+export interface GetTemplateByIdResponseDTO {
+  template: TrainingTemplateWithExercisesDTO & { exerciseIds: string[] };
 }

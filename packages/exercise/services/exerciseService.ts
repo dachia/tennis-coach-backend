@@ -14,7 +14,9 @@ import {
   GetResourceSharesResponseDTO,
   GetExercisesResponseDTO,
   GetTemplatesResponseDTO,
-  ExerciseWithKPIsDTO
+  ExerciseWithKPIsDTO,
+  GetExerciseByIdResponseDTO,
+  GetTemplateByIdResponseDTO
 } from '../types';
 import { AuthError, EventService } from '../../shared';
 import { DomainError } from '../../shared/errors/DomainError';
@@ -432,21 +434,10 @@ export class ExerciseService {
   }
 
   async getResourceShares(resourceId: string, userId: string): Promise<GetResourceSharesResponseDTO> {
-    // Verify the resource exists and user has access
-    const exercise = await this.exerciseModel.findOne({
-      _id: resourceId,
-      createdBy: userId
-    });
-
-    if (!exercise) {
-      throw new DomainError('Exercise not found or unauthorized', 404);
-    }
-
     // Find all shares for this resource
     const shares = await this.sharedResourceModel
       .find({
         resourceId,
-        resourceType: ResourceType.EXERCISE
       })
       .populate('sharedWithId', '_id email name')
       .sort({ createdAt: 1 }) as unknown as (Omit<ISharedResource, 'sharedWithId'> & { sharedWithId: IUser })[];
@@ -537,6 +528,9 @@ export class ExerciseService {
           title: exercise.title,
           description: exercise.description,
           media: exercise.media,
+          createdBy: exercise.createdBy.toString(),
+          createdAt: exercise.createdAt,
+          updatedAt: exercise.updatedAt,
           kpis: exercise.kpis.map((kpi: any) => ({
             _id: kpi._id.toString(),
             goalValue: kpi.goalValue,
@@ -551,14 +545,31 @@ export class ExerciseService {
     };
   }
 
-  async getExerciseById(id: string, userId: string): Promise<{ exercise: ExerciseWithKPIsDTO | null }> {
-    // Get exercise created by user or shared with user
-    const exercise = await this.exerciseModel
+  async getExerciseById(id: string, userId: string): Promise<GetExerciseByIdResponseDTO> {
+    // Check if exercise is owned by user
+    let exercise = await this.exerciseModel
       .findOne({
-        _id: id, createdBy: userId
+        _id: id,
+        createdBy: userId
       })
       .populate('kpis')
       .lean();
+
+    // If not owned, check if it's shared with user
+    if (!exercise) {
+      const sharedResource = await this.sharedResourceModel.findOne({
+        resourceId: id,
+        sharedWithId: userId,
+        resourceType: ResourceType.EXERCISE
+      });
+
+      if (sharedResource) {
+        exercise = await this.exerciseModel
+          .findById(id)
+          .populate('kpis')
+          .lean();
+      }
+    }
 
     if (!exercise) {
       throw new DomainError('Exercise not found or unauthorized', 404);
@@ -569,12 +580,80 @@ export class ExerciseService {
         ...exercise,
         _id: exercise._id.toString(),
         createdBy: exercise.createdBy.toString(),
+        isShared: exercise.createdBy.toString() !== userId,
         kpis: exercise.kpis!.map(kpi => ({
           _id: kpi._id.toString(),
           goalValue: kpi.goalValue,
           unit: kpi.unit,
           performanceGoal: kpi.performanceGoal,
           exerciseId: kpi.exerciseId.toString()
+        }))
+      }
+    };
+  }
+
+  async getTemplateById(id: string, userId: string): Promise<GetTemplateByIdResponseDTO> {
+    // Check if template is owned by user
+    let template = await this.templateModel
+      .findOne({
+        _id: id,
+        createdBy: userId
+      })
+      .populate({
+        path: 'exerciseIds',
+        populate: {
+          path: 'kpis'
+        }
+      })
+      .lean();
+
+    // If not owned, check if it's shared with user
+    if (!template) {
+      const sharedResource = await this.sharedResourceModel.findOne({
+        resourceId: id,
+        sharedWithId: userId,
+        resourceType: ResourceType.TEMPLATE
+      });
+
+      if (sharedResource) {
+        template = await this.templateModel
+          .findById(id)
+          .populate({
+            path: 'exerciseIds',
+            populate: {
+              path: 'kpis'
+            }
+          })
+          .lean();
+      }
+    }
+
+    if (!template) {
+      throw new DomainError('Template not found or unauthorized', 404);
+    }
+
+    return {
+      template: {
+        ...template,
+        _id: template._id.toString(),
+        createdBy: template.createdBy.toString(),
+        isShared: template.createdBy.toString() !== userId,
+        exerciseIds: template.exerciseIds.map((exercise: any) => exercise._id.toString()),
+        exercises: template.exerciseIds.map((exercise: any) => ({
+          _id: exercise._id.toString(),
+          title: exercise.title,
+          description: exercise.description,
+          media: exercise.media,
+          createdBy: exercise.createdBy.toString(),
+          createdAt: exercise.createdAt,
+          updatedAt: exercise.updatedAt,
+          kpis: exercise.kpis.map((kpi: any) => ({
+            _id: kpi._id.toString(),
+            goalValue: kpi.goalValue,
+            unit: kpi.unit,
+            performanceGoal: kpi.performanceGoal,
+            exerciseId: kpi.exerciseId.toString()
+          }))
         }))
       }
     };

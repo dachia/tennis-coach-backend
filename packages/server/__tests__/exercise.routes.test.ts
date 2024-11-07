@@ -978,4 +978,90 @@ describe('Exercise Routes', () => {
       expect(response.body.error.message).toBe('Exercise not found or unauthorized');
     });
   });
+
+  describe('GET /exercise/template/:id', () => {
+    let template: any;
+    let exercise: any;
+    let kpi: any;
+
+    beforeEach(async () => {
+      exercise = await Exercise.create({
+        title: 'Test Exercise',
+        description: 'Test Description',
+        media: ['https://example.com/test.mp4'],
+        createdBy: coach._id
+      });
+
+      kpi = await KPI.create({
+        exerciseId: exercise._id,
+        goalValue: 10,
+        unit: 'repetitions',
+        performanceGoal: 'maximize'
+      });
+
+      template = await TrainingTemplate.create({
+        title: 'Test Template',
+        description: 'Test Description',
+        exerciseIds: [exercise._id],
+        createdBy: coach._id
+      });
+    });
+
+    it('should get a template by id successfully', async () => {
+      const response = await request(app)
+        .get(`/exercise/template/${template._id}`)
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: 'Template retrieved successfully',
+          payload: {
+            template: {
+              _id: template._id.toString(),
+              title: template.title,
+              description: template.description,
+              createdBy: coach._id.toString(),
+              exerciseIds: [exercise._id.toString()],
+              exercises: [{
+                _id: exercise._id.toString(),
+                title: exercise.title,
+                description: exercise.description,
+                media: exercise.media,
+                kpis: [{
+                  _id: kpi._id.toString(),
+                  goalValue: kpi.goalValue,
+                  unit: kpi.unit,
+                  performanceGoal: kpi.performanceGoal,
+                  exerciseId: exercise._id.toString()
+                }]
+              }]
+            }
+          }
+        },
+        error: null,
+        version: expect.any(Number)
+      });
+    });
+
+    it('should return 404 when template not found', async () => {
+      const nonExistentId = new mongoose.Types.ObjectId();
+      const response = await request(app)
+        .get(`/exercise/template/${nonExistentId}`)
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.error.message).toBe('Template not found or unauthorized');
+    });
+
+    it('should return 404 when unauthorized user tries to access', async () => {
+      const response = await request(app)
+        .get(`/exercise/template/${template._id}`)
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.error.message).toBe('Template not found or unauthorized');
+    });
+  });
 }); 

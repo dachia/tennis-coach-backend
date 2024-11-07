@@ -11,7 +11,8 @@ import {
   SharedResourceDTO,
   ResourceType,
   PerformanceGoal,
-  GetExercisesResponseDTO
+  GetExercisesResponseDTO,
+  GetTemplateByIdResponseDTO
 } from '../types';
 
 interface CreateExercisePayload {
@@ -143,6 +144,17 @@ export class ExerciseTransportRouter {
       async (payload) => {
         const { id, userId } = payload;
         return this.exerciseService.deleteTemplate(id, userId);
+      }
+    );
+
+    this.router.register<
+      { id: string; userId: string },
+      GetTemplateByIdResponseDTO
+    >(
+      'template.get',
+      async (payload) => {
+        const { id, userId } = payload;
+        return this.exerciseService.getTemplateById(id, userId);
       }
     );
   }
