@@ -54,7 +54,7 @@ export class WorkoutService {
         stripUnknown: true
       });
     } catch (err: any) {
-      throw new DomainError(err.message);
+      throw new DomainError(err.errors.join(', '));
     }
 
     const startTimestamp = validatedData.startTimestamp || new Date();
@@ -407,7 +407,6 @@ export class WorkoutService {
     if (!workouts.length) return [];
 
     let traineeMap = new Map();
-    // Get all exercise logs and their KPIs
     let exerciseMap = new Map();
     try {
       const exerciseIds = workouts
@@ -449,10 +448,8 @@ export class WorkoutService {
     }
     if (includeTraineeInfo) {
       try {
-        // Get all unique trainee IDs
         const traineeIds = [...new Set(workouts.map(w => w.traineeId.toString()))];
 
-        // Fetch trainee information in bulk
         const traineeResponse = await this.transport.request<
           { ids: string[] },
           { users: { _id: string; email: string; name: string }[] }
@@ -472,17 +469,30 @@ export class WorkoutService {
     return workouts.map(workout => {
       const workoutObj = workout.toObject ? workout.toObject() : workout;
       const traineeInfo = traineeMap.get(workout.traineeId.toString());
-      const exerciseLogs = workoutObj.exerciseLogs.map((log: IExerciseLog) => {
+
+      const exercises = workoutObj.exerciseLogs.reduce((acc: any[], log: IExerciseLog) => {
         const exercise = exerciseMap.get(log.exerciseId.toString());
         const kpi = exercise?.kpis.find((kpi: any) => kpi._id === log.kpiId.toString());
 
-        return {
+        const logEntry = {
           ...log,
-          exerciseName: exercise?.title,
           kpiUnit: kpi?.unit,
           kpiPerformanceGoal: kpi?.performanceGoal
         };
-      });
+
+        const existingExercise = acc.find(e => e.exerciseId === log.exerciseId.toString());
+        if (existingExercise) {
+          existingExercise.logs.push(logEntry);
+        } else {
+          acc.push({
+            exerciseId: log.exerciseId.toString(),
+            exerciseName: exercise?.title,
+            logs: [logEntry]
+          });
+        }
+
+        return acc;
+      }, []);
 
       return {
         ...workoutObj,
@@ -491,8 +501,44 @@ export class WorkoutService {
         templateId: workoutObj.templateId?.toString(),
         traineeEmail: traineeInfo?.email,
         traineeName: traineeInfo?.name,
-        exerciseLogs
+        exercises
       };
     });
+  }
+
+  async addExerciseToWorkout(workoutId: string, exerciseId: string, userId: string) {
+    const workout = await this.workoutModel.findOne({
+      _id: workoutId,
+      traineeId: userId
+    });
+
+    if (!workout) {
+      throw new DomainError('Workout not found or unauthorized', 404);
+    }
+
+    const exerciseResponse = await this.transport.request<
+      { id: string; userId: string },
+      { _id: string; exercise: { _id: string, kpis: { _id: string }[] } }
+    >('exercise.get', {
+      type: 'GET_EXERCISE',
+      payload: { id: exerciseId, userId }
+    });
+
+    if (!exerciseResponse) {
+      throw new DomainError('Exercise not found', 404);
+    }
+
+    const exerciseLogs = await Promise.all(exerciseResponse.exercise.kpis.map(async (kpi) => this.exerciseLogModel.create({
+      workoutId: workout._id,
+      exerciseId: exerciseResponse.exercise._id,
+      kpiId: kpi._id,
+      traineeId: userId,
+      logDate: new Date(),
+      actualValue: 0,
+      duration: 0,
+      status: ExerciseLogStatus.PENDING
+    })));
+
+    return { exerciseLogs };
   }
 } 

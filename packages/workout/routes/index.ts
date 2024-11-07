@@ -85,5 +85,13 @@ export function buildRoutes(container: Container) {
     requireRole([UserRole.TRAINEE, UserRole.COACH]),
     workoutController.getCompletedWorkouts.bind(workoutController)
   );
+
+  router.post(
+    '/workout/:workoutId/exercise',
+    authMiddleware,
+    requireRole([UserRole.TRAINEE, UserRole.COACH]),
+    workoutController.addExerciseToWorkout.bind(workoutController)
+  );
+
   return router;
 } 

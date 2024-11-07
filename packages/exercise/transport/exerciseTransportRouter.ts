@@ -13,7 +13,8 @@ import {
   PerformanceGoal,
   GetExercisesResponseDTO,
   GetTemplateByIdResponseDTO,
-  ExerciseWithKPIsDTO
+  ExerciseWithKPIsDTO,
+  GetExerciseByIdResponseDTO
 } from '../types';
 
 interface CreateExercisePayload {
@@ -129,6 +130,13 @@ export class ExerciseTransportRouter {
       'exercises.get',
       async (payload) => {
         return this.exerciseService.getExercisesWithKPIs(payload.userId);
+      }
+    );
+
+    this.router.register<{ id: string; userId: string }, GetExerciseByIdResponseDTO>(
+      'exercise.get',
+      async (payload) => {
+        return this.exerciseService.getExerciseById(payload.id, payload.userId);
       }
     );
 

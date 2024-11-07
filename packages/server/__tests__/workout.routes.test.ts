@@ -15,7 +15,7 @@ import { TrainingTemplate } from '../../exercise/models/TrainingTemplate';
 import { KPI } from '../../exercise/models/KPI';
 import { ExerciseLog } from '../../workout/models/ExerciseLog';
 import { SharedResource } from '../../exercise/models/SharedResource';
-import { ResourceType } from '../../exercise/types';
+import { PerformanceGoal, ResourceType } from '../../exercise/types';
 import { CoachTrainee } from '../../auth/models/CoachTrainee';
 
 describe('Workout Routes', () => {
@@ -414,13 +414,39 @@ describe('Workout Routes', () => {
 
   describe('GET /workout/workout/:id', () => {
     let workout: any;
+    let exercise: any;
+    let kpi: any;
 
     beforeEach(async () => {
+      exercise = await Exercise.create({
+        title: 'Test Exercise',
+        description: 'Test Description',
+        media: ['https://example.com/test.mp4'],
+        createdBy: coach._id
+      });
+
+      kpi = await KPI.create({
+        exerciseId: exercise._id,
+        goalValue: 10,
+        unit: 'repetitions',
+        performanceGoal: 'maximize'
+      });
+
       workout = await Workout.create({
         name: "Workout",
         traineeId: trainee._id,
         startTimestamp: new Date(),
         status: WorkoutStatus.PLANNED
+      });
+
+      await ExerciseLog.create({
+        logDate: new Date(),
+        workoutId: workout._id,
+        exerciseId: exercise._id,
+        kpiId: kpi._id,
+        traineeId: trainee._id,
+        status: ExerciseLogStatus.PENDING,
+        actualValue: 0
       });
     });
 
@@ -481,6 +507,38 @@ describe('Workout Routes', () => {
 
       expect(response.status).toBe(404);
       expect(response.body.error.message).toBe('Workout not found or unauthorized');
+    });
+
+    it('should return enriched workout payload', async () => {
+      const response = await request(app)
+        .get(`/workout/workout/${workout._id}`)
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: 'Workout retrieved successfully',
+          payload: {
+            workout: expect.objectContaining({
+              _id: workout._id.toString(),
+              traineeId: trainee._id.toString(),
+              status: WorkoutStatus.PLANNED,
+              exercises: expect.arrayContaining([
+                expect.objectContaining({
+                  exerciseId: exercise._id.toString(),
+                  logs: expect.arrayContaining([
+                    expect.objectContaining({
+                      kpiId: kpi._id.toString(),
+                      status: ExerciseLogStatus.PENDING,
+                    })
+                  ])
+                })
+              ])
+            })
+          }
+        }
+      });
     });
   });
 
@@ -683,6 +741,59 @@ describe('Workout Routes', () => {
 
       expect(response.status).toBe(403);
       expect(response.body.error.message).toBe('Unauthorized to access trainee workouts');
+    });
+  });
+
+  describe('POST /workout/:workoutId/exercise', () => {
+    let workout: any;
+    let exercise: any;
+
+    beforeEach(async () => {
+      workout = await Workout.create({
+        traineeId: trainee._id,
+        name: "Workout",
+        startTimestamp: new Date(),
+        status: WorkoutStatus.IN_PROGRESS
+      });
+
+      exercise = await Exercise.create({
+        title: 'Test Exercise',
+        description: 'Test Description',
+        media: ['https://example.com/test.mp4'],
+        createdBy: coach._id
+      });
+      // Add kpi to exercise
+      await KPI.create({
+        exerciseId: exercise._id,
+        name: 'Test KPI',
+        unit: 'Test Unit',
+        goalValue: 10,
+        performanceGoal: PerformanceGoal.MAXIMIZE
+      })
+      // Add exercise to trainee
+      await SharedResource.create({
+        resourceId: exercise._id,
+        resourceType: ResourceType.EXERCISE,
+        sharedById: coach._id,
+        sharedWithId: trainee._id
+      });
+      
+    });
+
+    it('should add an exercise to a workout and create an empty log', async () => {
+      const response = await request(app)
+        .post(`/workout/workout/${workout._id}/exercise`)
+        .set('Authorization', `Bearer ${traineeToken}`)
+        .send({ exerciseId: exercise._id });
+
+      expect(response.status).toBe(201);
+      expect(response.body.status).toBe('success');
+      expect(response.body.data.payload.exerciseLogs).toHaveLength(1);
+      expect(response.body.data.payload.exerciseLogs[0]).toMatchObject({
+        workoutId: workout._id.toString(),
+        exerciseId: exercise._id.toString(),
+        status: ExerciseLogStatus.PENDING
+      });
     });
   });
 });

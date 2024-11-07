@@ -54,7 +54,6 @@ export interface CreateExerciseLogDTO {
   workoutId: string;
   exerciseId: string;
   actualValue: number;
-  duration: number;
   notes?: string;
   media?: string[];
   userId: string;
@@ -73,19 +72,39 @@ export interface UpdateWorkoutDTO {
 
 export interface UpdateExerciseLogDTO {
   actualValue?: number;
-  duration?: number;
   status?: ExerciseLogStatus;
   notes?: string;
   media?: string[];
   userId: string;
 }
+export interface ExerciseLogDTO {
+  id: string;
+  workoutId: string;
+  exerciseId: string;
+  kpiId: string;
+  traineeId: string;
+  logDate: Date;
+  actualValue: number;
+  status: ExerciseLogStatus;
+  notes?: string;
+  media?: string[];
+}
+
+export interface EnrichedExerciseLogDTO extends ExerciseLogDTO {
+  exerciseName?: string;
+  kpiUnit?: string;
+  kpiPerformanceGoal?: number;
+}
 
 export interface EnrichedWorkoutDTO extends WorkoutDTO {
   traineeEmail?: string;
   traineeName?: string;
-  exerciseName?: string;
-  kpiUnit?: string;
-  kpiPerformanceGoal?: number;
+  exerciseLogs: EnrichedExerciseLogDTO[];
+  exercises: {
+    exerciseId: string;
+    exerciseName: string;
+    logs: EnrichedExerciseLogDTO[];
+  }[];
 }
 
 export interface GetCompletedWorkoutsResponseDTO {

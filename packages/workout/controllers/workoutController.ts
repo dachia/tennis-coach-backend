@@ -128,4 +128,16 @@ export class WorkoutController {
       createResponse('success', 'Completed workouts retrieved successfully', result)
     );
   }
+
+  async addExerciseToWorkout(req: AuthRequest, res: Response) {
+    const result = await this.workoutService.addExerciseToWorkout(
+      req.params.workoutId,
+      req.body.exerciseId,
+      req.user._id
+    );
+
+    res.status(201).json(
+      createResponse('success', 'Exercise added to workout successfully', result)
+    );
+  }
 } 
