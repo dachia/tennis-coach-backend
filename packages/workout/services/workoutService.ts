@@ -27,6 +27,22 @@ export class WorkoutService {
     private readonly transport: Transport
   ) {}
 
+  private determineWorkoutStatus(startTimestamp: Date): WorkoutStatus {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const workoutDate = new Date(startTimestamp);
+    workoutDate.setHours(0, 0, 0, 0);
+
+    if (workoutDate > today) {
+      return WorkoutStatus.PLANNED;
+    } else if (workoutDate.getTime() === today.getTime()) {
+      return WorkoutStatus.IN_PROGRESS;
+    } else {
+      return WorkoutStatus.COMPLETED;
+    }
+  }
+
   async createWorkout(data: CreateWorkoutDTO) {
     let validatedData;
     try {
@@ -38,10 +54,14 @@ export class WorkoutService {
       throw new DomainError(err.message);
     }
 
+    const startTimestamp = validatedData.startTimestamp || new Date();
+    const status = this.determineWorkoutStatus(startTimestamp);
+
     const workout = await this.workoutModel.create({
       ...validatedData,
+      startTimestamp,
       traineeId: data.userId,
-      status: WorkoutStatus.PLANNED
+      status
     });
 
     if (validatedData.templateId) {
@@ -64,7 +84,7 @@ export class WorkoutService {
               exerciseId: exercise._id,
               kpiId: exercise.kpis[0]._id,
               traineeId: data.userId,
-              logDate: validatedData.workoutDate,
+              logDate: startTimestamp,
               actualValue: 0,
               duration: 0,
               status: ExerciseLogStatus.PENDING
@@ -132,6 +152,11 @@ export class WorkoutService {
       });
     } catch (err: any) {
       throw new DomainError(err.message);
+    }
+
+    // If startTimestamp is being updated, recalculate status
+    if (validatedData.startTimestamp) {
+      validatedData.status = this.determineWorkoutStatus(validatedData.startTimestamp);
     }
 
     const workout = await this.workoutModel.findOneAndUpdate(

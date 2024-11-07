@@ -42,8 +42,7 @@ export interface ProgressComparisonDTO {
 }
 
 export interface CreateWorkoutDTO {
-  workoutDate: Date;
-  startTimestamp: Date;
+  startTimestamp?: Date;
   endTimestamp?: Date;
   templateId?: string;
   notes?: string;

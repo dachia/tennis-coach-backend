@@ -3,7 +3,6 @@ import { WorkoutStatus } from '../types';
 
 export interface IWorkout extends Document {
   traineeId: mongoose.Types.ObjectId;
-  workoutDate: Date;
   startTimestamp: Date;
   endTimestamp?: Date;
   status: WorkoutStatus;
@@ -18,8 +17,11 @@ const workoutSchema = new Schema({
     ref: 'User',
     required: true 
   },
-  workoutDate: { type: Date, required: true },
-  startTimestamp: { type: Date, required: true },
+  startTimestamp: { 
+    type: Date, 
+    required: true,
+    default: Date.now 
+  },
   endTimestamp: { type: Date },
   status: { 
     type: String, 

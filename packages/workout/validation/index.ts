@@ -2,8 +2,7 @@ import * as yup from 'yup';
 import { WorkoutStatus, ExerciseLogStatus } from '../types';
 
 export const createWorkoutSchema = yup.object({
-  workoutDate: yup.date().required('Workout date is required'),
-  startTimestamp: yup.date().required('Start time is required'),
+  startTimestamp: yup.date(),
   endTimestamp: yup.date().when('startTimestamp', {
     is: (startTimestamp: Date) => startTimestamp != null,
     then: (schema) => schema.min(

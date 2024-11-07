@@ -12,6 +12,7 @@ import { createTestContainer } from '../di';
 import { testConfig } from '../config';
 import { bootstrapServer } from '../server';
 import jwt from 'jsonwebtoken';
+import { CoachTrainee } from '../../auth/models/CoachTrainee';
 
 describe("Workout Flow", () => {
   let app: Express;
@@ -61,6 +62,12 @@ describe("Workout Flow", () => {
     // Create tokens
     coachToken = jwt.sign({ sub: coach._id, role: coach.role }, testConfig.jwtSecret);
     traineeToken = jwt.sign({ sub: trainee._id, role: trainee.role }, testConfig.jwtSecret);
+
+    // Create coach-trainee relationship
+    await CoachTrainee.create({
+      coachId: coach._id,
+      traineeId: trainee._id
+    });
 
     // Create test exercise and template
     exercise = await Exercise.create({

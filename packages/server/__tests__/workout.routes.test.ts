@@ -107,9 +107,9 @@ describe('Workout Routes', () => {
 
     it('should create a new workout successfully', async () => {
       const workoutData = {
-        workoutDate: new Date(),
-        startTimestamp: new Date(),
-        endTimestamp: new Date(Date.now() + 3600000),
+        workoutDate: new Date(Date.now() + 86400000),
+        startTimestamp: new Date(Date.now() + 86400000),
+        endTimestamp: new Date(Date.now() + 90000000),
         templateId: template._id,
         notes: 'Test workout',
         media: ['https://example.com/workout.jpg']
@@ -121,20 +121,16 @@ describe('Workout Routes', () => {
         .send(workoutData);
 
       expect(response.status).toBe(201);
-      expect(response.body).toMatchObject({
-        status: 'success',
-        data: {
-          message: expect.any(String),
-          payload: {
-            workout: expect.objectContaining({
-              workoutDate: expect.any(String),
-              startTimestamp: expect.any(String),
-              status: WorkoutStatus.PLANNED
-            })
-          }
-        },
-        error: null,
-        version: expect.any(Number)
+      expect(response.body.status).toBe('success');
+      expect(response.body.error).toBeNull();
+      expect(response.body.data.message).toEqual(expect.any(String));
+      expect(response.body.data.payload.workout).toMatchObject({
+        startTimestamp: expect.any(String),
+        status: WorkoutStatus.PLANNED,
+        templateId: template._id.toString(),
+        traineeId: trainee._id.toString(),
+        notes: workoutData.notes,
+        media: workoutData.media
       });
     });
 
@@ -155,9 +151,9 @@ describe('Workout Routes', () => {
 
     it('should create a workout with exercise logs when template is provided', async () => {
       const workoutData = {
-        workoutDate: new Date(),
-        startTimestamp: new Date(),
-        endTimestamp: new Date(Date.now() + 3600000),
+        workoutDate: new Date(Date.now() + 86400000),
+        startTimestamp: new Date(Date.now() + 86400000),
+        endTimestamp: new Date(Date.now() + 90000000),
         templateId: template._id,
         notes: 'Test workout',
         media: ['https://example.com/workout.jpg']
@@ -175,10 +171,8 @@ describe('Workout Routes', () => {
           message: expect.any(String),
           payload: {
             workout: expect.objectContaining({
-              workoutDate: expect.any(String),
-              startTimestamp: expect.any(String),
               status: WorkoutStatus.PLANNED,
-              templateId: template._id.toString()
+              templateId: template._id.toString(),
             })
           }
         },
@@ -245,6 +239,45 @@ describe('Workout Routes', () => {
         .send(workoutData);
 
       expect(response.status).toBe(400);
+    });
+
+    it('should set correct status based on startTimestamp', async () => {
+      const yesterday = new Date(Date.now() - 86400000);
+      const tomorrow = new Date(Date.now() + 86400000);
+      const today = new Date();
+
+      // Past workout
+      const pastWorkout = await request(app)
+        .post('/workout/workout')
+        .set('Authorization', `Bearer ${traineeToken}`)
+        .send({ 
+          workoutDate: yesterday,
+          startTimestamp: yesterday 
+        });
+
+      expect(pastWorkout.body.data.payload.workout.status).toBe(WorkoutStatus.COMPLETED);
+
+      // Today's workout
+      const todayWorkout = await request(app)
+        .post('/workout/workout')
+        .set('Authorization', `Bearer ${traineeToken}`)
+        .send({ 
+          workoutDate: today,
+          startTimestamp: today 
+        });
+
+      expect(todayWorkout.body.data.payload.workout.status).toBe(WorkoutStatus.IN_PROGRESS);
+
+      // Future workout
+      const futureWorkout = await request(app)
+        .post('/workout/workout')
+        .set('Authorization', `Bearer ${traineeToken}`)
+        .send({ 
+          workoutDate: tomorrow,
+          startTimestamp: tomorrow 
+        });
+
+      expect(futureWorkout.body.data.payload.workout.status).toBe(WorkoutStatus.PLANNED);
     });
   });
 
