@@ -77,4 +77,20 @@ export class AuthController {
       createResponse('success', 'Relationship check completed', { hasRelationship })
     );
   }
+
+  async getUsersByIds(req: AuthRequest, res: Response) {
+    const userIds = req.query.ids as string[];
+    
+    if (!Array.isArray(userIds)) {
+      res.status(400).json(
+        createResponse('fail', 'ids must be an array of strings')
+      );
+      return;
+    }
+
+    const users = await this.authService.getUsersByIds(userIds);
+    res.json(
+      createResponse('success', 'Users retrieved successfully', { users })
+    );
+  }
 } 

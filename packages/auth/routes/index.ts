@@ -59,5 +59,11 @@ export function buildRoutes(container: Container) {
     authController.checkCoachTraineeRelationship.bind(authController)
   );
 
+  router.get(
+    '/users',
+    authMiddleware,
+    authController.getUsersByIds.bind(authController)
+  );
+
   return router;
 }

@@ -203,4 +203,19 @@ export class AuthService {
     
     return !!relationship;
   }
+
+  async getUsersByIds(userIds: string[]): Promise<{ users: UserResponseDTO[] }> {
+    const users = await this.userModel
+      .find({ _id: { $in: userIds } })
+      .select('name email _id role') as UserResponseDTO[];
+
+    return {
+      users: users.map(user => ({
+        _id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }))
+    };
+  }
 } 

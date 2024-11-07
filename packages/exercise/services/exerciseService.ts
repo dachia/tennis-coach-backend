@@ -69,7 +69,6 @@ export class ExerciseService {
       .findById(exercise._id)
       .populate('kpis')
       .exec();
-    console.log(JSON.stringify(populatedExercise, null, 2));
 
     await this.eventService.publishDomainEvent({
       eventName: 'exercise.created',
@@ -690,5 +689,46 @@ export class ExerciseService {
         }))
       }
     };
+  }
+
+  async getExercisesByIds(exerciseIds: string[], userId: string): Promise<ExerciseWithKPIsDTO[]> {
+    // Get exercises that are either owned by user or shared with user
+    const sharedResources = await this.sharedResourceModel
+      .find({
+        resourceId: { $in: exerciseIds },
+        sharedWithId: userId,
+        resourceType: ResourceType.EXERCISE
+      });
+
+    const sharedExerciseIds = sharedResources.map(share => share.resourceId.toString());
+
+    const exercises = await this.exerciseModel
+      .find({
+        _id: { $in: exerciseIds },
+        $or: [
+          { createdBy: userId },
+          { _id: { $in: sharedExerciseIds } }
+        ]
+      })
+      .populate('kpis')
+      .lean();
+
+    return exercises.map(exercise => ({
+      _id: exercise._id.toString(),
+      title: exercise.title,
+      description: exercise.description,
+      media: exercise.media,
+      createdBy: exercise.createdBy.toString(),
+      isShared: exercise.createdBy.toString() !== userId,
+      kpis: exercise.kpis!.map(kpi => ({
+        _id: kpi._id.toString(),
+        goalValue: kpi.goalValue,
+        unit: kpi.unit,
+        performanceGoal: kpi.performanceGoal,
+        exerciseId: kpi.exerciseId.toString()
+      })),
+      createdAt: exercise.createdAt,
+      updatedAt: exercise.updatedAt
+    }));
   }
 }

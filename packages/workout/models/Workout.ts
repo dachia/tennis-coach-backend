@@ -45,7 +45,8 @@ const workoutSchema = new Schema({
   media: [{ type: String }]
 }, { 
   timestamps: true,
-  toJSON: { virtuals: true }
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
 workoutSchema.virtual('exerciseLogs', {

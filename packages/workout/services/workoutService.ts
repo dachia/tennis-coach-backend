@@ -1,4 +1,4 @@
-import { Workout } from '../models/Workout';
+import { IWorkout, Workout } from '../models/Workout';
 import { ExerciseLog } from '../models/ExerciseLog';
 import { EventService } from '../../shared';
 import { DomainError } from '../../shared/errors/DomainError';
@@ -285,7 +285,8 @@ export class WorkoutService {
       }
     }
 
-    return { workout };
+    const [enrichedWorkout] = await this.enrichWorkoutResponse([workout], userId, true);
+    return { workout: enrichedWorkout };
   }
 
   async getWorkoutsByDateRange(params: {
@@ -337,7 +338,8 @@ export class WorkoutService {
       .populate('exerciseLogs')
       .sort({ startTimestamp: 1 });
 
-    return { workouts };
+    const enrichedWorkouts = await this.enrichWorkoutResponse(workouts, userId, true);
+    return { workouts: enrichedWorkouts };
   }
 
   async getWorkoutsByDay(params: {
@@ -362,13 +364,11 @@ export class WorkoutService {
   }
 
   async getCompletedWorkouts(userId: string): Promise<GetCompletedWorkoutsResponseDTO> {
-    const query = {
-      status: WorkoutStatus.COMPLETED,
-      traineeId: userId
-    };
-
     let workouts = await this.workoutModel
-      .find(query)
+      .find({
+        status: WorkoutStatus.COMPLETED,
+        traineeId: userId
+      })
       .populate('exerciseLogs')
       .sort({ startTimestamp: -1 });
 
@@ -379,16 +379,11 @@ export class WorkoutService {
         { trainees: { _id: string; email: string; name: string }[] }
       >('auth.coach.trainees', {
         type: 'GET_TRAINEES',
-        payload: {
-          coachId: userId
-        }
+        payload: { coachId: userId }
       });
 
       if (coachTraineeResponse.trainees.length > 0) {
         const traineeIds = coachTraineeResponse.trainees.map(trainee => trainee._id);
-        const traineeMap = new Map(
-          coachTraineeResponse.trainees.map(trainee => [trainee._id, trainee])
-        );
 
         const traineeWorkouts = await this.workoutModel
           .find({
@@ -398,46 +393,102 @@ export class WorkoutService {
           .populate('exerciseLogs')
           .sort({ startTimestamp: -1 });
 
-        // Add trainee information to each workout
-        const enrichedTraineeWorkouts = traineeWorkouts.map(workout => {
-          const traineeInfo = traineeMap.get(workout.traineeId.toString());
-          const workoutObj = workout.toObject();
-          const enrichedWorkout: EnrichedWorkoutDTO = {
-            ...workoutObj,
-            _id: workoutObj._id.toString(), // Convert ObjectId to string
-            traineeId: workout.traineeId.toString(), // Convert ObjectId to string
-            templateId: workoutObj.templateId?.toString(), // Convert ObjectId to string
-            traineeEmail: traineeInfo?.email,
-            traineeName: traineeInfo?.name
-          };
-          return enrichedWorkout;
-        });
-
-        const allWorkouts = [...workouts, ...enrichedTraineeWorkouts].sort((a, b) =>
-          b.startTimestamp.getTime() - a.startTimestamp.getTime()
-        );
-
-        return {
-          workouts: allWorkouts.map(workout => ({
-            ...workout,
-            _id: workout._id.toString(),
-            traineeId: workout.traineeId.toString(),
-            templateId: workout.templateId?.toString()
-          }))
-        };
+        workouts = [...workouts, ...traineeWorkouts];
       }
     } catch (err) {
-      // If error occurs while fetching trainees, just return user's own workouts
       console.log('Error fetching trainees:', err);
     }
 
-    return {
-      workouts: workouts.map(workout => ({
-        ...workout,
-        _id: workout._id.toString(),
+    const enrichedWorkouts = await this.enrichWorkoutResponse(workouts, userId, true);
+    return { workouts: enrichedWorkouts };
+  }
+
+  private async enrichWorkoutResponse(workouts: IWorkout[], userId: string, includeTraineeInfo: boolean = false): Promise<EnrichedWorkoutDTO[]> {
+    if (!workouts.length) return [];
+
+    let traineeMap = new Map();
+    // Get all exercise logs and their KPIs
+    let exerciseMap = new Map();
+    try {
+      const exerciseIds = workouts
+        .flatMap(w => w.exerciseLogs)
+        .filter(log => log)
+        .map(log => log.exerciseId.toString());
+
+      if (exerciseIds.length > 0) {
+        const exerciseResponse = await this.transport.request<
+          { ids: string[]; userId: string },
+          {
+            _id: string;
+            title: string;
+            description: string;
+            media: string[];
+            createdBy: string;
+            isShared?: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+            kpis: {
+              _id: string;
+              goalValue: number;
+              unit: string;
+              performanceGoal: string;
+              exerciseId: string;
+            }[]
+          }[]
+        >('exercise.getByIds', {
+          type: 'GET_EXERCISES_BY_IDS',
+          payload: { ids: exerciseIds, userId }
+        });
+
+        exerciseMap = new Map(
+          exerciseResponse.map(exercise => [exercise._id, exercise])
+        );
+      }
+    } catch (err) {
+      console.log('Error fetching exercise information:', err);
+    }
+    if (includeTraineeInfo) {
+      try {
+        // Get all unique trainee IDs
+        const traineeIds = [...new Set(workouts.map(w => w.traineeId.toString()))];
+
+        // Fetch trainee information in bulk
+        const traineeResponse = await this.transport.request<
+          { ids: string[] },
+          { users: { _id: string; email: string; name: string }[] }
+        >('auth.users', {
+          type: 'GET_USERS_BY_IDS',
+          payload: { ids: traineeIds }
+        });
+
+        traineeMap = new Map(
+          traineeResponse.users.map(user => [user._id, user])
+        );
+      } catch (err) {
+        console.log('Error fetching trainee information:', err);
+      }
+    }
+
+    return workouts.map(workout => {
+      const workoutObj = workout.toObject ? workout.toObject() : workout;
+      const traineeInfo = traineeMap.get(workout.traineeId.toString());
+      const exerciseLogs = workoutObj.exerciseLogs.map((log: any) => {
+        const exercise = exerciseMap.get(log.exerciseId.toString());
+        return {
+          ...log,
+          exercise
+        };
+      });
+
+      return {
+        ...workoutObj,
+        _id: workoutObj._id.toString(),
         traineeId: workout.traineeId.toString(),
-        templateId: workout.templateId?.toString()
-      }))
-    };
+        templateId: workoutObj.templateId?.toString(),
+        traineeEmail: traineeInfo?.email,
+        traineeName: traineeInfo?.name,
+        exerciseLogs
+      };
+    });
   }
 } 

@@ -1,7 +1,7 @@
 import { TransportRouter } from '../../shared/transport/transportRouter';
 import { Transport } from '../../shared/transport/transport';
 import { AuthService } from '../services/authService';
-import { LoginDTO, RegisterDTO } from '../types';
+import { LoginDTO, RegisterDTO, UserResponseDTO } from '../types';
 
 export class AuthTransportRouter {
   private router: TransportRouter;
@@ -73,6 +73,11 @@ export class AuthTransportRouter {
         );
         return { hasRelationship };
       }
+    );
+
+    this.router.register<{ ids: string[] }, { users: UserResponseDTO[] }>(
+      'auth.users',
+      async (payload) => this.authService.getUsersByIds(payload.ids)
     );
   }
 

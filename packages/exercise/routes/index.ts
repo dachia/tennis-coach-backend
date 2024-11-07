@@ -111,5 +111,12 @@ export function buildRoutes(container: Container) {
     exerciseController.getTemplate.bind(exerciseController)
   );
 
+  // Add this route after existing routes
+  router.post(
+    '/exercises/by-ids',
+    authMiddleware,
+    exerciseController.getExercisesByIds.bind(exerciseController)
+  );
+
   return router;
 } 

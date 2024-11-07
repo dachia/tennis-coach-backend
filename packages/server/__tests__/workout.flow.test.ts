@@ -163,12 +163,13 @@ describe("Complete Workout Flow", () => {
       .set('Authorization', `Bearer ${traineeToken}`);
 
     expect(workoutDetailsResponse.status).toBe(200);
+    console.log(JSON.stringify(workoutDetailsResponse.body, null, 2));
     const exerciseLog = workoutDetailsResponse.body.data.payload.workout.exerciseLogs[0];
+
 
     // 6. Trainee logs KPI values and completes the workout
     const logUpdateData = {
       actualValue: 12,
-      duration: 300,
       status: ExerciseLogStatus.COMPLETED
     };
 
