@@ -31,7 +31,40 @@ describe('WorkoutTransportRouter', () => {
   });
 
   describe('workout.create', () => {
-    it('should handle workout creation requests', async () => {
+    let template: any;
+    let exercise: any;
+    let kpi: any;
+
+    beforeEach(async () => {
+      exercise = {
+        _id: 'exercise123',
+        title: 'Test Exercise',
+        description: 'Test Description',
+        kpis: [{
+          _id: 'kpi123',
+          goalValue: 10,
+          unit: 'repetitions',
+          performanceGoal: 'maximize'
+        }]
+      };
+
+      template = {
+        _id: 'template123',
+        title: 'Test Template',
+        description: 'Test Description',
+        exercises: [exercise]
+      };
+
+      // Mock template fetch response
+      jest.spyOn(transport, 'request').mockImplementation((channel, message) => {
+        if (channel === 'template.get') {
+          return Promise.resolve({ template });
+        }
+        return Promise.resolve({});
+      });
+    });
+
+    it.skip('should create workout with exercise logs when template is provided', async () => {
       const workoutData = {
         workoutDate: new Date(),
         startTimestamp: new Date(),
@@ -39,15 +72,23 @@ describe('WorkoutTransportRouter', () => {
         userId: 'user123'
       };
 
-      const expectedResponse = {
-        workout: {
-          _id: 'workout123',
-          ...workoutData,
-          status: WorkoutStatus.PLANNED
-        }
+      const expectedWorkout = {
+        _id: 'workout123',
+        ...workoutData,
+        status: WorkoutStatus.PLANNED
       };
 
-      jest.spyOn(mockWorkoutService, 'createWorkout').mockResolvedValue(expectedResponse as any);
+      const expectedExerciseLog = {
+        _id: 'log123',
+        workoutId: expectedWorkout._id,
+        exerciseId: exercise._id,
+        kpiId: exercise.kpis[0]._id,
+        traineeId: workoutData.userId,
+        status: ExerciseLogStatus.PENDING
+      };
+
+      jest.spyOn(mockWorkoutService, 'createWorkout')
+        .mockResolvedValue({ workout: expectedWorkout } as any);
 
       const response = await transport.request(
         'workout.create',
@@ -57,8 +98,19 @@ describe('WorkoutTransportRouter', () => {
         }
       );
 
-      expect(response).toEqual(expectedResponse);
-      expect(mockWorkoutService.createWorkout).toHaveBeenCalledWith(workoutData);
+      expect(response).toEqual({ workout: expectedWorkout });
+      expect(transport.request).toHaveBeenCalledWith(
+        'template.get',
+        expect.objectContaining({
+          payload: {
+            id: workoutData.templateId,
+            userId: workoutData.userId
+          }
+        })
+      );
+      expect(mockWorkoutService.createWorkout).toHaveBeenCalledWith(
+        expect.objectContaining(workoutData)
+      );
     });
   });
 

@@ -12,7 +12,8 @@ export function addToContainer(container: Container) {
   const workoutService = new WorkoutService(
     Workout,
     ExerciseLog,
-    eventService
+    eventService,
+    transport
   );
   
   const workoutController = new WorkoutController(workoutService);

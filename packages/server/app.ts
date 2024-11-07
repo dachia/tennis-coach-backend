@@ -11,6 +11,10 @@ import { buildRoutes as buildWorkoutRoutes } from '../workout/routes';
 import { buildRoutes as buildReportingRoutes } from '../reporting/routes';
 import { buildRoutes as buildMediaRoutes } from '../media/routes';
 import { connectToDatabase } from '../shared/utils/db';
+import { AuthTransportRouter } from '../auth/transport/authTransportRouter';
+import { ExerciseTransportRouter } from '../exercise/transport/exerciseTransportRouter';
+import { WorkoutTransportRouter } from '../workout/transport/workoutTransportRouter';
+import { ReportingTransportRouter } from '../reporting/transport/reportingTransportRouter';
 
 interface AppConfig {
   mongoUri: string;
@@ -36,6 +40,19 @@ export async function bootstrapApp(config: AppConfig, container: Container) {
   app.use('/workout', buildWorkoutRoutes(container));
   app.use('/reporting', buildReportingRoutes(container));
   app.use('/media', buildMediaRoutes(container));
+  
+  // Start transport listeners
+  const authTransportRouter = container.get<AuthTransportRouter>('AuthTransportRouter');
+  const exerciseTransportRouter = container.get<ExerciseTransportRouter>('ExerciseTransportRouter');
+  const workoutTransportRouter = container.get<WorkoutTransportRouter>('WorkoutTransportRouter');
+  const reportingTransportRouter = container.get<ReportingTransportRouter>('ReportingTransportRouter');
+  
+  await Promise.all([
+    authTransportRouter.listen(),
+    exerciseTransportRouter.listen(),
+    workoutTransportRouter.listen(),
+    reportingTransportRouter.listen()
+  ]);
 
   return app;
 }

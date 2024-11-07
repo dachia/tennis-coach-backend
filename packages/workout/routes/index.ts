@@ -18,14 +18,14 @@ export function buildRoutes(container: Container) {
   router.post(
     '/workout',
     authMiddleware,
-    requireRole([UserRole.TRAINEE]),
+    requireRole([UserRole.TRAINEE, UserRole.COACH]),
     workoutController.createWorkout.bind(workoutController)
   );
 
   router.put(
     '/workout/:id',
     authMiddleware,
-    requireRole([UserRole.TRAINEE]),
+    requireRole([UserRole.TRAINEE, UserRole.COACH]),
     workoutController.updateWorkout.bind(workoutController)
   );
 
@@ -33,28 +33,28 @@ export function buildRoutes(container: Container) {
   router.post(
     '/log',
     authMiddleware,
-    requireRole([UserRole.TRAINEE]),
+    requireRole([UserRole.TRAINEE, UserRole.COACH]),
     workoutController.createExerciseLog.bind(workoutController)
   );
 
   router.put(
     '/log/:id',
     authMiddleware,
-    requireRole([UserRole.TRAINEE]),
+    requireRole([UserRole.TRAINEE, UserRole.COACH]),
     workoutController.updateExerciseLog.bind(workoutController)
   );
 
   router.get(
     '/log/:id',
     authMiddleware,
-    requireRole([UserRole.TRAINEE]),
+    requireRole([UserRole.TRAINEE, UserRole.COACH]),
     workoutController.getExerciseLog.bind(workoutController)
   );
 
   router.get(
     '/logs',
     authMiddleware,
-    requireRole([UserRole.TRAINEE]),
+    requireRole([UserRole.TRAINEE, UserRole.COACH]),
     workoutController.getExerciseLogsByDateRange.bind(workoutController)
   );
 

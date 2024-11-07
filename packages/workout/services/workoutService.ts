@@ -16,12 +16,15 @@ import {
   updateWorkoutSchema,
   updateExerciseLogSchema
 } from '../validation';
+import { Transport } from '../../shared';
+import { GetTemplateByIdResponseDTO } from '../../exercise/types';
 
 export class WorkoutService {
   constructor(
     private readonly workoutModel: typeof Workout,
     private readonly exerciseLogModel: typeof ExerciseLog,
     private readonly eventService: EventService,
+    private readonly transport: Transport
   ) {}
 
   async createWorkout(data: CreateWorkoutDTO) {
@@ -40,6 +43,39 @@ export class WorkoutService {
       traineeId: data.userId,
       status: WorkoutStatus.PLANNED
     });
+
+    if (validatedData.templateId) {
+      try {
+        const templateResponse = await this.transport.request<
+          { id: string; userId: string },
+          GetTemplateByIdResponseDTO
+        >('template.get', {
+          type: 'GET_TEMPLATE',
+          payload: {
+            id: validatedData.templateId,
+            userId: data.userId
+          }
+        });
+
+        const exerciseLogs = await Promise.all(
+          templateResponse.template.exercises.map(exercise => 
+            this.exerciseLogModel.create({
+              workoutId: workout._id,
+              exerciseId: exercise._id,
+              kpiId: exercise.kpis[0]._id,
+              traineeId: data.userId,
+              logDate: validatedData.workoutDate,
+              actualValue: 0,
+              duration: 0,
+              status: ExerciseLogStatus.PENDING
+            })
+          )
+        );
+      } catch (err: any) {
+        await this.workoutModel.findByIdAndDelete(workout._id);
+        throw new DomainError('Failed to fetch template or create exercise logs');
+      }
+    }
 
     await this.eventService.publishDomainEvent({
       eventName: 'workout.created',

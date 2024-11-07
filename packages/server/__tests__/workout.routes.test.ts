@@ -13,6 +13,9 @@ import { WorkoutStatus, ExerciseLogStatus } from '../../workout/types';
 import { Exercise } from '../../exercise/models/Exercise';
 import { TrainingTemplate } from '../../exercise/models/TrainingTemplate';
 import { KPI } from '../../exercise/models/KPI';
+import { ExerciseLog } from '../../workout/models/ExerciseLog';
+import { SharedResource } from '../../exercise/models/SharedResource';
+import { ResourceType } from '../../exercise/types';
 
 describe('Workout Routes', () => {
   let app: Express;
@@ -67,20 +70,38 @@ describe('Workout Routes', () => {
 
   describe('POST /workout/workout', () => {
     let template: any;
+    let exercise: any;
+    let kpi: any;
 
     beforeEach(async () => {
-      const exercise = await Exercise.create({
+      // Create exercise with KPI
+      exercise = await Exercise.create({
         title: 'Test Exercise',
         description: 'Test Description',
         media: ['https://example.com/test.mp4'],
         createdBy: coach._id
       });
 
+      kpi = await KPI.create({
+        exerciseId: exercise._id,
+        goalValue: 10,
+        unit: 'repetitions',
+        performanceGoal: 'maximize'
+      });
+
+      // Create template with exercise
       template = await TrainingTemplate.create({
         title: 'Test Template',
         description: 'Test Description',
-        exercises: [exercise._id],
+        exerciseIds: [exercise._id],
         createdBy: coach._id
+      });
+      // Share template with trainee
+      await SharedResource.create({
+        resourceId: template._id,
+        resourceType: ResourceType.TEMPLATE,
+        sharedById: coach._id,
+        sharedWithId: trainee._id
       });
     });
 
@@ -131,10 +152,15 @@ describe('Workout Routes', () => {
       expect(response.status).toBe(400);
     });
 
-    it('should return 403 when coach tries to create workout', async () => {
+
+    it('should create a workout with exercise logs when template is provided', async () => {
       const workoutData = {
         workoutDate: new Date(),
-        startTimestamp: new Date()
+        startTimestamp: new Date(),
+        endTimestamp: new Date(Date.now() + 3600000),
+        templateId: template._id,
+        notes: 'Test workout',
+        media: ['https://example.com/workout.jpg']
       };
 
       const response = await request(app)
@@ -142,7 +168,83 @@ describe('Workout Routes', () => {
         .set('Authorization', `Bearer ${coachToken}`)
         .send(workoutData);
 
-      expect(response.status).toBe(403);
+      expect(response.status).toBe(201);
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: expect.any(String),
+          payload: {
+            workout: expect.objectContaining({
+              workoutDate: expect.any(String),
+              startTimestamp: expect.any(String),
+              status: WorkoutStatus.PLANNED,
+              templateId: template._id.toString()
+            })
+          }
+        },
+        error: null,
+        version: expect.any(Number)
+      });
+
+      // Verify exercise logs were created
+      const workout = await Workout.findById(response.body.data.payload.workout._id).lean();
+      const exerciseLogs = await ExerciseLog.find({ workoutId: workout!._id }).lean();
+
+      expect(exerciseLogs).toHaveLength(1); // One exercise in template
+      expect(exerciseLogs[0]).toMatchObject({
+        workoutId: workout!._id,
+        exerciseId: exercise._id,
+        kpiId: kpi._id,
+        traineeId: coach._id,
+        status: ExerciseLogStatus.PENDING,
+        actualValue: 0,
+        duration: 0
+      });
+    });
+
+    it('should fail gracefully when template is not found', async () => {
+      const workoutData = {
+        workoutDate: new Date(),
+        startTimestamp: new Date(),
+        templateId: new mongoose.Types.ObjectId(), // Non-existent template
+        notes: 'Test workout'
+      };
+
+      const response = await request(app)
+        .post('/workout/workout')
+        .set('Authorization', `Bearer ${traineeToken}`)
+        .send(workoutData);
+
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBeTruthy();
+
+      // Verify no workout was created
+      const workouts = await Workout.find({ traineeId: trainee._id });
+      expect(workouts).toHaveLength(0);
+    });
+
+    it('should handle template without exercises gracefully', async () => {
+      // Create template without exercises
+      const emptyTemplate = await TrainingTemplate.create({
+        title: 'Empty Template',
+        description: 'Template without exercises',
+        exerciseIds: [],
+        createdBy: coach._id
+      });
+
+      const workoutData = {
+        workoutDate: new Date(),
+        startTimestamp: new Date(),
+        templateId: emptyTemplate._id,
+        notes: 'Test workout'
+      };
+
+      const response = await request(app)
+        .post('/workout/workout')
+        .set('Authorization', `Bearer ${traineeToken}`)
+        .send(workoutData);
+
+      expect(response.status).toBe(400);
     });
   });
 
@@ -220,7 +322,7 @@ describe('Workout Routes', () => {
 
       const response = await request(app)
         .post('/workout/log')
-        .set('Authorization', `Bearer ${traineeToken}`)
+        .set('Authorization', `Bearer ${coachToken}`)
         .send(logData);
 
       expect(response.status).toBe(404);
