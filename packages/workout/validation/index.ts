@@ -10,6 +10,7 @@ export const createWorkoutSchema = yup.object({
       'End time must be after start time'
     )
   }),
+  name: yup.string().required('Workout name is required').trim(),
   templateId: yup.string(),
   notes: yup.string(),
   media: yup.array().of(yup.string().url('Media must be valid URLs'))
@@ -20,9 +21,6 @@ export const createExerciseLogSchema = yup.object({
   exerciseId: yup.string().required('Exercise ID is required'),
   kpiId: yup.string().required('KPI ID is required'),
   actualValue: yup.number().required('Actual value is required'),
-  duration: yup.number()
-    .min(0, 'Duration must be positive')
-    .required('Duration is required'),
   notes: yup.string(),
   media: yup.array().of(yup.string().url('Media must be valid URLs'))
 });
@@ -37,6 +35,7 @@ export const updateWorkoutSchema = yup.object({
       'End time must be after start time'
     )
   }),
+  name: yup.string().trim(),
   status: yup.string().oneOf(Object.values(WorkoutStatus)),
   notes: yup.string(),
   media: yup.array().of(yup.string().url('Media must be valid URLs'))
@@ -44,7 +43,6 @@ export const updateWorkoutSchema = yup.object({
 
 export const updateExerciseLogSchema = yup.object({
   actualValue: yup.number(),
-  duration: yup.number().min(0, 'Duration must be positive'),
   status: yup.string().oneOf(Object.values(ExerciseLogStatus)),
   notes: yup.string(),
   media: yup.array().of(yup.string().url('Media must be valid URLs'))

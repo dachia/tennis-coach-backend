@@ -8,7 +8,6 @@ export interface IExerciseLog extends Document {
   traineeId: mongoose.Types.ObjectId;
   logDate: Date;
   actualValue: number;
-  duration: number;
   status: ExerciseLogStatus;
   notes?: string;
   media?: string[];
@@ -37,7 +36,6 @@ const exerciseLogSchema = new Schema({
   },
   logDate: { type: Date, required: true },
   actualValue: { type: Number, required: true },
-  duration: { type: Number, required: true },
   status: { 
     type: String, 
     enum: Object.values(ExerciseLogStatus),

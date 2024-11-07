@@ -145,6 +145,7 @@ describe("Complete Workout Flow", () => {
     const workoutData = {
       templateId,
       startTimestamp: new Date(),
+      name: 'Test Workout',
       notes: 'First workout with template'
     };
 

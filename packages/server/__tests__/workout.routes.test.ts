@@ -111,6 +111,7 @@ describe('Workout Routes', () => {
         workoutDate: new Date(Date.now() + 86400000),
         startTimestamp: new Date(Date.now() + 86400000),
         endTimestamp: new Date(Date.now() + 90000000),
+        name: 'Test Workout',
         templateId: template._id,
         notes: 'Test workout',
         media: ['https://example.com/workout.jpg']
@@ -152,6 +153,7 @@ describe('Workout Routes', () => {
 
     it('should create a workout with exercise logs when template is provided', async () => {
       const workoutData = {
+        name: 'Test Workout',
         workoutDate: new Date(Date.now() + 86400000),
         startTimestamp: new Date(Date.now() + 86400000),
         endTimestamp: new Date(Date.now() + 90000000),
@@ -193,12 +195,12 @@ describe('Workout Routes', () => {
         traineeId: coach._id,
         status: ExerciseLogStatus.PENDING,
         actualValue: 0,
-        duration: 0
       });
     });
 
     it('should fail gracefully when template is not found', async () => {
       const workoutData = {
+        name: 'Test Workout',
         workoutDate: new Date(),
         startTimestamp: new Date(),
         templateId: new mongoose.Types.ObjectId(), // Non-existent template
@@ -228,6 +230,7 @@ describe('Workout Routes', () => {
       });
 
       const workoutData = {
+        name: 'Test Workout',
         workoutDate: new Date(),
         startTimestamp: new Date(),
         templateId: emptyTemplate._id,
@@ -253,7 +256,8 @@ describe('Workout Routes', () => {
         .set('Authorization', `Bearer ${traineeToken}`)
         .send({ 
           workoutDate: yesterday,
-          startTimestamp: yesterday 
+          startTimestamp: yesterday,
+          name: 'Test Workout'
         });
 
       expect(pastWorkout.body.data.payload.workout.status).toBe(WorkoutStatus.COMPLETED);
@@ -264,7 +268,8 @@ describe('Workout Routes', () => {
         .set('Authorization', `Bearer ${traineeToken}`)
         .send({ 
           workoutDate: today,
-          startTimestamp: today 
+          startTimestamp: today,
+          name: 'Test Workout'
         });
 
       expect(todayWorkout.body.data.payload.workout.status).toBe(WorkoutStatus.IN_PROGRESS);
@@ -275,7 +280,8 @@ describe('Workout Routes', () => {
         .set('Authorization', `Bearer ${traineeToken}`)
         .send({ 
           workoutDate: tomorrow,
-          startTimestamp: tomorrow 
+          startTimestamp: tomorrow,
+          name: 'Test Workout'
         });
 
       expect(futureWorkout.body.data.payload.workout.status).toBe(WorkoutStatus.PLANNED);
@@ -304,6 +310,7 @@ describe('Workout Routes', () => {
 
       workout = await Workout.create({
         traineeId: trainee._id,
+        name: "Workout",
         workoutDate: new Date(),
         startTimestamp: new Date(),
         status: WorkoutStatus.IN_PROGRESS
@@ -316,7 +323,6 @@ describe('Workout Routes', () => {
         exerciseId: exercise._id,
         kpiId: kpi._id,
         actualValue: 10,
-        duration: 300,
         notes: 'Test log',
         media: ['https://example.com/log.jpg']
       };
@@ -327,6 +333,7 @@ describe('Workout Routes', () => {
         .send(logData);
 
       expect(response.status).toBe(201);
+
       expect(response.body).toMatchObject({
         status: 'success',
         data: {
@@ -335,7 +342,6 @@ describe('Workout Routes', () => {
             exerciseLog: expect.objectContaining({
               kpiId: kpi._id.toString(),
               actualValue: logData.actualValue,
-              duration: logData.duration,
               status: ExerciseLogStatus.COMPLETED
             })
           }
@@ -368,6 +374,7 @@ describe('Workout Routes', () => {
 
     beforeEach(async () => {
       workout = await Workout.create({
+        name: "Workout",
         traineeId: trainee._id,
         workoutDate: new Date(),
         startTimestamp: new Date(),
@@ -410,6 +417,7 @@ describe('Workout Routes', () => {
 
     beforeEach(async () => {
       workout = await Workout.create({
+        name: "Workout",
         traineeId: trainee._id,
         startTimestamp: new Date(),
         status: WorkoutStatus.PLANNED
@@ -495,6 +503,7 @@ describe('Workout Routes', () => {
         await Workout.create({
           traineeId: trainee._id,
           startTimestamp: date,
+          name: "Workout",
           status: WorkoutStatus.COMPLETED
         });
       }
@@ -595,6 +604,7 @@ describe('Workout Routes', () => {
         await Workout.create({
           traineeId: trainee._id,
           startTimestamp: time,
+          name: "Workout",
           status: WorkoutStatus.COMPLETED
         });
       }
@@ -603,6 +613,7 @@ describe('Workout Routes', () => {
       await Workout.create({
         traineeId: trainee._id,
         startTimestamp: new Date(Date.now() - 86400000), // Yesterday
+        name: "Workout",
         status: WorkoutStatus.COMPLETED
       });
     });

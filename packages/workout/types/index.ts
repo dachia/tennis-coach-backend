@@ -13,6 +13,7 @@ export enum ExerciseLogStatus {
 export interface WorkoutDTO {
   _id: string;
   traineeId: string;
+  name: string;
   startTimestamp: Date;
   endTimestamp?: Date;
   status: WorkoutStatus;
@@ -29,7 +30,6 @@ export interface ExerciseLogDTO {
   traineeId: string;
   logDate: Date;
   actualValue: number;
-  duration: number;
   status: ExerciseLogStatus;
   notes?: string;
   media?: string[];
@@ -43,6 +43,7 @@ export interface ProgressComparisonDTO {
 export interface CreateWorkoutDTO {
   startTimestamp?: Date;
   endTimestamp?: Date;
+  name: string;
   templateId?: string;
   notes?: string;
   media?: string[];
@@ -63,6 +64,7 @@ export interface UpdateWorkoutDTO {
   workoutDate?: Date;
   startTimestamp?: Date;
   endTimestamp?: Date;
+  name?: string;
   status?: WorkoutStatus;
   notes?: string;
   media?: string[];

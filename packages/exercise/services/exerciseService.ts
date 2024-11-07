@@ -131,7 +131,9 @@ export class ExerciseService {
         resource = await this.exerciseModel.findById(validatedData.resourceId);
         break;
       case ResourceType.TEMPLATE:
-        resource = await this.templateModel.findById(validatedData.resourceId);
+        resource = await this.templateModel.findById(validatedData.resourceId)
+          .populate('exerciseIds')
+          .exec();
         break;
       default:
         throw new DomainError('Invalid resource type');
@@ -145,6 +147,37 @@ export class ExerciseService {
       ...validatedData,
       sharedById: data.userId
     });
+
+    // If sharing a template, also share all exercises within it
+    if (validatedData.resourceType === ResourceType.TEMPLATE) {
+      // Fetch template details to ensure we have all exercise IDs
+      const template = await this.templateModel.findById(validatedData.resourceId)
+        .lean();
+      // Check if any exercises are already shared with this user
+      const existingShares = await this.sharedResourceModel.find({
+        resourceId: { $in: template!.exerciseIds },
+        sharedWithId: validatedData.sharedWithId,
+        resourceType: ResourceType.EXERCISE
+      });
+
+      // Filter out already shared exercise IDs
+      const existingSharedIds = existingShares.map(share => 
+        share.resourceId.toString()
+      );
+      const unsharedExerciseIds = template!.exerciseIds.filter(id => 
+        !existingSharedIds.includes(id.toString())
+      );
+
+      const promises = unsharedExerciseIds.map(async (exerciseId) =>
+        this.sharedResourceModel.create({
+          resourceId: exerciseId,
+          resourceType: ResourceType.EXERCISE,
+          sharedWithId: validatedData.sharedWithId,
+          sharedById: data.userId,
+        })
+      );
+      await Promise.all(promises);
+    }
 
     await this.eventService.publishDomainEvent({
       eventName: 'resource.shared',
