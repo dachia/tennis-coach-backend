@@ -163,7 +163,41 @@ describe("Complete Workout Flow", () => {
       .set('Authorization', `Bearer ${traineeToken}`);
 
     expect(workoutDetailsResponse.status).toBe(200);
-    console.log(JSON.stringify(workoutDetailsResponse.body, null, 2));
+    expect(workoutDetailsResponse.body).toMatchObject({
+      status: 'success',
+      data: {
+        message: 'Workout retrieved successfully',
+        payload: {
+          workout: {
+            _id: workoutId,
+            traineeId: trainee._id.toString(),
+            name: 'Test Workout',
+            status: 'in_progress',
+            templateId: templateId,
+            notes: 'First workout with template',
+            media: [],
+            exerciseLogs: [
+              {
+                workoutId: workoutId,
+                exerciseId: exerciseId,
+                traineeId: trainee._id.toString(),
+                actualValue: 0,
+                status: 'pending',
+                media: [],
+                exerciseName: 'Squat Exercise',
+                kpiUnit: 'repetitions',
+                kpiPerformanceGoal: 'maximize'
+              }
+            ],
+            traineeEmail: trainee.email,
+            traineeName: trainee.name
+          }
+        }
+      },
+      error: null,
+      meta: {},
+      version: 1
+    });
     const exerciseLog = workoutDetailsResponse.body.data.payload.workout.exerciseLogs[0];
 
 

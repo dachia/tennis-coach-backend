@@ -1,5 +1,5 @@
 import { IWorkout, Workout } from '../models/Workout';
-import { ExerciseLog } from '../models/ExerciseLog';
+import { ExerciseLog, IExerciseLog } from '../models/ExerciseLog';
 import { EventService } from '../../shared';
 import { DomainError } from '../../shared/errors/DomainError';
 import {
@@ -472,11 +472,15 @@ export class WorkoutService {
     return workouts.map(workout => {
       const workoutObj = workout.toObject ? workout.toObject() : workout;
       const traineeInfo = traineeMap.get(workout.traineeId.toString());
-      const exerciseLogs = workoutObj.exerciseLogs.map((log: any) => {
+      const exerciseLogs = workoutObj.exerciseLogs.map((log: IExerciseLog) => {
         const exercise = exerciseMap.get(log.exerciseId.toString());
+        const kpi = exercise?.kpis.find((kpi: any) => kpi._id === log.kpiId.toString());
+
         return {
           ...log,
-          exercise
+          exerciseName: exercise?.title,
+          kpiUnit: kpi?.unit,
+          kpiPerformanceGoal: kpi?.performanceGoal
         };
       });
 

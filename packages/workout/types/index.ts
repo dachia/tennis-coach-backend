@@ -83,6 +83,9 @@ export interface UpdateExerciseLogDTO {
 export interface EnrichedWorkoutDTO extends WorkoutDTO {
   traineeEmail?: string;
   traineeName?: string;
+  exerciseName?: string;
+  kpiUnit?: string;
+  kpiPerformanceGoal?: number;
 }
 
 export interface GetCompletedWorkoutsResponseDTO {
