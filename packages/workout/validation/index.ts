@@ -11,7 +11,7 @@ export const createWorkoutSchema = yup.object({
     )
   }),
   name: yup.string().required('Workout name is required').trim(),
-  templateId: yup.string(),
+  templateId: yup.string().transform((value) => value === '' ? undefined : value),
   notes: yup.string(),
   media: yup.array().of(yup.string().url('Media must be valid URLs'))
 });

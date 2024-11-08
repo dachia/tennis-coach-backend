@@ -80,7 +80,7 @@ export function buildRoutes(container: Container) {
     workoutController.getWorkoutsByDay.bind(workoutController)
   );
   router.get(
-    '/workouts/completed',
+    '/workouts/all',
     authMiddleware,
     requireRole([UserRole.TRAINEE, UserRole.COACH]),
     workoutController.getCompletedWorkouts.bind(workoutController)

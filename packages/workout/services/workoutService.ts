@@ -363,10 +363,9 @@ export class WorkoutService {
     });
   }
 
-  async getCompletedWorkouts(userId: string): Promise<GetCompletedWorkoutsResponseDTO> {
+  async getAllWorkouts(userId: string): Promise<GetCompletedWorkoutsResponseDTO> {
     let workouts = await this.workoutModel
       .find({
-        status: WorkoutStatus.COMPLETED,
         traineeId: userId
       })
       .populate('exerciseLogs')

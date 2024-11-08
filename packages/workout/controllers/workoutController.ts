@@ -7,6 +7,7 @@ export class WorkoutController {
   constructor(private readonly workoutService: WorkoutService) { }
 
   async createWorkout(req: AuthRequest, res: Response) {
+
     const result = await this.workoutService.createWorkout({
       ...req.body,
       userId: req.user._id
@@ -122,7 +123,7 @@ export class WorkoutController {
     );
   }
   async getCompletedWorkouts(req: AuthRequest, res: Response) {
-    const result = await this.workoutService.getCompletedWorkouts(req.user._id);
+    const result = await this.workoutService.getAllWorkouts(req.user._id);
 
     res.json(
       createResponse('success', 'Completed workouts retrieved successfully', result)
