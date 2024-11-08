@@ -2,7 +2,6 @@ import { InMemoryTransport } from '../../../shared/transport/inMemoryTransport';
 import { WorkoutTransportRouter } from '../workoutTransportRouter';
 import { WorkoutService } from '../../services/workoutService';
 import { WorkoutStatus, ExerciseLogStatus } from '../../types';
-import { DomainError } from '../../../shared/errors/DomainError';
 
 const mockWorkoutService = {
   createWorkout: jest.fn(),

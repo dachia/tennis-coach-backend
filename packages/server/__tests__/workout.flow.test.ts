@@ -184,9 +184,9 @@ describe("Complete Workout Flow", () => {
                 actualValue: 0,
                 status: 'pending',
                 media: [],
-                exerciseName: 'Squat Exercise',
-                kpiUnit: 'repetitions',
-                kpiPerformanceGoal: 'maximize'
+                // exerciseName: 'Squat Exercise',
+                // kpiUnit: 'repetitions',
+                // kpiPerformanceGoal: 'maximize'
               }
             ],
             traineeEmail: trainee.email,
