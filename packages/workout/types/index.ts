@@ -23,7 +23,7 @@ export interface WorkoutDTO {
 }
 
 export interface ExerciseLogDTO {
-  id: string;
+  _id: string;
   workoutId: string;
   exerciseId: string;
   kpiId: string;
@@ -78,7 +78,7 @@ export interface UpdateExerciseLogDTO {
   userId: string;
 }
 export interface ExerciseLogDTO {
-  id: string;
+  _id: string;
   workoutId: string;
   exerciseId: string;
   kpiId: string;
@@ -93,7 +93,7 @@ export interface ExerciseLogDTO {
 export interface EnrichedExerciseLogDTO extends ExerciseLogDTO {
   exerciseName?: string;
   kpiUnit?: string;
-  kpiPerformanceGoal?: number;
+  kpiPerformanceGoal?: string;
 }
 
 export interface EnrichedWorkoutDTO extends WorkoutDTO {

@@ -3,6 +3,7 @@ import { ExerciseLogStatus } from '../types';
 import { PerformanceGoal } from '../../exercise/types';
 
 export interface IExerciseLog extends Document {
+  _id: mongoose.Types.ObjectId;
   workoutId: mongoose.Types.ObjectId;
   exerciseId: mongoose.Types.ObjectId;
   kpiId: mongoose.Types.ObjectId;
