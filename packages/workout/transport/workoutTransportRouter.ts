@@ -7,16 +7,16 @@ import {
   ExerciseLogDTO,
   CreateWorkoutDTO,
   CreateExerciseLogDTO,
-  UpdateWorkoutDTO,
-  UpdateExerciseLogDTO
 } from '../types';
+import { WorkoutQueryService } from '../services/workoutQueryService';
 
 export class WorkoutTransportRouter {
   private router: TransportRouter;
 
   constructor(
     transport: Transport,
-    private readonly workoutService: WorkoutService
+    private readonly workoutService: WorkoutService,
+    private readonly workoutQueryService: WorkoutQueryService
   ) {
     this.router = new TransportRouter(transport);
     this.registerRoutes();
@@ -57,7 +57,7 @@ export class WorkoutTransportRouter {
       'exerciseLog.get',
       async (payload) => {
         const { id, userId } = payload;
-        return this.workoutService.getExerciseLogById(id, userId);
+        return this.workoutQueryService.getExerciseLogById(id, userId);
       }
     );
 
@@ -70,7 +70,7 @@ export class WorkoutTransportRouter {
       'exerciseLog.getByDateRange',
       async (payload) => {
         const { startDate, endDate, userId, kpiId } = payload;
-        return this.workoutService.getExerciseLogsByDateRange({
+        return this.workoutQueryService.getExerciseLogsByDateRange({
           startDate: new Date(startDate),
           endDate: new Date(endDate),
           userId,

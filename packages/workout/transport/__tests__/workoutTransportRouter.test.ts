@@ -2,15 +2,19 @@ import { InMemoryTransport } from '../../../shared/transport/inMemoryTransport';
 import { WorkoutTransportRouter } from '../workoutTransportRouter';
 import { WorkoutService } from '../../services/workoutService';
 import { WorkoutStatus, ExerciseLogStatus } from '../../types';
+import { WorkoutQueryService } from '../../services/workoutQueryService';
 
 const mockWorkoutService = {
   createWorkout: jest.fn(),
   createExerciseLog: jest.fn(),
   updateWorkout: jest.fn(),
   updateExerciseLog: jest.fn(),
+} as unknown as WorkoutService;
+
+const mockWorkoutQueryService = {
   getExerciseLogById: jest.fn(),
   getExerciseLogsByDateRange: jest.fn()
-} as unknown as WorkoutService;
+} as unknown as WorkoutQueryService;
 
 describe('WorkoutTransportRouter', () => {
   let transport: InMemoryTransport;
@@ -19,7 +23,7 @@ describe('WorkoutTransportRouter', () => {
   beforeEach(async () => {
     transport = new InMemoryTransport();
     await transport.connect();
-    workoutTransportRouter = new WorkoutTransportRouter(transport, mockWorkoutService);
+    workoutTransportRouter = new WorkoutTransportRouter(transport, mockWorkoutService, mockWorkoutQueryService);
     await workoutTransportRouter.listen();
   });
 
@@ -243,7 +247,7 @@ describe('WorkoutTransportRouter', () => {
         }
       };
 
-      jest.spyOn(mockWorkoutService, 'getExerciseLogById').mockResolvedValue(expectedResponse as any);
+      jest.spyOn(mockWorkoutQueryService, 'getExerciseLogById').mockResolvedValue(expectedResponse as any);
 
       const response = await transport.request(
         'exerciseLog.get',
@@ -254,7 +258,7 @@ describe('WorkoutTransportRouter', () => {
       );
 
       expect(response).toEqual(expectedResponse);
-      expect(mockWorkoutService.getExerciseLogById).toHaveBeenCalledWith(
+      expect(mockWorkoutQueryService.getExerciseLogById).toHaveBeenCalledWith(
         fetchData.id,
         fetchData.userId
       );
@@ -288,7 +292,7 @@ describe('WorkoutTransportRouter', () => {
         ]
       };
 
-      jest.spyOn(mockWorkoutService, 'getExerciseLogsByDateRange')
+      jest.spyOn(mockWorkoutQueryService, 'getExerciseLogsByDateRange')
         .mockResolvedValue(expectedResponse as any);
 
       const response = await transport.request(
@@ -300,7 +304,7 @@ describe('WorkoutTransportRouter', () => {
       );
 
       expect(response).toEqual(expectedResponse);
-      expect(mockWorkoutService.getExerciseLogsByDateRange)
+      expect(mockWorkoutQueryService.getExerciseLogsByDateRange)
         .toHaveBeenCalledWith({
           startDate: new Date(fetchData.startDate),
           endDate: new Date(fetchData.endDate),
