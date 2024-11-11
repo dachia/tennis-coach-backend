@@ -14,8 +14,8 @@ export const mapExerciseToDTO = (exercise: any, userId: string): ExerciseWithKPI
   title: exercise.title,
   description: exercise.description,
   media: exercise.media,
-  createdBy: exercise.createdBy.toString(),
-  isShared: exercise.createdBy.toString() !== userId.toString(),
+  createdBy: exercise.createdBy?.toString(),
+  isShared: exercise.createdBy?.toString() !== userId.toString(),
   isArchived: exercise.isArchived,
   kpis: exercise.kpis?.map(mapKPIToDTO) || [],
   createdAt: exercise.createdAt,
@@ -65,8 +65,8 @@ export const mapTemplateWithExercisesToDTO = (template: any, userId: string) => 
   title: template.title,
   description: template.description,
   createdBy: template.createdBy.toString(),
-  isShared: template.isShared,
-  exercises: template.exerciseIds.map((exercise: any) => mapExerciseToDTO(exercise, userId)),
+  isShared: template.createdBy.toString() !== userId.toString(),
+  exercises: template.exercises.map((exercise: any) => mapExerciseToDTO(exercise, userId)),
   createdAt: template.createdAt,
   updatedAt: template.updatedAt
 });
@@ -77,8 +77,8 @@ export const mapTemplatesToResponse = (
   userId: string
 ): GetTemplatesResponseDTO => ({
   templates: [
-    ...ownedTemplates.map(template => mapTemplateWithExercisesToDTO({ ...template, isShared: false }, userId)),
-    ...sharedTemplates.map(template => mapTemplateWithExercisesToDTO({ ...template, isShared: true }, userId))
+    ...ownedTemplates.map(template => mapTemplateWithExercisesToDTO(template, userId)),
+    ...sharedTemplates.map(template => mapTemplateWithExercisesToDTO(template, userId))
   ]
 });
 

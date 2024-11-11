@@ -84,7 +84,6 @@ describe("Template Flow", () => {
         .set('Authorization', `Bearer ${coachToken}`)
         .send(exerciseData);
 
-      console.log(exerciseResponse.body);
       exerciseId = exerciseResponse.body.data.payload.exercise._id;
     });
 
@@ -171,7 +170,6 @@ describe("Template Flow", () => {
           exerciseIds: [exerciseId]
         });
 
-      console.log(updateResponse.body);
       expect(updateResponse.status).toBe(404);
 
       // 3. Try to delete non-existent template

@@ -80,21 +80,24 @@ export class WorkoutService {
           }
         });
 
-        const exerciseLogs = await Promise.all(
-          templateResponse.template.exercises.map(exercise =>
-            this.exerciseLogModel.create({
-              workoutId: workout._id,
-              exerciseId: exercise._id,
-              kpiId: exercise.kpis[0]._id,
-              traineeId: data.userId,
-              logDate: startTimestamp,
-              actualValue: 0,
-              duration: 0,
-              status: ExerciseLogStatus.PENDING
-            })
+        await Promise.all(
+          templateResponse.template.exercises.flatMap(exercise =>
+            exercise.kpis.map(kpi =>
+              this.exerciseLogModel.create({
+                workoutId: workout._id,
+                exerciseId: exercise._id,
+                kpiId: kpi._id,
+                traineeId: data.userId,
+                logDate: startTimestamp,
+                actualValue: 0,
+                duration: 0,
+                status: ExerciseLogStatus.PENDING
+              })
+            )
           )
         );
       } catch (err: any) {
+        console.log(err);
         await this.workoutModel.findByIdAndDelete(workout._id);
         throw new DomainError('Failed to fetch template or create exercise logs');
       }

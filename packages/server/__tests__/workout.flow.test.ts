@@ -232,7 +232,7 @@ describe("Complete Workout Flow", () => {
     const endDate = new Date();
 
     const coachWorkoutsResponse = await request(app)
-      .get('/workout/workouts/completed')
+      .get('/workout/workouts/all')
       .set('Authorization', `Bearer ${coachToken}`);
 
     expect(coachWorkoutsResponse.status).toBe(200);

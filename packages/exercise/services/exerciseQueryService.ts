@@ -57,7 +57,6 @@ export class ExerciseQueryService {
       .lean()
       .exec();
       
-    console.log(ownedExercises, sharedExercises, userId);
 
     return mapExercisesWithKPIsToResponse(ownedExercises, sharedExercises, userId);
   }

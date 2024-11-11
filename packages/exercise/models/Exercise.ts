@@ -25,7 +25,8 @@ const exerciseSchema = new Schema({
   isArchived: { type: Boolean, default: false }
 }, { 
   timestamps: true,
-  toJSON: { virtuals: true }
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
 exerciseSchema.virtual('kpis', {

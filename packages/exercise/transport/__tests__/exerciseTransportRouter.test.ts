@@ -3,11 +3,7 @@ import { ExerciseTransportRouter } from '../exerciseTransportRouter';
 import { ExerciseService } from '../../services/exerciseService';
 import { ResourceType } from '../../types';
 import { DomainError } from '../../../shared/errors/DomainError';
-import { Document } from 'mongoose';
-import { IExercise } from '../../models/Exercise';
-import { ITrainingTemplate } from '../../models/TrainingTemplate';
-import { ISharedResource } from '../../models/SharedResource';
-import { IKPI } from '../../models/KPI';
+import { ExerciseQueryService } from '../../services/exerciseQueryService';
 
 // Mock ExerciseService
 const mockExerciseService = {
@@ -19,10 +15,13 @@ const mockExerciseService = {
   updateTemplate: jest.fn(),
   deleteSharedResource: jest.fn(),
   updateExerciseWithKPIs: jest.fn(),
-  getExercisesWithKPIs: jest.fn(),
   deleteExercise: jest.fn(),
   deleteTemplate: jest.fn()
 } as unknown as ExerciseService;
+
+const mockExerciseQueryService = {
+  getExercisesWithKPIs: jest.fn()
+} as unknown as ExerciseQueryService;
 
 describe('ExerciseTransportRouter', () => {
   let transport: InMemoryTransport;
@@ -31,7 +30,7 @@ describe('ExerciseTransportRouter', () => {
   beforeEach(async () => {
     transport = new InMemoryTransport();
     await transport.connect();
-    exerciseTransportRouter = new ExerciseTransportRouter(transport, mockExerciseService);
+    exerciseTransportRouter = new ExerciseTransportRouter(transport, mockExerciseService, mockExerciseQueryService);
     await exerciseTransportRouter.listen();
   });
 
@@ -347,7 +346,7 @@ describe('ExerciseTransportRouter', () => {
         ]
       };
 
-      jest.spyOn(mockExerciseService, 'getExercisesWithKPIs')
+      jest.spyOn(mockExerciseQueryService, 'getExercisesWithKPIs')
         .mockResolvedValue(expectedResponse as any);
 
       const response = await transport.request(
@@ -359,7 +358,7 @@ describe('ExerciseTransportRouter', () => {
       );
 
       expect(response).toEqual(expectedResponse);
-      expect(mockExerciseService.getExercisesWithKPIs)
+      expect(mockExerciseQueryService.getExercisesWithKPIs)
         .toHaveBeenCalledWith(fetchData.userId);
     });
   });
