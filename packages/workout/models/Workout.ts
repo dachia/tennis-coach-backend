@@ -14,6 +14,9 @@ export interface IWorkout extends Document {
   exerciseLogs?: any[];
   exerciseNotes: Map<string, string>;
   exerciseMedia: Map<string, string[]>;
+  // Denormalized trainee data
+  traineeName: string;
+  traineeEmail: string;
 }
 
 const workoutSchema = new Schema({
@@ -54,7 +57,10 @@ const workoutSchema = new Schema({
     type: Map,
     of: [String],
     default: new Map()
-  }
+  },
+  // Denormalized trainee data
+  traineeName: { type: String, required: true },
+  traineeEmail: { type: String, required: true }
 }, { 
   timestamps: true,
   toJSON: { virtuals: true },

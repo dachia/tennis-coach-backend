@@ -313,7 +313,9 @@ describe('Workout Routes', () => {
         name: "Workout",
         workoutDate: new Date(),
         startTimestamp: new Date(),
-        status: WorkoutStatus.IN_PROGRESS
+        status: WorkoutStatus.IN_PROGRESS,
+        traineeName: trainee.name,
+        traineeEmail: trainee.email
       });
       
       // Share exercise with trainee
@@ -386,7 +388,9 @@ describe('Workout Routes', () => {
         traineeId: trainee._id,
         workoutDate: new Date(),
         startTimestamp: new Date(),
-        status: WorkoutStatus.PLANNED
+        status: WorkoutStatus.PLANNED,
+        traineeName: trainee.name,
+        traineeEmail: trainee.email
       });
     });
 
@@ -444,7 +448,9 @@ describe('Workout Routes', () => {
         name: "Workout",
         traineeId: trainee._id,
         startTimestamp: new Date(),
-        status: WorkoutStatus.PLANNED
+        status: WorkoutStatus.PLANNED,
+        traineeName: trainee.name,
+        traineeEmail: trainee.email
       });
 
       await ExerciseLog.create({
@@ -575,7 +581,9 @@ describe('Workout Routes', () => {
           traineeId: trainee._id,
           startTimestamp: date,
           name: "Workout",
-          status: WorkoutStatus.COMPLETED
+          status: WorkoutStatus.COMPLETED,
+          traineeName: trainee.name,
+          traineeEmail: trainee.email
         });
       }
     });
@@ -676,7 +684,9 @@ describe('Workout Routes', () => {
           traineeId: trainee._id,
           startTimestamp: time,
           name: "Workout",
-          status: WorkoutStatus.COMPLETED
+          status: WorkoutStatus.COMPLETED,
+          traineeName: trainee.name,
+          traineeEmail: trainee.email
         });
       }
 
@@ -685,7 +695,9 @@ describe('Workout Routes', () => {
         traineeId: trainee._id,
         startTimestamp: new Date(Date.now() - 86400000), // Yesterday
         name: "Workout",
-        status: WorkoutStatus.COMPLETED
+        status: WorkoutStatus.COMPLETED,
+        traineeName: trainee.name,
+        traineeEmail: trainee.email
       });
     });
 
@@ -766,7 +778,9 @@ describe('Workout Routes', () => {
         traineeId: trainee._id,
         name: "Workout",
         startTimestamp: new Date(),
-        status: WorkoutStatus.IN_PROGRESS
+        status: WorkoutStatus.IN_PROGRESS,
+        traineeName: trainee.name,
+        traineeEmail: trainee.email
       });
 
       exercise = await Exercise.create({

@@ -59,12 +59,24 @@ export class WorkoutService {
 
     const startTimestamp = validatedData.startTimestamp || new Date();
     const status = this.determineWorkoutStatus(startTimestamp);
+    // Get trainee information
+    const traineeResponse = await this.transport.request<
+      { ids: string[] },
+      { users: { _id: string; email: string; name: string }[] }
+    >('auth.users', {
+      type: 'GET_USERS_BY_IDS',
+      payload: { ids: [data.userId] }
+    });
+
+    const trainee = traineeResponse.users[0];
 
     const workout = await this.workoutModel.create({
       ...validatedData,
       startTimestamp,
       traineeId: data.userId,
-      status
+      status,
+      traineeName: trainee.name,
+      traineeEmail: trainee.email
     });
 
     if (validatedData.templateId) {
@@ -96,7 +108,7 @@ export class WorkoutService {
                 kpiGoalValue: kpi.goalValue,
                 kpiUnit: kpi.unit,
                 kpiPerformanceGoal: kpi.performanceGoal,
-                status: ExerciseLogStatus.PENDING
+                status: ExerciseLogStatus.PENDING,
               })
             )
           )
@@ -148,6 +160,7 @@ export class WorkoutService {
     });
     const kpiData = exerciseResponse.exercise.kpis.find(kpi => kpi._id.toString() === validatedData.kpiId);
 
+
     const exerciseLog = await this.exerciseLogModel.create({
       ...validatedData,
       traineeId: data.userId,
@@ -157,7 +170,7 @@ export class WorkoutService {
       kpiGoalValue: kpiData?.goalValue,
       kpiUnit: kpiData?.unit,
       kpiPerformanceGoal: kpiData?.performanceGoal,
-      status: ExerciseLogStatus.COMPLETED
+      status: ExerciseLogStatus.COMPLETED,
     });
 
     await this.eventService.publishDomainEvent({
@@ -248,6 +261,17 @@ export class WorkoutService {
     if (!exerciseResponse) {
       throw new DomainError('Exercise not found', 404);
     }
+    // Get trainee information
+    const traineeResponse = await this.transport.request<
+      { ids: string[] },
+      { users: { _id: string; email: string; name: string }[] }
+    >('auth.users', {
+      type: 'GET_USERS_BY_IDS',
+      payload: { ids: [userId] }
+    });
+
+    const trainee = traineeResponse.users[0];
+
 
     const exerciseLogs = await Promise.all(exerciseResponse.exercise.kpis.map(async (kpi) => this.exerciseLogModel.create({
       workoutId: workout._id,
@@ -262,7 +286,9 @@ export class WorkoutService {
       kpiPerformanceGoal: kpi.performanceGoal,
       actualValue: 0,
       duration: 0,
-      status: ExerciseLogStatus.PENDING
+      status: ExerciseLogStatus.PENDING,
+      traineeName: trainee.name,
+      traineeEmail: trainee.email
     })));
 
     return { exerciseLogs };

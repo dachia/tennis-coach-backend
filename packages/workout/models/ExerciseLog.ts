@@ -62,7 +62,7 @@ const exerciseLogSchema = new Schema({
   kpiPerformanceGoal: { 
     type: String,
     enum: Object.values(PerformanceGoal)
-  }
+  },
 }, { timestamps: true });
 
 export const ExerciseLog = mongoose.model<IExerciseLog>('ExerciseLog', exerciseLogSchema); 
