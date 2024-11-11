@@ -21,6 +21,16 @@ const trainingTemplateSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'Exercise' 
   }]
-}, { timestamps: true });
+}, { 
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+trainingTemplateSchema.virtual('exercises', {
+  ref: 'Exercise',
+  localField: 'exerciseIds',
+  foreignField: '_id'
+});
 
 export const TrainingTemplate = mongoose.model<ITrainingTemplate>('TrainingTemplate', trainingTemplateSchema); 

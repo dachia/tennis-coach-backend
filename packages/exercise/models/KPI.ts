@@ -4,9 +4,9 @@ import { PerformanceGoal } from '../types';
 export interface IKPI extends Document {
   _id: mongoose.Types.ObjectId;
   exerciseId: mongoose.Types.ObjectId;
-  goalValue: number;
+  goalValue?: number;
   unit: string;
-  performanceGoal: PerformanceGoal;
+  performanceGoal?: PerformanceGoal;
 }
 
 const kpiSchema = new Schema({
@@ -15,12 +15,12 @@ const kpiSchema = new Schema({
     ref: 'Exercise',
     required: true 
   },
-  goalValue: { type: Number, required: true },
+  goalValue: { type: Number, required: false },
   unit: { type: String, required: true },
   performanceGoal: { 
     type: String, 
     enum: Object.values(PerformanceGoal),
-    required: true 
+    required: false 
   }
 }, { timestamps: true });
 

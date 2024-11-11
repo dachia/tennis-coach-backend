@@ -12,13 +12,13 @@ export function globalErrorHandler(
   // Log the error
 
   if (err instanceof DomainError) {
-    console.error('Domain error:', err.message);
+    // console.error('Domain error:', err.message);
     return res.status(err.statusCode).json(
       createResponse('fail', err.message)
     );
   }
   if (err instanceof AuthError) {
-    console.error('Auth error:', err.message);
+    // console.error('Auth error:', err.message);
     return res.status(err.statusCode).json(
       createResponse('fail', err.message)
     );

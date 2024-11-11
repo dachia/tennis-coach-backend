@@ -754,7 +754,6 @@ describe('Exercise Routes', () => {
         .set('Authorization', `Bearer ${coachToken}`);
 
       expect(response.status).toBe(200);
-      console.log(JSON.stringify(response.body, null, 2));
       expect(response.body.data.payload.exercises).toHaveLength(2);
       
       const exercises = response.body.data.payload.exercises;
@@ -807,11 +806,11 @@ describe('Exercise Routes', () => {
 
       // Verify exercise was deleted
       const deletedExercise = await Exercise.findById(exercise._id);
-      expect(deletedExercise).toBeNull();
+      expect(deletedExercise?.isArchived).toBe(true);
 
       // Verify KPIs were deleted
-      const deletedKpis = await KPI.find({ exerciseId: exercise._id });
-      expect(deletedKpis).toHaveLength(0);
+      // const deletedKpis = await KPI.find({ exerciseId: exercise._id });
+      // expect(deletedKpis).toHaveLength(0);
     });
 
     it('should return 404 when deleting non-existent exercise', async () => {

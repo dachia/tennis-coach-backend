@@ -3,6 +3,7 @@ import { IExercise } from '../models/Exercise';
 import { IKPI } from '../models/KPI';
 import { ISharedResource } from '../models/SharedResource';
 import { ITrainingTemplate } from '../models/TrainingTemplate';
+import { ExerciseQueryService } from '../services/exerciseQueryService';
 import { ExerciseService } from '../services/exerciseService';
 import {
   ExerciseDTO,
@@ -43,7 +44,8 @@ export class ExerciseTransportRouter {
 
   constructor(
     transport: Transport,
-    private readonly exerciseService: ExerciseService
+    private readonly exerciseService: ExerciseService,
+    private readonly exerciseQueryService: ExerciseQueryService
   ) {
     this.router = new TransportRouter(transport);
     this.registerRoutes();
@@ -129,14 +131,14 @@ export class ExerciseTransportRouter {
     >(
       'exercises.get',
       async (payload) => {
-        return this.exerciseService.getExercisesWithKPIs(payload.userId);
+        return this.exerciseQueryService.getExercisesWithKPIs(payload.userId);
       }
     );
 
     this.router.register<{ id: string; userId: string }, GetExerciseByIdResponseDTO>(
       'exercise.get',
       async (payload) => {
-        return this.exerciseService.getExerciseById(payload.id, payload.userId);
+        return this.exerciseQueryService.getExerciseById(payload.id, payload.userId);
       }
     );
 
@@ -163,13 +165,13 @@ export class ExerciseTransportRouter {
       'template.get',
       async (payload) => {
         const { id, userId } = payload;
-        return this.exerciseService.getTemplateById(id, userId);
+        return this.exerciseQueryService.getTemplateById(id, userId);
       }
     );
 
     this.router.register<{ ids: string[]; userId: string }, ExerciseWithKPIsDTO[]>(
       'exercise.getByIds',
-      async (payload) => this.exerciseService.getExercisesByIds(payload.ids, payload.userId)
+      async (payload) => this.exerciseQueryService.getExercisesByIds(payload.ids, payload.userId)
     );
   }
 

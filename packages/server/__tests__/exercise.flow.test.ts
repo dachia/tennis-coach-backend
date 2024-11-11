@@ -170,7 +170,7 @@ describe("Exercise Flow", () => {
 
       // Verify exercise was deleted
       const deletedExercise = await Exercise.findById(exerciseId);
-      expect(deletedExercise).toBeNull();
+      expect(deletedExercise?.isArchived).toBe(true);
 
       // Verify KPIs were deleted
       const deletedKpis = await KPI.find({ exerciseId });

@@ -2,10 +2,12 @@ import { Request, Response } from 'express';
 import { ExerciseService } from '../services/exerciseService';
 import { AuthRequest } from '../../shared/middleware/auth';
 import { createResponse } from '../../shared/utils/response.utils';
+import { ExerciseQueryService } from '../services/exerciseQueryService';
 
 export class ExerciseController {
   constructor(
-    private readonly exerciseService: ExerciseService
+    private readonly exerciseService: ExerciseService,
+    private readonly exerciseQueryService: ExerciseQueryService
   ) {}
 
   async createExercise(req: AuthRequest, res: Response) {
@@ -109,7 +111,7 @@ export class ExerciseController {
   }
 
   async getExercises(req: AuthRequest, res: Response) {
-    const result = await this.exerciseService.getExercisesWithKPIs(req.user._id);
+    const result = await this.exerciseQueryService.getExercisesWithKPIs(req.user._id);
     
     res.json(
       createResponse('success', 'Exercises retrieved successfully', result)
@@ -128,7 +130,7 @@ export class ExerciseController {
   }
 
   async getResourceShares(req: AuthRequest, res: Response) {
-    const result = await this.exerciseService.getResourceShares(
+    const result = await this.exerciseQueryService.getResourceShares(
       req.params.id,
       req.user._id
     );
@@ -147,7 +149,7 @@ export class ExerciseController {
   }
 
   async getTemplates(req: AuthRequest, res: Response) {
-    const result = await this.exerciseService.getTemplatesWithExercises(req.user._id);
+    const result = await this.exerciseQueryService.getTemplatesWithExercises(req.user._id);
     
     res.json(
       createResponse('success', 'Templates retrieved successfully', result)
@@ -155,7 +157,7 @@ export class ExerciseController {
   }
 
   async getExercise(req: AuthRequest, res: Response) {
-    const result = await this.exerciseService.getExerciseById(
+    const result = await this.exerciseQueryService.getExerciseById(
       req.params.id,
       req.user._id
     );
@@ -166,7 +168,7 @@ export class ExerciseController {
   }
 
   async getTemplate(req: AuthRequest, res: Response) {
-    const result = await this.exerciseService.getTemplateById(
+    const result = await this.exerciseQueryService.getTemplateById(
       req.params.id,
       req.user._id
     );
@@ -177,7 +179,7 @@ export class ExerciseController {
   }
 
   async getExercisesByIds(req: AuthRequest, res: Response) {
-    const result = await this.exerciseService.getExercisesByIds(req.body.ids, req.user._id);
+    const result = await this.exerciseQueryService.getExercisesByIds(req.body.ids, req.user._id);
 
     res.json(
       createResponse('success', 'Exercises retrieved successfully', result)

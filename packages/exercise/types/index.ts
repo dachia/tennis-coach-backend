@@ -15,15 +15,16 @@ export interface ExerciseDTO {
   media: string[];
   createdBy: string;
   isShared?: boolean;
+  isArchived: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface KPIDTO {
   _id: string;
-  goalValue: number;
+  goalValue?: number;
   unit: string;
-  performanceGoal: PerformanceGoal;
+  performanceGoal?: PerformanceGoal;
   exerciseId: string;
 }
 

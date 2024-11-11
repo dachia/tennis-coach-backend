@@ -11,12 +11,6 @@ import {
   UpdateKpiDTO,
   UpdateTemplateDTO,
   UpdateExerciseWithKPIsDTO,
-  GetResourceSharesResponseDTO,
-  GetExercisesResponseDTO,
-  GetTemplatesResponseDTO,
-  ExerciseWithKPIsDTO,
-  GetExerciseByIdResponseDTO,
-  GetTemplateByIdResponseDTO
 } from '../types';
 import { AuthError, EventService } from '../../shared';
 import { DomainError } from '../../shared/errors/DomainError';
@@ -29,7 +23,6 @@ import {
   updateTemplateSchema,
   updateExerciseWithKPIsSchema
 } from '../validation';
-import { IUser } from '../../auth/models/User';
 
 export class ExerciseService {
   constructor(
@@ -386,63 +379,6 @@ export class ExerciseService {
     return { exercise };
   }
 
-  async getExercisesWithKPIs(userId: string): Promise<GetExercisesResponseDTO> {
-    // Get exercises created by user
-    const ownedExercises = await this.exerciseModel
-      .find({ createdBy: userId })
-      .populate('kpis')
-      .lean()
-      .exec();
-
-    // Get shared exercises
-    const sharedResources = await this.sharedResourceModel
-      .find({
-        sharedWithId: userId,
-        resourceType: ResourceType.EXERCISE
-      })
-      .exec();
-
-    const sharedExerciseIds = sharedResources.map(share => share.resourceId);
-
-    const sharedExercises = await this.exerciseModel
-      .find({
-        _id: { $in: sharedExerciseIds }
-      })
-      .populate('kpis')
-      .lean()
-      .exec();
-
-    // Convert ObjectIds to strings and add flags
-    const mappedOwnedExercises = ownedExercises.map(exercise => ({
-      ...exercise,
-      isShared: false
-    }));
-
-    const mappedSharedExercises = sharedExercises.map(exercise => ({
-      ...exercise,
-      isShared: true
-    }));
-
-    return {
-      exercises: [...mappedOwnedExercises, ...mappedSharedExercises].map(exercise => ({
-        _id: exercise._id.toString(),
-        title: exercise.title,
-        description: exercise.description,
-        media: exercise.media,
-        createdBy: exercise.createdBy.toString(),
-        isShared: exercise.isShared,
-        kpis: exercise.kpis!.map(kpi => ({
-          _id: kpi._id.toString(),
-          goalValue: kpi.goalValue,
-          unit: kpi.unit,
-          performanceGoal: kpi.performanceGoal,
-          exerciseId: kpi.exerciseId.toString()
-        })),
-        createdAt: exercise.createdAt,
-        updatedAt: exercise.updatedAt
-      }))
-    }
-  }
 
   async deleteExercise(id: string, userId: string): Promise<boolean> {
     const exercise = await this.exerciseModel.findOne({ _id: id, createdBy: userId });
@@ -451,37 +387,15 @@ export class ExerciseService {
       throw new DomainError('Exercise not found or unauthorized', 404);
     }
 
-    // Delete all associated KPIs
-    await this.kpiModel.deleteMany({ exerciseId: id });
-
-    // Delete the exercise
-    await this.exerciseModel.findByIdAndDelete(id);
+    // Set isArchived to true instead of deleting
+    await this.exerciseModel.findByIdAndUpdate(id, { isArchived: true });
 
     await this.eventService.publishDomainEvent({
-      eventName: 'exercise.deleted',
+      eventName: 'exercise.archived',
       payload: { exerciseId: id }
     });
 
     return true;
-  }
-
-  async getResourceShares(resourceId: string, userId: string): Promise<GetResourceSharesResponseDTO> {
-    // Find all shares for this resource
-    const shares = await this.sharedResourceModel
-      .find({
-        resourceId,
-      })
-      .populate('sharedWithId', '_id email name')
-      .sort({ createdAt: 1 }) as unknown as (Omit<ISharedResource, 'sharedWithId'> & { sharedWithId: IUser })[];
-
-    return {
-      shares: shares.map(share => ({
-        _id: share._id.toString(),
-        email: share.sharedWithId.email,
-        name: share.sharedWithId.name,
-        sharedAt: share.createdAt
-      }))
-    };
   }
 
   async deleteTemplate(id: string, userId: string): Promise<boolean> {
@@ -499,236 +413,5 @@ export class ExerciseService {
     });
 
     return true;
-  }
-
-  async getTemplatesWithExercises(userId: string): Promise<GetTemplatesResponseDTO> {
-    // Get templates created by user
-    const ownedTemplates = await this.templateModel
-      .find({ createdBy: userId })
-      .populate({
-        path: 'exerciseIds',
-        populate: {
-          path: 'kpis'
-        }
-      })
-      .lean()
-      .exec();
-
-    // Get shared templates
-    const sharedResources = await this.sharedResourceModel
-      .find({
-        sharedWithId: userId,
-        resourceType: ResourceType.TEMPLATE
-      })
-      .exec();
-
-    const sharedTemplateIds = sharedResources.map(share => share.resourceId);
-
-    const sharedTemplates = await this.templateModel
-      .find({
-        _id: { $in: sharedTemplateIds }
-      })
-      .populate({
-        path: 'exerciseIds',
-        populate: {
-          path: 'kpis'
-        }
-      })
-      .lean()
-      .exec();
-
-    // Convert ObjectIds to strings and add flags
-    const mappedOwnedTemplates = ownedTemplates.map(template => ({
-      ...template,
-      isShared: false
-    }));
-
-    const mappedSharedTemplates = sharedTemplates.map(template => ({
-      ...template,
-      isShared: true
-    }));
-
-    return {
-      templates: [...mappedOwnedTemplates, ...mappedSharedTemplates].map(template => ({
-        _id: template._id.toString(),
-        title: template.title,
-        description: template.description,
-        createdBy: template.createdBy.toString(),
-        isShared: template.isShared,
-        exercises: template.exerciseIds.map((exercise: any) => ({
-          _id: exercise._id.toString(),
-          title: exercise.title,
-          description: exercise.description,
-          media: exercise.media,
-          createdBy: exercise.createdBy.toString(),
-          createdAt: exercise.createdAt,
-          updatedAt: exercise.updatedAt,
-          kpis: exercise.kpis.map((kpi: any) => ({
-            _id: kpi._id.toString(),
-            goalValue: kpi.goalValue,
-            unit: kpi.unit,
-            performanceGoal: kpi.performanceGoal,
-            exerciseId: kpi.exerciseId.toString()
-          }))
-        })),
-        createdAt: template.createdAt,
-        updatedAt: template.updatedAt
-      }))
-    };
-  }
-
-  async getExerciseById(id: string, userId: string): Promise<GetExerciseByIdResponseDTO> {
-    // Check if exercise is owned by user
-    let exercise = await this.exerciseModel
-      .findOne({
-        _id: id,
-        createdBy: userId
-      })
-      .populate('kpis')
-      .lean();
-
-    // If not owned, check if it's shared with user
-    if (!exercise) {
-      const sharedResource = await this.sharedResourceModel.findOne({
-        resourceId: id,
-        sharedWithId: userId,
-        resourceType: ResourceType.EXERCISE
-      });
-
-      if (sharedResource) {
-        exercise = await this.exerciseModel
-          .findById(id)
-          .populate('kpis')
-          .lean();
-      }
-    }
-
-    if (!exercise) {
-      throw new DomainError('Exercise not found or unauthorized', 404);
-    }
-
-    return {
-      exercise: {
-        ...exercise,
-        _id: exercise._id.toString(),
-        createdBy: exercise.createdBy.toString(),
-        isShared: exercise.createdBy.toString() !== userId,
-        kpis: exercise.kpis!.map(kpi => ({
-          _id: kpi._id.toString(),
-          goalValue: kpi.goalValue,
-          unit: kpi.unit,
-          performanceGoal: kpi.performanceGoal,
-          exerciseId: kpi.exerciseId.toString()
-        }))
-      }
-    };
-  }
-
-  async getTemplateById(id: string, userId: string): Promise<GetTemplateByIdResponseDTO> {
-    // Check if template is owned by user
-    let template = await this.templateModel
-      .findOne({
-        _id: id,
-        createdBy: userId
-      })
-      .populate({
-        path: 'exerciseIds',
-        populate: {
-          path: 'kpis'
-        }
-      })
-      .lean();
-
-    // If not owned, check if it's shared with user
-    if (!template) {
-      const sharedResource = await this.sharedResourceModel.findOne({
-        resourceId: id,
-        sharedWithId: userId,
-        resourceType: ResourceType.TEMPLATE
-      });
-
-      if (sharedResource) {
-        template = await this.templateModel
-          .findById(id)
-          .populate({
-            path: 'exerciseIds',
-            populate: {
-              path: 'kpis'
-            }
-          })
-          .lean();
-      }
-    }
-
-    if (!template) {
-      throw new DomainError('Template not found or unauthorized', 404);
-    }
-
-    return {
-      template: {
-        ...template,
-        _id: template._id.toString(),
-        createdBy: template.createdBy.toString(),
-        isShared: template.createdBy.toString() !== userId,
-        exerciseIds: template.exerciseIds.map((exercise: any) => exercise._id.toString()),
-        exercises: template.exerciseIds.map((exercise: any) => ({
-          _id: exercise._id.toString(),
-          title: exercise.title,
-          description: exercise.description,
-          media: exercise.media,
-          createdBy: exercise.createdBy.toString(),
-          createdAt: exercise.createdAt,
-          updatedAt: exercise.updatedAt,
-          kpis: exercise.kpis.map((kpi: any) => ({
-            _id: kpi._id.toString(),
-            goalValue: kpi.goalValue,
-            unit: kpi.unit,
-            performanceGoal: kpi.performanceGoal,
-            exerciseId: kpi.exerciseId.toString()
-          }))
-        }))
-      }
-    };
-  }
-
-  async getExercisesByIds(exerciseIds: string[], userId: string): Promise<ExerciseWithKPIsDTO[]> {
-    // Get exercises that are either owned by user or shared with user
-    const sharedResources = await this.sharedResourceModel
-      .find({
-        resourceId: { $in: exerciseIds },
-        sharedWithId: userId,
-        resourceType: ResourceType.EXERCISE
-      });
-
-    const sharedExerciseIds = sharedResources.map(share => share.resourceId.toString());
-
-    const exercises = await this.exerciseModel
-      .find({
-        _id: { $in: exerciseIds },
-        $or: [
-          { createdBy: userId },
-          { _id: { $in: sharedExerciseIds } }
-        ]
-      })
-      .populate('kpis')
-      .lean();
-
-    return exercises.map(exercise => ({
-      _id: exercise._id.toString(),
-      title: exercise.title,
-      description: exercise.description,
-      media: exercise.media,
-      createdBy: exercise.createdBy.toString(),
-      isShared: exercise.createdBy.toString() !== userId,
-      kpis: exercise.kpis!.map(kpi => ({
-        _id: kpi._id.toString(),
-        goalValue: kpi.goalValue,
-        unit: kpi.unit,
-        performanceGoal: kpi.performanceGoal,
-        exerciseId: kpi.exerciseId.toString()
-      })),
-      createdAt: exercise.createdAt,
-      updatedAt: exercise.updatedAt
-    }));
   }
 }

@@ -6,6 +6,7 @@ import { Exercise } from "./models/Exercise";
 import { KPI } from "./models/KPI";
 import { TrainingTemplate } from "./models/TrainingTemplate";
 import { SharedResource } from "./models/SharedResource";
+import { ExerciseQueryService } from "./services/exerciseQueryService";
 
 export function addToContainer(container: Container) {
   const eventService = container.get<EventService>('EventService');
@@ -19,10 +20,17 @@ export function addToContainer(container: Container) {
     eventService
   );
   
-  const exerciseController = new ExerciseController(exerciseService);
-  const exerciseTransportRouter = new ExerciseTransportRouter(transport, exerciseService);
+  const exerciseQueryService = new ExerciseQueryService(
+    Exercise,
+    TrainingTemplate,
+    SharedResource
+  );
+  
+  const exerciseController = new ExerciseController(exerciseService, exerciseQueryService);
+  const exerciseTransportRouter = new ExerciseTransportRouter(transport, exerciseService, exerciseQueryService);
   
   container.register('ExerciseService', exerciseService);
+  container.register('ExerciseQueryService', exerciseQueryService);
   container.register('ExerciseController', exerciseController);
   container.register('ExerciseTransportRouter', exerciseTransportRouter);
 }
