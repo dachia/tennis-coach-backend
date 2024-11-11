@@ -315,6 +315,14 @@ describe('Workout Routes', () => {
         startTimestamp: new Date(),
         status: WorkoutStatus.IN_PROGRESS
       });
+      
+      // Share exercise with trainee
+      await SharedResource.create({
+        resourceId: exercise._id,
+        resourceType: ResourceType.EXERCISE,
+        sharedById: coach._id,
+        sharedWithId: trainee._id
+      });
     });
 
     it('should create a new exercise log successfully', async () => {
@@ -446,7 +454,12 @@ describe('Workout Routes', () => {
         kpiId: kpi._id,
         traineeId: trainee._id,
         status: ExerciseLogStatus.PENDING,
-        actualValue: 0
+        actualValue: 0,
+        kpiGoalValue: kpi.goalValue,
+        kpiUnit: kpi.unit,
+        kpiPerformanceGoal: kpi.performanceGoal,
+        exerciseTitle: exercise.title,
+        exerciseDescription: exercise.description
       });
     });
 

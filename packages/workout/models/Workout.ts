@@ -12,6 +12,8 @@ export interface IWorkout extends Document {
   notes?: string;
   media?: string[];
   exerciseLogs?: any[];
+  exerciseNotes: Map<string, string>;
+  exerciseMedia: Map<string, string[]>;
 }
 
 const workoutSchema = new Schema({
@@ -42,7 +44,17 @@ const workoutSchema = new Schema({
     ref: 'TrainingTemplate'
   },
   notes: { type: String },
-  media: [{ type: String }]
+  media: [{ type: String }],
+  exerciseNotes: {
+    type: Map,
+    of: String,
+    default: new Map()
+  },
+  exerciseMedia: {
+    type: Map,
+    of: [String],
+    default: new Map()
+  }
 }, { 
   timestamps: true,
   toJSON: { virtuals: true },

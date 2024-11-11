@@ -91,6 +91,11 @@ export class WorkoutService {
                 logDate: startTimestamp,
                 actualValue: 0,
                 duration: 0,
+                exerciseTitle: exercise.title,
+                exerciseDescription: exercise.description,
+                kpiGoalValue: kpi.goalValue,
+                kpiUnit: kpi.unit,
+                kpiPerformanceGoal: kpi.performanceGoal,
                 status: ExerciseLogStatus.PENDING
               })
             )
@@ -133,11 +138,25 @@ export class WorkoutService {
     if (!workout) {
       throw new DomainError('Workout not found or unauthorized', 404);
     }
+    // fetch exercise and kpi data
+    const exerciseResponse = await this.transport.request<
+      { id: string; userId: string },
+      { exercise: { _id: string; title: string; description: string; kpis: { _id: string, goalValue: number, unit: string, performanceGoal: string }[] } }
+    >('exercise.get', {
+      type: 'GET_EXERCISE',
+      payload: { id: validatedData.exerciseId, userId: data.userId }
+    });
+    const kpiData = exerciseResponse.exercise.kpis.find(kpi => kpi._id.toString() === validatedData.kpiId);
 
     const exerciseLog = await this.exerciseLogModel.create({
       ...validatedData,
       traineeId: data.userId,
       logDate: new Date(),
+      exerciseTitle: exerciseResponse.exercise.title,
+      exerciseDescription: exerciseResponse.exercise.description,
+      kpiGoalValue: kpiData?.goalValue,
+      kpiUnit: kpiData?.unit,
+      kpiPerformanceGoal: kpiData?.performanceGoal,
       status: ExerciseLogStatus.COMPLETED
     });
 
@@ -520,7 +539,7 @@ export class WorkoutService {
 
     const exerciseResponse = await this.transport.request<
       { id: string; userId: string },
-      { _id: string; exercise: { _id: string, kpis: { _id: string }[] } }
+      { _id: string; exercise: { _id: string, title: string, description: string, kpis: { _id: string, goalValue: number, unit: string, performanceGoal: string }[] } }
     >('exercise.get', {
       type: 'GET_EXERCISE',
       payload: { id: exerciseId, userId }
@@ -536,6 +555,11 @@ export class WorkoutService {
       kpiId: kpi._id,
       traineeId: userId,
       logDate: new Date(),
+      exerciseTitle: exerciseResponse.exercise.title,
+      exerciseDescription: exerciseResponse.exercise.description,
+      kpiGoalValue: kpi.goalValue,
+      kpiUnit: kpi.unit,
+      kpiPerformanceGoal: kpi.performanceGoal,
       actualValue: 0,
       duration: 0,
       status: ExerciseLogStatus.PENDING
