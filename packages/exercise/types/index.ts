@@ -57,7 +57,6 @@ export interface CreateExerciseDTO {
   media?: string[];
   tags?: string[];
   kpis?: Array<{
-    goalValue: number;
     unit: string;
     performanceGoal: PerformanceGoal;
   }>;

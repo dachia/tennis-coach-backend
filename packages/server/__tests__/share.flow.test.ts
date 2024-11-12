@@ -108,7 +108,7 @@ describe("Share Flow", () => {
         .send(shareData);
 
       expect(shareResponse.status).toBe(201);
-      const sharedResourceId = shareResponse.body.data.payload.sharedResource._id;
+      const sharedResourceId = shareResponse.body.data.payload.share._id;
 
       // 3. Verify shared resource was created correctly
       const sharedResource = await SharedResource.findById(sharedResourceId);

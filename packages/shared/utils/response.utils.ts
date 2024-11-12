@@ -5,11 +5,11 @@ export interface PaginationMeta {
   totalPages: number;
 }
 
-export interface ResponsePayload {
+export interface ResponsePayload<T = any> {
   status: 'success' | 'fail' | 'error';
   data: {
     message: string;
-    payload: any;
+    payload: T;
     pagination?: PaginationMeta;
   } | null;
   error: { message: string; details?: any } | null;
@@ -17,18 +17,18 @@ export interface ResponsePayload {
   version: number;
 }
 
-export function createResponse(
+export function createResponse<T = any>(
   status: 'success' | 'fail' | 'error',
   message: string,
-  payload: any = null,
+  payload: T | null = null,
   error: { message: string; details?: any } | null = null,
   meta: Record<string, any> = {},
   version: number = 1,
   pagination?: PaginationMeta
-): ResponsePayload {
+): ResponsePayload<T> {
   return {
     status,
-    data: status === 'success' ? { message, payload, pagination } : null,
+    data: status === 'success' ? { message, payload: payload as T, pagination } : null,
     error: error !== null ? error : status !== 'success' ? { message: message } : null,
     meta,
     version,

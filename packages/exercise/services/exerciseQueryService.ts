@@ -11,15 +11,8 @@ import {
   ExerciseWithKPIsDTO,
   GetResourceSharesResponseDTO
 } from '../types';
-import {
-  mapExercisesWithKPIsToResponse,
-  mapTemplateToDetailedResponse,
-  mapTemplatesToResponse,
-  mapSharesToResponse,
-  mapExerciseToDetailedResponse,
-  mapExerciseToDTO
-} from '../mappers/responseMappers';
 import { IUser } from '../../auth/models/User';
+import { mapExercise, mapShare, mapTemplate } from '../mappers/responseMappers';
 
 export class ExerciseQueryService {
   constructor(
@@ -28,7 +21,7 @@ export class ExerciseQueryService {
     private readonly sharedResourceModel: typeof SharedResource,
   ) { }
 
-  async getExercisesWithKPIs(userId: string): Promise<GetExercisesResponseDTO> {
+  async getExercisesWithKPIs(userId: string) {
     const [ownedExercises, sharedResources] = await Promise.all([
       this.exerciseModel
         .find({
@@ -58,10 +51,12 @@ export class ExerciseQueryService {
       .exec();
       
 
-    return mapExercisesWithKPIsToResponse(ownedExercises, sharedExercises, userId);
+    return {
+      exercises: [...ownedExercises, ...sharedExercises].map(exercise => mapExercise(exercise, userId))
+    };
   }
 
-  async getTemplatesWithExercises(userId: string): Promise<GetTemplatesResponseDTO> {
+  async getTemplatesWithExercises(userId: string) {
     const [ownedTemplates, sharedResources] = await Promise.all([
       this.templateModel
         .find({ createdBy: userId })
@@ -98,10 +93,12 @@ export class ExerciseQueryService {
       .lean()
       .exec();
 
-    return mapTemplatesToResponse(ownedTemplates, sharedTemplates, userId);
+    return {
+      templates: [...ownedTemplates, ...sharedTemplates].map(template => mapTemplate(template, userId))
+    };
   }
 
-  async getExerciseById(id: string, userId: string): Promise<GetExerciseByIdResponseDTO> {
+  async getExerciseById(id: string, userId: string) {
     let exercise = await this.exerciseModel
       .findOne({
         _id: id,
@@ -129,10 +126,12 @@ export class ExerciseQueryService {
       throw new DomainError('Exercise not found or unauthorized', 404);
     }
 
-    return mapExerciseToDetailedResponse(exercise, userId);
+    return {
+      exercise: mapExercise(exercise, userId)
+    };
   }
 
-  async getTemplateById(id: string, userId: string): Promise<GetTemplateByIdResponseDTO> {
+  async getTemplateById(id: string, userId: string) {
     let template = await this.templateModel
       .findOne({
         _id: id,
@@ -170,19 +169,23 @@ export class ExerciseQueryService {
       throw new DomainError('Template not found or unauthorized', 404);
     }
 
-    return mapTemplateToDetailedResponse(template, userId);
+    return {
+      template: mapTemplate(template, userId)
+    };
   }
 
-  async getResourceShares(resourceId: string, userId: string): Promise<GetResourceSharesResponseDTO> {
+  async getResourceShares(resourceId: string, userId: string) {
     const shares = await this.sharedResourceModel
       .find({ resourceId })
-      .populate('sharedWithId', '_id email name')
-      .sort({ createdAt: 1 }) as unknown as (Omit<ISharedResource, 'sharedWithId'> & { sharedWithId: IUser })[];
+      .populate('sharedWith', '_id email name')
+      .sort({ createdAt: 1 })
 
-    return mapSharesToResponse(shares);
+    return {
+      shares: shares.map(share => mapShare(share))
+    };
   }
 
-  async getExercisesByIds(exerciseIds: string[], userId: string): Promise<ExerciseWithKPIsDTO[]> {
+  async getExercisesByIds(exerciseIds: string[], userId: string) {
     const sharedResources = await this.sharedResourceModel
       .find({
         resourceId: { $in: exerciseIds },
@@ -204,6 +207,8 @@ export class ExerciseQueryService {
       .populate('kpis')
       .lean();
 
-    return exercises.map(exercise => mapExerciseToDTO(exercise, userId));
+    return {
+      exercises: exercises.map(exercise => mapExercise(exercise, userId))
+    };
   }
 } 

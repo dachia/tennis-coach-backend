@@ -1,6 +1,6 @@
 import { IWorkout, Workout } from '../models/Workout';
 import { ExerciseLog, IExerciseLog } from '../models/ExerciseLog';
-import { EventService } from '../../shared';
+import { EventService, ExerciseTransportClient } from '../../shared';
 import { DomainError } from '../../shared/errors/DomainError';
 import {
   WorkoutStatus,
@@ -16,18 +16,15 @@ import {
   updateWorkoutSchema,
   updateExerciseLogSchema
 } from '../validation';
-import { Transport } from '../../shared';
-import { GetTemplateByIdResponseDTO } from '../../exercise/types';
-import { dateRangeSchema } from '../validation';
-import * as yup from 'yup';
-import { EnrichedWorkoutDTO, GetCompletedWorkoutsResponseDTO } from '../types';
+import { AuthTransportClient } from '../../shared/transport/helpers/authTransport';
 
 export class WorkoutService {
   constructor(
     private readonly workoutModel: typeof Workout,
     private readonly exerciseLogModel: typeof ExerciseLog,
     private readonly eventService: EventService,
-    private readonly transport: Transport
+    private readonly exerciseTransportClient: ExerciseTransportClient,
+    private readonly authTransportClient: AuthTransportClient
   ) { }
 
   private determineWorkoutStatus(startTimestamp: Date): WorkoutStatus {
@@ -60,41 +57,34 @@ export class WorkoutService {
     const startTimestamp = validatedData.startTimestamp || new Date();
     const status = this.determineWorkoutStatus(startTimestamp);
     // Get trainee information
-    const traineeResponse = await this.transport.request<
-      { ids: string[] },
-      { users: { _id: string; email: string; name: string }[] }
-    >('auth.users', {
-      type: 'GET_USERS_BY_IDS',
-      payload: { ids: [data.userId] }
+    const traineeResponse = await this.authTransportClient.getUsersByIds({
+      ids: [data.userId],
+      userId: data.userId
     });
 
-    const trainee = traineeResponse.users[0];
+    const trainee = traineeResponse.data?.payload.users[0];
 
     const workout = await this.workoutModel.create({
       ...validatedData,
       startTimestamp,
       traineeId: data.userId,
       status,
-      traineeName: trainee.name,
-      traineeEmail: trainee.email
+      traineeName: trainee?.name,
+      traineeEmail: trainee?.email
     });
 
     if (validatedData.templateId) {
       try {
-        const templateResponse = await this.transport.request<
-          { id: string; userId: string },
-          GetTemplateByIdResponseDTO
-        >('template.get', {
-          type: 'GET_TEMPLATE',
-          payload: {
-            id: validatedData.templateId,
-            userId: data.userId
-          }
+
+        const templateResponse = await this.exerciseTransportClient.getTemplate({
+          id: validatedData.templateId,
+          userId: data.userId
         });
+        const template = templateResponse.data?.payload.template!;
 
         await Promise.all(
-          templateResponse.template.exercises.flatMap(exercise =>
-            exercise.kpis.map(kpi =>
+          template.exercises.flatMap(exercise =>
+            exercise.kpis!.map(kpi =>
               this.exerciseLogModel.create({
                 workoutId: workout._id,
                 exerciseId: exercise._id,
@@ -150,23 +140,20 @@ export class WorkoutService {
       throw new DomainError('Workout not found or unauthorized', 404);
     }
     // fetch exercise and kpi data
-    const exerciseResponse = await this.transport.request<
-      { id: string; userId: string },
-      { exercise: { _id: string; title: string; description: string; kpis: { _id: string, goalValue: number, unit: string, performanceGoal: string }[] } }
-    >('exercise.get', {
-      type: 'GET_EXERCISE',
-      payload: { id: validatedData.exerciseId, userId: data.userId }
+    const exerciseResponse = await this.exerciseTransportClient.getExercise({
+      id: validatedData.exerciseId,
+      userId: data.userId
     });
-    const kpiData = exerciseResponse.exercise.kpis.find(kpi => kpi._id.toString() === validatedData.kpiId);
+    const exercise = exerciseResponse.data?.payload.exercise!;
+    const kpiData = exercise.kpis!.find(kpi => kpi._id!.toString() === validatedData.kpiId);
 
 
     const exerciseLog = await this.exerciseLogModel.create({
       ...validatedData,
       traineeId: data.userId,
       logDate: new Date(),
-      exerciseTitle: exerciseResponse.exercise.title,
-      exerciseDescription: exerciseResponse.exercise.description,
-      kpiGoalValue: kpiData?.goalValue,
+      exerciseTitle: exercise.title,
+      exerciseDescription: exercise.description,
       kpiUnit: kpiData?.unit,
       kpiPerformanceGoal: kpiData?.performanceGoal,
       status: ExerciseLogStatus.COMPLETED,
@@ -249,45 +236,39 @@ export class WorkoutService {
       throw new DomainError('Workout not found or unauthorized', 404);
     }
 
-    const exerciseResponse = await this.transport.request<
-      { id: string; userId: string },
-      { _id: string; exercise: { _id: string, title: string, description: string, kpis: { _id: string, goalValue: number, unit: string, performanceGoal: string }[] } }
-    >('exercise.get', {
-      type: 'GET_EXERCISE',
-      payload: { id: exerciseId, userId }
+    const exerciseResponse = await this.exerciseTransportClient.getExercise({
+      id: exerciseId,
+      userId
     });
 
     if (!exerciseResponse) {
       throw new DomainError('Exercise not found', 404);
     }
     // Get trainee information
-    const traineeResponse = await this.transport.request<
-      { ids: string[] },
-      { users: { _id: string; email: string; name: string }[] }
-    >('auth.users', {
-      type: 'GET_USERS_BY_IDS',
-      payload: { ids: [userId] }
+    const traineeResponse = await this.authTransportClient.getUsersByIds({
+      ids: [userId],
+      userId
     });
 
-    const trainee = traineeResponse.users[0];
+    const trainee = traineeResponse.data?.payload.users[0];
 
+    const exercise = exerciseResponse.data?.payload.exercise!;
 
-    const exerciseLogs = await Promise.all(exerciseResponse.exercise.kpis.map(async (kpi) => this.exerciseLogModel.create({
+    const exerciseLogs = await Promise.all(exercise.kpis!.map(async (kpi) => this.exerciseLogModel.create({
       workoutId: workout._id,
-      exerciseId: exerciseResponse.exercise._id,
+      exerciseId: exercise._id,
       kpiId: kpi._id,
       traineeId: userId,
       logDate: new Date(),
-      exerciseTitle: exerciseResponse.exercise.title,
-      exerciseDescription: exerciseResponse.exercise.description,
-      kpiGoalValue: kpi.goalValue,
+      exerciseTitle: exercise.title,
+      exerciseDescription: exercise.description,
       kpiUnit: kpi.unit,
       kpiPerformanceGoal: kpi.performanceGoal,
       actualValue: 0,
       duration: 0,
       status: ExerciseLogStatus.PENDING,
-      traineeName: trainee.name,
-      traineeEmail: trainee.email
+      traineeName: trainee?.name,
+      traineeEmail: trainee?.email
     })));
 
     return { exerciseLogs };

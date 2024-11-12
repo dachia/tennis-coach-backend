@@ -23,6 +23,7 @@ import {
   updateTemplateSchema,
   updateExerciseWithKPIsSchema
 } from '../validation';
+import { mapExercise, mapKPI, mapShare, mapTemplate } from '../mappers/responseMappers';
 
 export class ExerciseService {
   constructor(
@@ -33,7 +34,7 @@ export class ExerciseService {
     private readonly eventService: EventService,
   ) { }
 
-  async createExerciseWithKPIs(data: CreateExerciseDTO): Promise<{ exercise: IExercise }> {
+  async createExerciseWithKPIs(data: CreateExerciseDTO) {
     let validatedData;
     try {
       validatedData = await createExerciseSchema.validate(data, {
@@ -68,10 +69,12 @@ export class ExerciseService {
       payload: { exerciseId: exercise._id }
     });
 
-    return { exercise: populatedExercise! };
+    return {
+      exercise: mapExercise(populatedExercise, data.userId)
+    };
   }
 
-  async createTemplate(data: CreateTemplateDTO): Promise<{ template: ITrainingTemplate }> {
+  async createTemplate(data: CreateTemplateDTO) {
     let validatedData;
     try {
       validatedData = await createTemplateSchema.validate(data, {
@@ -102,10 +105,12 @@ export class ExerciseService {
       payload: { templateId: template._id }
     });
 
-    return { template };
+    return {
+      template: mapTemplate(template, data.userId)
+    };
   }
 
-  async shareResource(data: ShareResourceDTO): Promise<{ sharedResource: ISharedResource }> {
+  async shareResource(data: ShareResourceDTO) {
     let validatedData;
     try {
       validatedData = await shareResourceSchema.validate(data, {
@@ -168,7 +173,7 @@ export class ExerciseService {
           sharedById: data.userId,
         })
       );
-      await Promise.all(promises);
+
     }
 
     await this.eventService.publishDomainEvent({
@@ -179,10 +184,12 @@ export class ExerciseService {
       }
     });
 
-    return { sharedResource };
+    return {
+      share: mapShare(sharedResource)
+    };
   }
 
-  async updateExercise(id: string, data: UpdateExerciseDTO): Promise<{ exercise: IExercise | null }> {
+  async updateExercise(id: string, data: UpdateExerciseDTO) {
     let validatedData;
     try {
       validatedData = await updateExerciseSchema.validate(data, {
@@ -208,10 +215,12 @@ export class ExerciseService {
       payload: { exerciseId: exercise._id }
     });
 
-    return { exercise };
+    return {
+      exercise: mapExercise(exercise, data.userId)
+    };
   }
 
-  async updateKpi(id: string, data: UpdateKpiDTO): Promise<{ kpi: IKPI | null }> {
+  async updateKpi(id: string, data: UpdateKpiDTO) {
     let validatedData;
     try {
       validatedData = await updateKpiSchema.validate(data, {
@@ -243,10 +252,12 @@ export class ExerciseService {
       payload: { kpiId: updatedKpi!._id }
     });
 
-    return { kpi: updatedKpi };
+    return {
+      kpi: mapKPI(updatedKpi)
+    };
   }
 
-  async updateTemplate(id: string, data: UpdateTemplateDTO): Promise<{ template: ITrainingTemplate | null }> {
+  async updateTemplate(id: string, data: UpdateTemplateDTO) {
     let validatedData;
     try {
       validatedData = await updateTemplateSchema.validate(data, {
@@ -282,10 +293,12 @@ export class ExerciseService {
       payload: { templateId: template._id }
     });
 
-    return { template };
+    return {
+      template: mapTemplate(template, data.userId)
+    };
   }
 
-  async deleteSharedResource(id: string, userId: string): Promise<boolean> {
+  async deleteSharedResource(id: string, userId: string) {
     const sharedResource = await this.sharedResourceModel.findById(id);
 
     if (!sharedResource) {
@@ -312,7 +325,7 @@ export class ExerciseService {
     return true;
   }
 
-  async updateExerciseWithKPIs(id: string, data: UpdateExerciseWithKPIsDTO): Promise<{ exercise: IExercise | null }> {
+  async updateExerciseWithKPIs(id: string, data: UpdateExerciseWithKPIsDTO) {
     let validatedData;
     try {
       validatedData = await updateExerciseWithKPIsSchema.validate(data, {
@@ -379,11 +392,13 @@ export class ExerciseService {
       payload: { exerciseId: exercise._id }
     });
 
-    return { exercise };
+    return {
+      exercise: mapExercise(exercise, data.userId)
+    };
   }
 
 
-  async deleteExercise(id: string, userId: string): Promise<boolean> {
+  async deleteExercise(id: string, userId: string) {
     const exercise = await this.exerciseModel.findOne({ _id: id, createdBy: userId });
 
     if (!exercise) {
@@ -401,7 +416,7 @@ export class ExerciseService {
     return true;
   }
 
-  async deleteTemplate(id: string, userId: string): Promise<boolean> {
+  async deleteTemplate(id: string, userId: string) {
     const template = await this.templateModel.findOne({ _id: id, createdBy: userId });
 
     if (!template) {

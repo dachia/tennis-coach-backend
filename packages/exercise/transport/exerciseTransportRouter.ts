@@ -1,43 +1,9 @@
 import { Transport, TransportRouter } from '../../shared/transport';
-import { IExercise } from '../models/Exercise';
-import { IKPI } from '../models/KPI';
-import { ISharedResource } from '../models/SharedResource';
-import { ITrainingTemplate } from '../models/TrainingTemplate';
-import { ExerciseQueryService } from '../services/exerciseQueryService';
 import { ExerciseService } from '../services/exerciseService';
-import {
-  ExerciseDTO,
-  KPIDTO,
-  TrainingTemplateDTO,
-  SharedResourceDTO,
-  ResourceType,
-  PerformanceGoal,
-  GetExercisesResponseDTO,
-  GetTemplateByIdResponseDTO,
-  ExerciseWithKPIsDTO,
-  GetExerciseByIdResponseDTO
-} from '../types';
-
-interface CreateExercisePayload {
-  title: string;
-  description: string;
-  media: string[];
-  userId: string;
-}
-
-interface CreateTemplatePayload {
-  title: string;
-  description: string;
-  exerciseIds: string[];
-  userId: string;
-}
-
-interface ShareResourcePayload {
-  resourceType: ResourceType;
-  resourceId: string;
-  sharedWithId: string;
-  userId: string;
-}
+import { ExerciseQueryService } from '../services/exerciseQueryService';
+import { TransportRoutes } from '../../shared/transport/constants';
+import { ExerciseTransport } from '../../shared/transport/types/exercise';
+import { createResponse } from '../../shared/utils/response.utils';
 
 export class ExerciseTransportRouter {
   private router: TransportRouter;
@@ -52,127 +18,132 @@ export class ExerciseTransportRouter {
   }
 
   private registerRoutes() {
-    this.router.register<CreateExercisePayload, { exercise: IExercise }>(
-      'exercise.create',
-      async (payload) => {
-        return this.exerciseService.createExerciseWithKPIs(payload);
-      }
-    );
-
-    this.router.register<CreateTemplatePayload, { template: ITrainingTemplate }>(
-      'template.create',
-      async (payload) => {
-        return this.exerciseService.createTemplate(payload);
-      }
-    );
-
-    this.router.register<ShareResourcePayload, { sharedResource: ISharedResource }>(
-      'resource.share',
-      async (payload) => {
-        return this.exerciseService.shareResource(payload);
-      }
-    );
-
-    this.router.register<{ id: string; userId: string } & Partial<ExerciseDTO>, { exercise: IExercise | null }>(
-      'exercise.update',
-      async (payload) => {
-        const { id, ...data } = payload;
-        return this.exerciseService.updateExercise(id, data);
-      }
-    );
-
-    this.router.register<{ id: string; userId: string } & Partial<KPIDTO>, {
-      kpi: IKPI | null
-    }>(
-      'kpi.update',
-      async (payload) => {
-        const { id, ...data } = payload;
-        return this.exerciseService.updateKpi(id, data);
-      }
-    );
-
-    this.router.register<{ id: string; userId: string } & Partial<TrainingTemplateDTO>, {
-      template: ITrainingTemplate | null
-    }>(
-      'template.update',
-      async (payload) => {
-        const { id, ...data } = payload;
-        return this.exerciseService.updateTemplate(id, data);
-      }
-    );
-
-    this.router.register<{ id: string; userId: string }, boolean>(
-      'resource.delete',
-      async (payload) => {
-        const { id, userId } = payload;
-        return this.exerciseService.deleteSharedResource(id, userId);
-      }
-    );
+    this.router.register<
+      ExerciseTransport.CreateExerciseRequest,
+      ExerciseTransport.CreateExerciseResponse
+    >(TransportRoutes.Exercise.CREATE, async (payload) => {
+      const response = await this.exerciseService.createExerciseWithKPIs(payload);
+      return createResponse('success', 'Exercise created successfully', response);
+    });
 
     this.router.register<
-      { id: string; userId: string } & Partial<ExerciseDTO> & { kpis?: Array<{
-        _id?: string;
-        goalValue: number;
-        unit: string;
-        performanceGoal: PerformanceGoal;
-      }> },
-      { exercise: IExercise | null }
-    >(
-      'exercise.updateWithKPIs',
-      async (payload) => {
-        const { id, ...data } = payload;
-        return this.exerciseService.updateExerciseWithKPIs(id, data);
-      }
-    );
+      ExerciseTransport.UpdateExerciseRequest,
+      ExerciseTransport.UpdateExerciseResponse
+    >(TransportRoutes.Exercise.UPDATE, async (payload) => {
+      const { id, ...data } = payload;
+      const response = await this.exerciseService.updateExercise(id, data);
+      return createResponse('success', 'Exercise updated successfully', response);
+    });
 
     this.router.register<
-      { userId: string },
-      GetExercisesResponseDTO
-    >(
-      'exercises.get',
-      async (payload) => {
-        return this.exerciseQueryService.getExercisesWithKPIs(payload.userId);
-      }
-    );
-
-    this.router.register<{ id: string; userId: string }, GetExerciseByIdResponseDTO>(
-      'exercise.get',
-      async (payload) => {
-        return this.exerciseQueryService.getExerciseById(payload.id, payload.userId);
-      }
-    );
-
-    this.router.register<{ id: string; userId: string }, boolean>(
-      'exercise.delete',
-      async (payload) => {
-        const { id, userId } = payload;
-        return this.exerciseService.deleteExercise(id, userId);
-      }
-    );
-
-    this.router.register<{ id: string; userId: string }, boolean>(
-      'template.delete',
-      async (payload) => {
-        const { id, userId } = payload;
-        return this.exerciseService.deleteTemplate(id, userId);
-      }
-    );
+      ExerciseTransport.UpdateExerciseWithKPIsRequest,
+      ExerciseTransport.UpdateExerciseWithKPIsResponse
+    >(TransportRoutes.Exercise.UPDATE_WITH_KPIS, async (payload) => {
+      const { id, ...data } = payload;
+      const response = await this.exerciseService.updateExerciseWithKPIs(id, data);
+      return createResponse('success', 'Exercise updated successfully', response);
+    });
 
     this.router.register<
-      { id: string; userId: string },
-      GetTemplateByIdResponseDTO
-    >(
-      'template.get',
-      async (payload) => {
-        const { id, userId } = payload;
-        return this.exerciseQueryService.getTemplateById(id, userId);
-      }
-    );
+      ExerciseTransport.DeleteExerciseRequest,
+      ExerciseTransport.DeleteExerciseResponse
+    >(TransportRoutes.Exercise.DELETE, async (payload) => {
+      const success = await this.exerciseService.deleteExercise(payload.id, payload.userId);
+      return createResponse('success', 'Exercise deleted successfully', { success });
+    });
 
-    this.router.register<{ ids: string[]; userId: string }, ExerciseWithKPIsDTO[]>(
-      'exercise.getByIds',
-      async (payload) => this.exerciseQueryService.getExercisesByIds(payload.ids, payload.userId)
-    );
+    this.router.register<
+      ExerciseTransport.GetExerciseByIdRequest,
+      ExerciseTransport.GetExerciseByIdResponse
+    >(TransportRoutes.Exercise.GET_BY_ID, async (payload) => {
+      const response = await this.exerciseQueryService.getExerciseById(payload.id, payload.userId);
+      return createResponse('success', 'Exercise fetched successfully', response);
+    });
+
+    this.router.register<
+      ExerciseTransport.GetExercisesRequest,
+      ExerciseTransport.GetExercisesResponse
+    >(TransportRoutes.Exercise.GET_ALL, async (payload) => {
+      const response = await this.exerciseQueryService.getExercisesWithKPIs(payload.userId);
+      return createResponse('success', 'Exercise fetched successfully', response);
+    });
+
+    // Template operations
+    this.router.register<
+      ExerciseTransport.CreateTemplateRequest,
+      ExerciseTransport.CreateTemplateResponse
+    >(TransportRoutes.Template.CREATE, async (payload) => {
+      const response = await this.exerciseService.createTemplate(payload);
+      return createResponse('success', 'Template created successfully', response);
+    });
+
+    this.router.register<
+      ExerciseTransport.UpdateTemplateRequest,
+      ExerciseTransport.UpdateTemplateResponse
+    >(TransportRoutes.Template.UPDATE, async (payload) => {
+      const { id, ...data } = payload;
+      const response = await this.exerciseService.updateTemplate(id, data);
+      return createResponse('success', 'Template updated successfully', response);
+    });
+
+    this.router.register<
+      ExerciseTransport.DeleteTemplateRequest,
+      ExerciseTransport.DeleteTemplateResponse
+    >(TransportRoutes.Template.DELETE, async (payload) => {
+      const success = await this.exerciseService.deleteTemplate(payload.id, payload.userId);
+      return createResponse('success', 'Template deleted successfully', { success });
+    });
+
+    this.router.register<
+      ExerciseTransport.GetTemplateByIdRequest,
+      ExerciseTransport.GetTemplateByIdResponse
+    >(TransportRoutes.Template.GET_BY_ID, async (payload) => {
+      const response = await this.exerciseQueryService.getTemplateById(payload.id, payload.userId);
+      return createResponse('success', 'Template fetched successfully', response);
+    });
+
+    // KPI operations
+    this.router.register<
+      ExerciseTransport.UpdateKPIRequest,
+      ExerciseTransport.UpdateKPIResponse
+    >(TransportRoutes.KPI.UPDATE, async (payload) => {
+      const { id, ...data } = payload;
+      const response = await this.exerciseService.updateKpi(id, data);
+      return createResponse('success', 'KPI updated successfully', response);
+    });
+
+    // Resource operations
+    this.router.register<
+      ExerciseTransport.ShareResourceRequest,
+      ExerciseTransport.ShareResourceResponse
+    >(TransportRoutes.Resource.SHARE, async (payload) => {
+      const response = await this.exerciseService.shareResource(payload);
+      return createResponse('success', 'Resource shared successfully', response);
+    });
+
+    this.router.register<
+      ExerciseTransport.DeleteResourceRequest,
+      ExerciseTransport.DeleteResourceResponse
+    >(TransportRoutes.Resource.DELETE, async (payload) => {
+      const success = await this.exerciseService.deleteSharedResource(payload.id, payload.userId);
+      return createResponse('success', 'Resource deleted successfully', { success });
+    });
+
+    this.router.register<
+      ExerciseTransport.GetResourceSharesRequest,
+      ExerciseTransport.GetResourceSharesResponse
+    >(TransportRoutes.Resource.GET_SHARES, async (payload) => {
+      const response = await this.exerciseQueryService.getResourceShares(payload.id, payload.userId);
+      return createResponse('success', 'Resource shares fetched successfully', response);
+    });
+
+    this.router.register<
+      ExerciseTransport.GetExercisesByIdsRequest,
+      ExerciseTransport.GetExercisesByIdsResponse
+    >(TransportRoutes.Exercise.GET_BY_IDS, async (payload) => {
+      const response = await this.exerciseQueryService.getExercisesByIds(payload.ids, payload.userId);
+      return createResponse('success', 'Exercises fetched successfully', response);
+    });
   }
 
   async listen() {

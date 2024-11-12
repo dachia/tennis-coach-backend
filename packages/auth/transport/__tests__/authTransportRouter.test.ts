@@ -3,6 +3,7 @@ import { AuthTransportRouter } from '../authTransportRouter';
 import { AuthService } from '../../services/authService';
 import { UserRole } from '../../types';
 import { DomainError } from '../../../shared/errors/DomainError';
+import { createResponse } from '../../../shared';
 
 // Mock AuthService
 const mockAuthService = {
@@ -48,7 +49,7 @@ describe('AuthTransportRouter', () => {
       }
     );
 
-    expect(response).toEqual(expectedResponse);
+    expect(response).toEqual(createResponse('success', 'User registered successfully', expectedResponse));
     expect(mockAuthService.register).toHaveBeenCalledWith(registerData);
   });
 
@@ -69,7 +70,7 @@ describe('AuthTransportRouter', () => {
       }
     );
 
-    expect(response).toEqual(expectedResponse);
+    expect(response).toEqual(createResponse('success', 'User logged in successfully', expectedResponse));
     expect(mockAuthService.login).toHaveBeenCalledWith(loginData);
   });
 

@@ -1,16 +1,18 @@
 import { IWorkout, Workout } from '../models/Workout';
 import { ExerciseLog, IExerciseLog } from '../models/ExerciseLog';
-import { Transport } from '../../shared';
+import { ExerciseTransportClient, Transport } from '../../shared';
 import { DomainError } from '../../shared/errors/DomainError';
 import { EnrichedWorkoutDTO, GetCompletedWorkoutsResponseDTO } from '../types';
 import { dateRangeSchema } from '../validation';
 import * as yup from 'yup';
+import { AuthTransportClient } from '../../shared/transport/helpers/authTransport';
 
 export class WorkoutQueryService {
   constructor(
     private readonly workoutModel: typeof Workout,
     private readonly exerciseLogModel: typeof ExerciseLog,
-    private readonly transport: Transport
+    private readonly exerciseTransportClient: ExerciseTransportClient,
+    private readonly authTransportClient: AuthTransportClient
   ) {}
 
   async getExerciseLogById(logId: string, userId: string) {
@@ -72,18 +74,13 @@ export class WorkoutQueryService {
     if (!workout) {
       workout = await this.workoutModel.findById(workoutId).populate('exerciseLogs');
       if (workout) {
-        const coachTrainee = await this.transport.request<
-          { traineeId: string; coachId: string },
-          { hasRelationship: boolean }
-        >('auth.checkCoachTrainee', {
-          type: 'CHECK_COACH_TRAINEE',
-          payload: {
-            traineeId: workout.traineeId.toString(),
-            coachId: userId
-          }
+        const coachTrainee = await this.authTransportClient.checkCoachTrainee({
+          traineeId: workout.traineeId.toString(),
+          coachId: userId,
+          userId
         });
 
-        if (!coachTrainee.hasRelationship) {
+        if (!coachTrainee.data?.payload.hasRelationship) {
           throw new DomainError('Workout not found or unauthorized', 404);
         }
       } else {
@@ -108,25 +105,19 @@ export class WorkoutQueryService {
         stripUnknown: true
       });
     } catch (err: any) {
-      console.log(err);
       throw new DomainError(err.errors.join(', '));
     }
 
     const { startDate, endDate, userId, traineeId } = validatedData;
 
     if (traineeId) {
-      const coachTrainee = await this.transport.request<
-        { traineeId: string; coachId: string },
-        { hasRelationship: boolean }
-      >('auth.checkCoachTrainee', {
-        type: 'CHECK_COACH_TRAINEE',
-        payload: {
-          traineeId,
-          coachId: userId
-        }
+      const coachTrainee = await this.authTransportClient.checkCoachTrainee({
+        traineeId,
+        coachId: userId,
+        userId
       });
 
-      if (!coachTrainee.hasRelationship) {
+      if (!coachTrainee.data?.payload.hasRelationship) {
         throw new DomainError('Unauthorized to access trainee workouts', 403);
       }
     }
@@ -174,16 +165,14 @@ export class WorkoutQueryService {
       .sort({ startTimestamp: -1 });
 
     try {
-      const coachTraineeResponse = await this.transport.request<
-        { coachId: string },
-        { trainees: { _id: string; email: string; name: string }[] }
-      >('auth.coach.trainees', {
-        type: 'GET_TRAINEES',
-        payload: { coachId: userId }
+      const coachTraineeResponse = await this.authTransportClient.getTraineesByCoach({
+        coachId: userId,
+        userId
       });
 
-      if (coachTraineeResponse.trainees.length > 0) {
-        const traineeIds = coachTraineeResponse.trainees.map(trainee => trainee._id);
+      const trainees = coachTraineeResponse.data?.payload!.trainees!;
+      if (trainees.length > 0) {
+        const traineeIds = trainees.map((trainee: any) => trainee._id);
 
         const traineeWorkouts = await this.workoutModel
           .find({
@@ -214,32 +203,13 @@ export class WorkoutQueryService {
         .map(log => log.exerciseId.toString());
 
       if (exerciseIds.length > 0) {
-        const exerciseResponse = await this.transport.request<
-          { ids: string[]; userId: string },
-          {
-            _id: string;
-            title: string;
-            description: string;
-            media: string[];
-            createdBy: string;
-            isShared?: boolean;
-            createdAt: Date;
-            updatedAt: Date;
-            kpis: {
-              _id: string;
-              goalValue: number;
-              unit: string;
-              performanceGoal: string;
-              exerciseId: string;
-            }[]
-          }[]
-        >('exercise.getByIds', {
-          type: 'GET_EXERCISES_BY_IDS',
-          payload: { ids: exerciseIds, userId }
+        const exerciseResponse = await this.exerciseTransportClient.getExercisesByIds({
+          ids: exerciseIds,
+          userId
         });
 
         exerciseMap = new Map(
-          exerciseResponse.map(exercise => [exercise._id, exercise])
+          exerciseResponse.data?.payload!.exercises.map(exercise => [exercise._id, exercise])
         );
       }
     } catch (err) {
@@ -249,16 +219,13 @@ export class WorkoutQueryService {
       try {
         const traineeIds = [...new Set(workouts.map(w => w.traineeId.toString()))];
 
-        const traineeResponse = await this.transport.request<
-          { ids: string[] },
-          { users: { _id: string; email: string; name: string }[] }
-        >('auth.users', {
-          type: 'GET_USERS_BY_IDS',
-          payload: { ids: traineeIds }
+        const traineeResponse = await this.authTransportClient.getUsersByIds({
+          ids: traineeIds,
+          userId
         });
 
         traineeMap = new Map(
-          traineeResponse.users.map(user => [user._id, user])
+          traineeResponse.data?.payload!.users.map((user: any) => [user._id, user])
         );
       } catch (err) {
         console.log('Error fetching trainee information:', err);

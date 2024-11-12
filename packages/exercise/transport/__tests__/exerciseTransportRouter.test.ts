@@ -4,6 +4,7 @@ import { ExerciseService } from '../../services/exerciseService';
 import { ResourceType } from '../../types';
 import { DomainError } from '../../../shared/errors/DomainError';
 import { ExerciseQueryService } from '../../services/exerciseQueryService';
+import { createResponse } from '../../../shared';
 
 // Mock ExerciseService
 const mockExerciseService = {
@@ -68,7 +69,7 @@ describe('ExerciseTransportRouter', () => {
         }
       );
 
-      expect(response).toEqual(expectedResponse);
+      expect(response).toEqual(createResponse('success', 'Exercise created successfully', expectedResponse));
       expect(mockExerciseService.createExerciseWithKPIs).toHaveBeenCalledWith(exerciseData);
     });
 
@@ -125,7 +126,7 @@ describe('ExerciseTransportRouter', () => {
         }
       );
 
-      expect(response).toEqual(expectedResponse);
+      expect(response).toEqual(createResponse('success', 'Template created successfully', expectedResponse));
       expect(mockExerciseService.createTemplate).toHaveBeenCalledWith(templateData);
     });
   });
@@ -159,7 +160,7 @@ describe('ExerciseTransportRouter', () => {
         }
       );
 
-      expect(response).toEqual(expectedResponse);
+      expect(response).toEqual(createResponse('success', 'Resource shared successfully', expectedResponse));
       expect(mockExerciseService.shareResource).toHaveBeenCalledWith(shareData);
     });
   });
@@ -199,7 +200,7 @@ describe('ExerciseTransportRouter', () => {
         }
       );
 
-      expect(response).toEqual(expectedResponse);
+      expect(response).toEqual(createResponse('success', 'Exercise updated successfully', expectedResponse));
       expect(mockExerciseService.updateExercise).toHaveBeenCalledWith(
         updateData.id,
         { title: updateData.title, description: updateData.description, userId: updateData.userId }
@@ -224,7 +225,7 @@ describe('ExerciseTransportRouter', () => {
         }
       );
 
-      expect(response).toBe(true);
+      expect(response).toEqual(createResponse('success', 'Resource deleted successfully', { success: true }));
       expect(mockExerciseService.deleteSharedResource).toHaveBeenCalledWith(
         deleteData.id,
         deleteData.userId
@@ -281,7 +282,7 @@ describe('ExerciseTransportRouter', () => {
         }
       );
 
-      expect(response).toEqual(expectedResponse);
+      expect(response).toEqual(createResponse('success', 'Exercise updated successfully', expectedResponse));
       expect(mockExerciseService.updateExerciseWithKPIs).toHaveBeenCalledWith(
         updateData.id,
         {
@@ -357,7 +358,7 @@ describe('ExerciseTransportRouter', () => {
         }
       );
 
-      expect(response).toEqual(expectedResponse);
+      expect(response).toEqual(createResponse('success', 'Exercise fetched successfully', expectedResponse));
       expect(mockExerciseQueryService.getExercisesWithKPIs)
         .toHaveBeenCalledWith(fetchData.userId);
     });
@@ -381,7 +382,7 @@ describe('ExerciseTransportRouter', () => {
         }
       );
 
-      expect(response).toBe(true);
+      expect(response).toEqual(createResponse('success', 'Exercise deleted successfully', { success: true }));
       expect(mockExerciseService.deleteExercise)
         .toHaveBeenCalledWith(deleteData.id, deleteData.userId);
     });
@@ -426,7 +427,7 @@ describe('ExerciseTransportRouter', () => {
         }
       );
 
-      expect(response).toBe(true);
+      expect(response).toEqual(createResponse('success', 'Template deleted successfully', { success: true }));
       expect(mockExerciseService.deleteTemplate).toHaveBeenCalledWith(
         deleteData.id,
         deleteData.userId

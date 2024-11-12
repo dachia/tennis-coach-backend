@@ -5,6 +5,7 @@ import { EventService } from '../../shared/';
 import jwt from 'jsonwebtoken';
 import { loginSchema, registerSchema } from '../validation';
 import { DomainError } from '../../shared/errors/DomainError';
+import { mapUser } from '../mappers/responseMappers';
 
 export class AuthService {
   constructor(
@@ -74,34 +75,24 @@ export class AuthService {
   async getTraineesByCoach(coachId: string): Promise<GetTraineesResponseDTO> {
     const coachTrainees = await this.coachTraineeModel
       .find({ coachId })
-      .populate('traineeId', 'name email _id role') as unknown as { traineeId: UserResponseDTO }[];
+      .populate('trainee', 'name email _id role')
 
     return {
-      trainees: coachTrainees.map((ct: any) => ({
-        _id: ct.traineeId._id.toString(),
-        name: ct.traineeId.name,
-        email: ct.traineeId.email,
-        role: ct.traineeId.role
-      }))
+      trainees: coachTrainees.map((ct: any) => mapUser(ct.trainee))
     };
   }
 
   async getCoachByTrainee(traineeId: string): Promise<GetCoachResponseDTO> {
     const coachTrainee = await this.coachTraineeModel
       .findOne({ traineeId })
-      .populate('coachId', 'name email _id role') as unknown as { coachId: UserResponseDTO };
+      .populate('coach', 'name email _id role')
 
     if (!coachTrainee) {
       throw new DomainError('No coach found for this trainee', 404);
     }
 
     return {
-      coach: {
-        _id: coachTrainee.coachId._id.toString(),
-        name: (coachTrainee.coachId as any).name,
-        email: (coachTrainee.coachId as any).email,
-        role: (coachTrainee.coachId as any).role
-      }
+      coach: mapUser(coachTrainee.coach)
     };
   }
 
@@ -207,15 +198,10 @@ export class AuthService {
   async getUsersByIds(userIds: string[]): Promise<{ users: UserResponseDTO[] }> {
     const users = await this.userModel
       .find({ _id: { $in: userIds } })
-      .select('name email _id role') as UserResponseDTO[];
+      .select('name email _id role');
 
     return {
-      users: users.map(user => ({
-        _id: user._id.toString(),
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }))
+      users: users.map(user => mapUser(user))
     };
   }
 } 

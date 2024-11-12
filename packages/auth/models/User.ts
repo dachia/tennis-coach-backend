@@ -3,6 +3,7 @@ import { UserRole } from '../types';
 import bcrypt from 'bcrypt';
 
 export interface IUser extends Document {
+  _id: string;
   name: string;
   email: string;
   password: string;

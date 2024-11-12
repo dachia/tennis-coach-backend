@@ -9,6 +9,11 @@ export interface ISharedResource extends Document {
   sharedById: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
+  sharedWith: {
+    _id: mongoose.Types.ObjectId;
+    email: string;
+    name: string;
+  };
 }
 
 const sharedResourceSchema = new Schema({
@@ -32,6 +37,13 @@ const sharedResourceSchema = new Schema({
     ref: 'User',
     required: true 
   }
-}, { timestamps: true });
+}, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } });
+
+sharedResourceSchema.virtual('sharedWith', {
+  ref: 'User',
+  localField: 'sharedWithId',
+  foreignField: '_id',
+  justOne: true
+});
 
 export const SharedResource = mongoose.model<ISharedResource>('SharedResource', sharedResourceSchema); 

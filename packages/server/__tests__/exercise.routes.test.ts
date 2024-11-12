@@ -302,7 +302,7 @@ describe('Exercise Routes', () => {
         data: {
           message: expect.any(String),
           payload: {
-            sharedResource: expect.objectContaining({
+            share: expect.objectContaining({
               resourceType: shareData.resourceType,
               resourceId: exercise._id.toString(),
               sharedWithId: trainee._id.toString(),

@@ -1,7 +1,9 @@
 import { TransportRouter } from '../../shared/transport/transportRouter';
 import { Transport } from '../../shared/transport/transport';
 import { AuthService } from '../services/authService';
-import { LoginDTO, RegisterDTO, UserResponseDTO } from '../types';
+import { AuthTransport } from '../../shared/transport/types/auth';
+import { TransportRoutes } from '../../shared/transport/constants';
+import { createResponse } from '../../shared/utils';
 
 export class AuthTransportRouter {
   private router: TransportRouter;
@@ -15,82 +17,78 @@ export class AuthTransportRouter {
   }
 
   private registerRoutes() {
-    // Register authentication routes
-    this.router.register<RegisterDTO, { token: string }>(
-      'auth.register',
+    this.router.register<AuthTransport.RegisterRequest, AuthTransport.RegisterResponse>(
+      TransportRoutes.Auth.REGISTER,
       async (payload) => {
-        return this.authService.register(payload);
+        const response = await this.authService.register(payload);
+        return createResponse('success', 'User registered successfully', response);
       }
     );
 
-    this.router.register<LoginDTO, { token: string }>(
-      'auth.login',
+    this.router.register<AuthTransport.LoginRequest, AuthTransport.LoginResponse>(
+      TransportRoutes.Auth.LOGIN,
       async (payload) => {
-        return this.authService.login(payload);
+        const response = await this.authService.login(payload);
+        return createResponse('success', 'User logged in successfully', response);
       }
     );
 
-    this.router.register<{ coachId: string }, { trainees: { _id: string; email: string; name: string }[] }>(
-      'auth.coach.trainees',
+    this.router.register<AuthTransport.GetTraineesByCoachRequest, AuthTransport.GetTraineesByCoachResponse>(
+      TransportRoutes.Auth.GET_TRAINEES_BY_COACH,
       async (payload) => {
-        return this.authService.getTraineesByCoach(payload.coachId);
+        const response = await this.authService.getTraineesByCoach(payload.coachId);
+        return createResponse('success', 'Trainees fetched successfully', response);
       }
     );
 
-    this.router.register<{ traineeId: string }, { coach: { _id: string; email: string; name: string } }>(
-      'auth.trainee.coach',
+    this.router.register<AuthTransport.GetCoachByTraineeRequest, AuthTransport.GetCoachByTraineeResponse>(
+      TransportRoutes.Auth.GET_COACH_BY_TRAINEE,
       async (payload) => {
-        return this.authService.getCoachByTrainee(payload.traineeId);
+        const response = await this.authService.getCoachByTrainee(payload.traineeId);
+        return createResponse('success', 'Coach fetched successfully', response);
       }
     );
 
-    this.router.register<{ coachId: string, traineeEmail: string }, void>(
-      'auth.coach.addTrainee',
+    this.router.register<AuthTransport.AddTraineeRequest, AuthTransport.AddTraineeResponse>(
+      TransportRoutes.Auth.ADD_TRAINEE,
       async (payload) => {
-        return this.authService.addTraineeToCoach(
-          payload.coachId, 
-          payload.traineeEmail
-        );
+        await this.authService.addTraineeToCoach(payload.coachId, payload.traineeEmail);
+        return createResponse('success', 'Trainee added to coach successfully');
       }
     );
 
-    this.router.register<{ coachId: string, traineeEmail: string }, void>(
-      'auth.coach.removeTrainee',
+    this.router.register<AuthTransport.RemoveTraineeRequest, AuthTransport.RemoveTraineeResponse>(
+      TransportRoutes.Auth.REMOVE_TRAINEE,
       async (payload) => {
-        return this.authService.removeTraineeFromCoach(
-          payload.coachId, 
-          payload.traineeEmail
-        );
+        await this.authService.removeTraineeFromCoach(payload.coachId, payload.traineeEmail);
+        return createResponse('success', 'Trainee removed from coach successfully');
       }
     );
 
-    this.router.register<{ coachId: string, traineeId: string }, { hasRelationship: boolean }>(
-      'auth.checkCoachTrainee',
+    this.router.register<AuthTransport.CheckCoachTraineeRequest, AuthTransport.CheckCoachTraineeResponse>(
+      TransportRoutes.Auth.CHECK_COACH_TRAINEE,
       async (payload) => {
         const hasRelationship = await this.authService.checkCoachTraineeRelationship(
           payload.coachId,
           payload.traineeId
         );
-        return { hasRelationship };
+        return createResponse('success', 'Coach trainee relationship checked successfully', { hasRelationship });
       }
     );
 
-    this.router.register<{ ids: string[] }, { users: UserResponseDTO[] }>(
-      'auth.users',
-      async (payload) => this.authService.getUsersByIds(payload.ids)
+    this.router.register<AuthTransport.GetUsersByIdsRequest, AuthTransport.GetUsersByIdsResponse>(
+      TransportRoutes.Auth.GET_USERS,
+      async (payload) => {
+        const response = await this.authService.getUsersByIds(payload.ids);
+        return createResponse('success', 'Users fetched successfully', response);
+      }
     );
   }
 
-  /**
-   * Start listening for auth-related messages
-   */
   async listen() {
     await this.router.listen();
   }
 
-  /**
-   * Stop listening and clean up
-   */
   async close() {
     await this.router.close();
   }
