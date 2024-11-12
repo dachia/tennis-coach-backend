@@ -3,6 +3,7 @@ import { WorkoutTransportRouter } from '../workoutTransportRouter';
 import { WorkoutService } from '../../services/workoutService';
 import { WorkoutStatus, ExerciseLogStatus } from '../../types';
 import { WorkoutQueryService } from '../../services/workoutQueryService';
+import { createResponse } from '../../../shared';
 
 const mockWorkoutService = {
   createWorkout: jest.fn(),
@@ -101,7 +102,7 @@ describe('WorkoutTransportRouter', () => {
         }
       );
 
-      expect(response).toEqual({ workout: expectedWorkout });
+      expect(response).toEqual(createResponse('success', 'Workout created successfully', { workout: expectedWorkout }));
       expect(transport.request).toHaveBeenCalledWith(
         'template.get',
         expect.objectContaining({
@@ -145,7 +146,7 @@ describe('WorkoutTransportRouter', () => {
         }
       );
 
-      expect(response).toEqual(expectedResponse);
+      expect(response).toEqual(createResponse('success', 'Exercise log created successfully', expectedResponse));
       expect(mockWorkoutService.createExerciseLog).toHaveBeenCalledWith(logData);
     });
   });
@@ -185,7 +186,7 @@ describe('WorkoutTransportRouter', () => {
         }
       );
 
-      expect(response).toEqual(expectedResponse);
+      expect(response).toEqual(createResponse('success', 'Workout updated successfully', expectedResponse));
       expect(mockWorkoutService.updateWorkout).toHaveBeenCalledWith(
         updateData.id,
         { status: updateData.status, notes: updateData.notes, userId: updateData.userId }
@@ -221,7 +222,7 @@ describe('WorkoutTransportRouter', () => {
         }
       );
 
-      expect(response).toEqual(expectedResponse);
+      expect(response).toEqual(createResponse('success', 'Exercise log updated successfully', expectedResponse));
       expect(mockWorkoutService.updateExerciseLog).toHaveBeenCalledWith(
         updateData.id,
         { actualValue: updateData.actualValue, status: updateData.status, userId: updateData.userId }
@@ -257,7 +258,7 @@ describe('WorkoutTransportRouter', () => {
         }
       );
 
-      expect(response).toEqual(expectedResponse);
+      expect(response).toEqual(createResponse('success', 'Exercise log fetched successfully', expectedResponse));
       expect(mockWorkoutQueryService.getExerciseLogById).toHaveBeenCalledWith(
         fetchData.id,
         fetchData.userId
@@ -303,7 +304,7 @@ describe('WorkoutTransportRouter', () => {
         }
       );
 
-      expect(response).toEqual(expectedResponse);
+      expect(response).toEqual(createResponse('success', 'Exercise logs fetched successfully', expectedResponse));
       expect(mockWorkoutQueryService.getExerciseLogsByDateRange)
         .toHaveBeenCalledWith({
           startDate: new Date(fetchData.startDate),

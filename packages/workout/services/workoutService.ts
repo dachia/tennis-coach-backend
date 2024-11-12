@@ -17,6 +17,7 @@ import {
   updateExerciseLogSchema
 } from '../validation';
 import { AuthTransportClient } from '../../shared/transport/helpers/authTransport';
+import { mapExerciseLog, mapWorkout } from '../mappers/responseMappers';
 
 export class WorkoutService {
   constructor(
@@ -117,7 +118,7 @@ export class WorkoutService {
       }
     });
 
-    return { workout };
+    return { workout: mapWorkout(workout) };
   }
 
   async createExerciseLog(data: CreateExerciseLogDTO) {
@@ -164,7 +165,7 @@ export class WorkoutService {
       payload: { exerciseLogId: exerciseLog._id }
     });
 
-    return { exerciseLog };
+    return { exerciseLog: mapExerciseLog(exerciseLog) };
   }
 
   async updateWorkout(id: string, data: UpdateWorkoutDTO) {
@@ -193,7 +194,7 @@ export class WorkoutService {
       payload: { workoutId: workout._id }
     });
 
-    return { workout };
+    return { workout: mapWorkout(workout) };
   }
 
   async updateExerciseLog(id: string, data: UpdateExerciseLogDTO) {
@@ -222,7 +223,7 @@ export class WorkoutService {
       payload: { exerciseLogId: exerciseLog._id }
     });
 
-    return { exerciseLog };
+    return { exerciseLog: mapExerciseLog(exerciseLog) };
   }
 
 
@@ -271,6 +272,6 @@ export class WorkoutService {
       traineeEmail: trainee?.email
     })));
 
-    return { exerciseLogs };
+    return { exerciseLogs: exerciseLogs.map(mapExerciseLog) };
   }
 } 

@@ -1,14 +1,9 @@
 import { Transport, TransportRouter } from '../../shared/transport';
-import { IWorkout } from '../models/Workout';
-import { IExerciseLog } from '../models/ExerciseLog';
 import { WorkoutService } from '../services/workoutService';
-import {
-  WorkoutDTO,
-  ExerciseLogDTO,
-  CreateWorkoutDTO,
-  CreateExerciseLogDTO,
-} from '../types';
 import { WorkoutQueryService } from '../services/workoutQueryService';
+import { TransportRoutes } from '../../shared/transport/constants';
+import { WorkoutTransport } from '../../shared/transport/types/workout';
+import { createResponse } from '../../shared/utils/response.utils';
 
 export class WorkoutTransportRouter {
   private router: TransportRouter;
@@ -23,62 +18,62 @@ export class WorkoutTransportRouter {
   }
 
   private registerRoutes() {
-    this.router.register<CreateWorkoutDTO, { workout: IWorkout }>(
-      'workout.create',
-      async (payload) => {
-        return this.workoutService.createWorkout(payload);
-      }
-    );
+    this.router.register<
+      WorkoutTransport.CreateWorkoutRequest,
+      WorkoutTransport.CreateWorkoutResponse
+    >(TransportRoutes.Workout.CREATE, async (payload) => {
+      const response = await this.workoutService.createWorkout(payload);
+      return createResponse('success', 'Workout created successfully', response);
+    });
 
-    this.router.register<CreateExerciseLogDTO, { exerciseLog: IExerciseLog }>(
-      'exerciseLog.create',
-      async (payload) => {
-        return this.workoutService.createExerciseLog(payload);
-      }
-    );
+    this.router.register<
+      WorkoutTransport.CreateExerciseLogRequest,
+      WorkoutTransport.CreateExerciseLogResponse
+    >(TransportRoutes.ExerciseLog.CREATE, async (payload) => {
+      const response = await this.workoutService.createExerciseLog(payload);
+      return createResponse('success', 'Exercise log created successfully', response);
+    });
 
-    this.router.register<{ id: string; userId: string } & Partial<WorkoutDTO>, { workout: IWorkout | null }>(
-      'workout.update',
-      async (payload) => {
-        const { id, ...data } = payload;
-        return this.workoutService.updateWorkout(id, data);
-      }
-    );
+    this.router.register<
+      WorkoutTransport.UpdateWorkoutRequest,
+      WorkoutTransport.UpdateWorkoutResponse
+    >(TransportRoutes.Workout.UPDATE, async (payload) => {
+      const { id, ...data } = payload;
+      const response = await this.workoutService.updateWorkout(id, data);
+      return createResponse('success', 'Workout updated successfully', response);
+    });
 
-    this.router.register<{ id: string; userId: string } & Partial<ExerciseLogDTO>, { exerciseLog: IExerciseLog | null }>(
-      'exerciseLog.update',
-      async (payload) => {
-        const { id, ...data } = payload;
-        return this.workoutService.updateExerciseLog(id, data);
-      }
-    );
+    this.router.register<
+      WorkoutTransport.UpdateExerciseLogRequest,
+      WorkoutTransport.UpdateExerciseLogResponse
+    >(TransportRoutes.ExerciseLog.UPDATE, async (payload) => {
+      const { id, ...data } = payload;
+      const response = await this.workoutService.updateExerciseLog(id, data);
+      return createResponse('success', 'Exercise log updated successfully', response);
+    });
 
-    this.router.register<{ id: string; userId: string }, { exerciseLog: IExerciseLog | null }>(
-      'exerciseLog.get',
-      async (payload) => {
-        const { id, userId } = payload;
-        return this.workoutQueryService.getExerciseLogById(id, userId);
-      }
-    );
+    this.router.register<
+      WorkoutTransport.GetExerciseLogRequest,
+      WorkoutTransport.GetExerciseLogResponse
+    >(TransportRoutes.ExerciseLog.GET, async (payload) => {
+      const response = await this.workoutQueryService.getExerciseLogById(payload.id, payload.userId);
+      return createResponse('success', 'Exercise log fetched successfully', response);
+    });
 
-    this.router.register<{
-      startDate: string;
-      endDate: string;
-      userId: string;
-      kpiId: string;
-    }, { exerciseLogs: IExerciseLog[] }>(
-      'exerciseLog.getByDateRange',
-      async (payload) => {
-        const { startDate, endDate, userId, kpiId } = payload;
-        return this.workoutQueryService.getExerciseLogsByDateRange({
-          startDate: new Date(startDate),
-          endDate: new Date(endDate),
-          userId,
-          kpiId
-        });
-      }
-    );
+    this.router.register<
+      WorkoutTransport.GetExerciseLogsByDateRangeRequest,
+      WorkoutTransport.GetExerciseLogsByDateRangeResponse
+    >(TransportRoutes.ExerciseLog.GET_BY_DATE_RANGE, async (payload) => {
+      const response = await this.workoutQueryService.getExerciseLogsByDateRange({
+        startDate: new Date(payload.startDate),
+        endDate: new Date(payload.endDate),
+        userId: payload.userId,
+        kpiId: payload.kpiId
+      });
+      return createResponse('success', 'Exercise logs fetched successfully', response);
+    });
   }
+
   async listen() {
     await this.router.listen();
   }

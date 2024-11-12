@@ -24,7 +24,6 @@ export function addToContainer(container: Container) {
   const workoutQueryService = new WorkoutQueryService(
     Workout,
     ExerciseLog,
-    exerciseTransportClient,
     authTransportClient
   );
   

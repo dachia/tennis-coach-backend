@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { WorkoutStatus } from '../types';
+import { IExerciseLog } from './ExerciseLog';
 
 export interface IWorkout extends Document {
   _id: mongoose.Types.ObjectId;
@@ -11,7 +12,7 @@ export interface IWorkout extends Document {
   templateId?: mongoose.Types.ObjectId;
   notes?: string;
   media?: string[];
-  exerciseLogs?: any[];
+  exerciseLogs?: IExerciseLog[];
   exerciseNotes: Map<string, string>;
   exerciseMedia: Map<string, string[]>;
   // Denormalized trainee data

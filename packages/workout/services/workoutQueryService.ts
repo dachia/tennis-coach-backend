@@ -6,12 +6,12 @@ import { EnrichedWorkoutDTO, GetCompletedWorkoutsResponseDTO } from '../types';
 import { dateRangeSchema } from '../validation';
 import * as yup from 'yup';
 import { AuthTransportClient } from '../../shared/transport/helpers/authTransport';
+import { groupExerciseLogsByExerciseId, mapExerciseLog, mapWorkout } from '../mappers/responseMappers';
 
 export class WorkoutQueryService {
   constructor(
     private readonly workoutModel: typeof Workout,
     private readonly exerciseLogModel: typeof ExerciseLog,
-    private readonly exerciseTransportClient: ExerciseTransportClient,
     private readonly authTransportClient: AuthTransportClient
   ) {}
 
@@ -25,7 +25,7 @@ export class WorkoutQueryService {
       throw new DomainError('Exercise log not found or unauthorized', 404);
     }
 
-    return { exerciseLog };
+    return { exerciseLog: mapExerciseLog(exerciseLog) };
   }
 
   async getExerciseLogsByDateRange(params: {
@@ -60,7 +60,7 @@ export class WorkoutQueryService {
       }
     }).sort({ logDate: 1 });
 
-    return { exerciseLogs };
+    return { exerciseLogs: exerciseLogs.map(mapExerciseLog) };
   }
 
   async getWorkoutById(workoutId: string, userId: string) {
@@ -88,7 +88,7 @@ export class WorkoutQueryService {
       }
     }
 
-    const [enrichedWorkout] = await this.enrichWorkoutResponse([workout], userId, true);
+    const [enrichedWorkout] = await this.enrichWorkoutResponse([workout]);
     return { workout: enrichedWorkout };
   }
 
@@ -133,7 +133,7 @@ export class WorkoutQueryService {
       .populate('exerciseLogs')
       .sort({ startTimestamp: 1 });
 
-    const enrichedWorkouts = await this.enrichWorkoutResponse(workouts, userId, true);
+    const enrichedWorkouts = await this.enrichWorkoutResponse(workouts);
     return { workouts: enrichedWorkouts };
   }
 
@@ -187,86 +187,19 @@ export class WorkoutQueryService {
       console.log('Error fetching trainees:', err);
     }
 
-    const enrichedWorkouts = await this.enrichWorkoutResponse(workouts, userId, true);
+    const enrichedWorkouts = await this.enrichWorkoutResponse(workouts);
     return { workouts: enrichedWorkouts };
   }
 
-  private async enrichWorkoutResponse(workouts: IWorkout[], userId: string, includeTraineeInfo: boolean = false): Promise<EnrichedWorkoutDTO[]> {
+  private async enrichWorkoutResponse(workouts: IWorkout[]): Promise<EnrichedWorkoutDTO[]> {
     if (!workouts.length) return [];
 
-    let traineeMap = new Map();
-    let exerciseMap = new Map();
-    try {
-      const exerciseIds = workouts
-        .flatMap(w => w.exerciseLogs)
-        .filter(log => log)
-        .map(log => log.exerciseId.toString());
-
-      if (exerciseIds.length > 0) {
-        const exerciseResponse = await this.exerciseTransportClient.getExercisesByIds({
-          ids: exerciseIds,
-          userId
-        });
-
-        exerciseMap = new Map(
-          exerciseResponse.data?.payload!.exercises.map(exercise => [exercise._id, exercise])
-        );
-      }
-    } catch (err) {
-      console.log('Error fetching exercise information:', err);
-    }
-    if (includeTraineeInfo) {
-      try {
-        const traineeIds = [...new Set(workouts.map(w => w.traineeId.toString()))];
-
-        const traineeResponse = await this.authTransportClient.getUsersByIds({
-          ids: traineeIds,
-          userId
-        });
-
-        traineeMap = new Map(
-          traineeResponse.data?.payload!.users.map((user: any) => [user._id, user])
-        );
-      } catch (err) {
-        console.log('Error fetching trainee information:', err);
-      }
-    }
-
     return workouts.map(workout => {
-      const workoutObj = workout.toObject ? workout.toObject() : workout;
-      const traineeInfo = traineeMap.get(workout.traineeId.toString());
-
-      const exercises = workoutObj.exerciseLogs.reduce((acc: any[], log: IExerciseLog) => {
-        const exercise = exerciseMap.get(log.exerciseId.toString());
-        const kpi = exercise?.kpis.find((kpi: any) => kpi._id === log.kpiId.toString());
-
-        const logEntry = {
-          ...log,
-          kpiUnit: kpi?.unit,
-          kpiPerformanceGoal: kpi?.performanceGoal
-        };
-
-        const existingExercise = acc.find(e => e.exerciseId === log.exerciseId.toString());
-        if (existingExercise) {
-          existingExercise.logs.push(logEntry);
-        } else {
-          acc.push({
-            exerciseId: log.exerciseId.toString(),
-            exerciseName: exercise?.title,
-            logs: [logEntry]
-          });
-        }
-
-        return acc;
-      }, []);
+      const workoutObj = mapWorkout(workout);
+      const exercises = groupExerciseLogsByExerciseId(workout.exerciseLogs || []);
 
       return {
         ...workoutObj,
-        _id: workoutObj._id.toString(),
-        traineeId: workout.traineeId.toString(),
-        templateId: workoutObj.templateId?.toString(),
-        traineeEmail: traineeInfo?.email,
-        traineeName: traineeInfo?.name,
         exercises
       };
     });

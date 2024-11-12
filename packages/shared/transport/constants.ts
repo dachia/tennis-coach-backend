@@ -32,5 +32,17 @@ export const TransportRoutes = {
     REMOVE_TRAINEE: 'auth.coach.removeTrainee',
     CHECK_COACH_TRAINEE: 'auth.checkCoachTrainee',
     GET_USERS: 'auth.users'
+  },
+  Workout: {
+    CREATE: 'workout.create',
+    UPDATE: 'workout.update',
+    GET: 'workout.get',
+    GET_ALL: 'workouts.get'
+  },
+  ExerciseLog: {
+    CREATE: 'exerciseLog.create',
+    UPDATE: 'exerciseLog.update',
+    GET: 'exerciseLog.get',
+    GET_BY_DATE_RANGE: 'exerciseLog.getByDateRange'
   }
 } as const; 
