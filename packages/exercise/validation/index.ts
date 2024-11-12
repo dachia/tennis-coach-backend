@@ -2,7 +2,6 @@ import * as yup from 'yup';
 import { PerformanceGoal, ResourceType } from '../types';
 
 export const kpiSchema = yup.object({
-  goalValue: yup.number().optional(),
   unit: yup.string().required('Unit is required'),
   performanceGoal: yup.string()
     .oneOf(Object.values(PerformanceGoal), 'Invalid performance goal')
@@ -57,7 +56,6 @@ export const updateExerciseSchema = yup.object({
 });
 
 export const updateKpiSchema = yup.object({
-  goalValue: yup.number(),
   unit: yup.string(),
   performanceGoal: yup.string()
     .oneOf(Object.values(PerformanceGoal), 'Invalid performance goal')
@@ -85,7 +83,6 @@ export const updateExerciseWithKPIsSchema = yup.object({
   kpis: yup.array().of(
     yup.object({
       _id: yup.string(),
-      goalValue: yup.number().required('Goal value is required'),
       unit: yup.string().required('Unit is required'),
       performanceGoal: yup.string()
         .oneOf(Object.values(PerformanceGoal), 'Invalid performance goal')

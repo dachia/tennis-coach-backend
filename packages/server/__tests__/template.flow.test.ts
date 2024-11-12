@@ -73,7 +73,6 @@ describe("Template Flow", () => {
         description: 'Exercise for template testing',
         media: ['https://example.com/exercise.mp4'],
         kpis: [{
-          goalValue: 10,
           unit: 'repetitions',
           performanceGoal: 'maximize'
         }]
@@ -188,7 +187,6 @@ describe("Template Flow", () => {
       description: 'Exercise for template testing',
       media: ['https://example.com/exercise.mp4'],
       kpis: [{
-        goalValue: 10,
         unit: 'repetitions',
         performanceGoal: 'maximize'
       }]
@@ -247,7 +245,6 @@ describe("Template Flow", () => {
         media: exerciseData.media,
         kpis: expect.arrayContaining([
           expect.objectContaining({
-            goalValue: exerciseData.kpis[0].goalValue,
             unit: exerciseData.kpis[0].unit,
             performanceGoal: exerciseData.kpis[0].performanceGoal
           })

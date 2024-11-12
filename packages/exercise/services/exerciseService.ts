@@ -343,22 +343,25 @@ export class ExerciseService {
 
       // Process KPI updates
       const kpiPromises = kpis.map(async kpi => {
+        const kpiData = {
+          unit: kpi.unit,
+          performanceGoal: kpi.performanceGoal,
+          exerciseId: id
+        };
+
         if (kpi._id) {
           // Update existing KPI
           if (existingKPIMap.has(kpi._id)) {
             return this.kpiModel.findByIdAndUpdate(
               kpi._id,
-              { ...kpi, exerciseId: id },
+              kpiData,
               { new: true }
             );
           }
           throw new DomainError(`KPI with id ${kpi._id} not found`);
         }
         // Create new KPI
-        return this.kpiModel.create({
-          ...kpi,
-          exerciseId: id
-        });
+        return this.kpiModel.create(kpiData);
       });
 
       // Delete KPIs that are not in the update

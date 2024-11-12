@@ -81,7 +81,6 @@ describe('Exercise Routes', () => {
         ],
         kpis: [
           {
-            goalValue: 10,
             unit: 'repetitions',
             performanceGoal: 'maximize'
           }
@@ -105,7 +104,6 @@ describe('Exercise Routes', () => {
               media: exerciseData.media,
               kpis: expect.arrayContaining([
                 expect.objectContaining({
-                  goalValue: exerciseData.kpis[0].goalValue,
                   unit: exerciseData.kpis[0].unit,
                   performanceGoal: exerciseData.kpis[0].performanceGoal
                 })
@@ -151,7 +149,6 @@ describe('Exercise Routes', () => {
         tags: ['technique', 'skill', 'beginner'],
         kpis: [
           {
-            goalValue: 10,
             unit: 'repetitions',
             performanceGoal: 'maximize'
           }
@@ -176,7 +173,6 @@ describe('Exercise Routes', () => {
               tags: exerciseData.tags,
               kpis: expect.arrayContaining([
                 expect.objectContaining({
-                  goalValue: exerciseData.kpis[0].goalValue,
                   unit: exerciseData.kpis[0].unit,
                   performanceGoal: exerciseData.kpis[0].performanceGoal
                 })
@@ -198,7 +194,6 @@ describe('Exercise Routes', () => {
         ],
         kpis: [
           {
-            goalValue: 10,
             unit: 'repetitions',
             performanceGoal: 'maximize'
           }
@@ -222,7 +217,6 @@ describe('Exercise Routes', () => {
               media: exerciseData.media,
               kpis: expect.arrayContaining([
                 expect.objectContaining({
-                  goalValue: exerciseData.kpis[0].goalValue,
                   unit: exerciseData.kpis[0].unit,
                   performanceGoal: exerciseData.kpis[0].performanceGoal
                 })
@@ -417,7 +411,6 @@ describe('Exercise Routes', () => {
 
       kpi = await KPI.create({
         exerciseId: exercise._id,
-        goalValue: 10,
         unit: 'repetitions',
         performanceGoal: 'maximize'
       });
@@ -425,7 +418,6 @@ describe('Exercise Routes', () => {
 
     it('should update a KPI successfully', async () => {
       const updateData = {
-        goalValue: 15,
         unit: 'minutes',
         performanceGoal: 'minimize'
       };
@@ -442,7 +434,6 @@ describe('Exercise Routes', () => {
           message: expect.any(String),
           payload: {
             kpi: expect.objectContaining({
-              goalValue: updateData.goalValue,
               unit: updateData.unit,
               performanceGoal: updateData.performanceGoal
             })
@@ -614,7 +605,6 @@ describe('Exercise Routes', () => {
 
       kpi = await KPI.create({
         exerciseId: exercise._id,
-        goalValue: 10,
         unit: 'repetitions',
         performanceGoal: 'maximize'
       });
@@ -628,12 +618,10 @@ describe('Exercise Routes', () => {
         kpis: [
           {
             _id: kpi._id.toString(),
-            goalValue: 15,
             unit: 'minutes',
             performanceGoal: 'minimize'
           },
           {
-            goalValue: 20,
             unit: 'repetitions',
             performanceGoal: 'maximize'
           }
@@ -645,6 +633,7 @@ describe('Exercise Routes', () => {
         .set('Authorization', `Bearer ${coachToken}`)
         .send(updateData);
 
+      
       expect(response.status).toBe(200);
       expect(response.body).toMatchObject({
         status: 'success',
@@ -669,7 +658,6 @@ describe('Exercise Routes', () => {
       // Verify existing KPI was updated
       const updatedExistingKpi = updatedKpis.find(k => k._id.toString() === kpi._id.toString());
       expect(updatedExistingKpi).toMatchObject({
-        goalValue: updateData.kpis[0].goalValue,
         unit: updateData.kpis[0].unit,
         performanceGoal: updateData.kpis[0].performanceGoal
       });
@@ -677,7 +665,6 @@ describe('Exercise Routes', () => {
       // Verify new KPI was created
       const newKpi = updatedKpis.find(k => k._id.toString() !== kpi._id.toString());
       expect(newKpi).toMatchObject({
-        goalValue: updateData.kpis[1].goalValue,
         unit: updateData.kpis[1].unit,
         performanceGoal: updateData.kpis[1].performanceGoal
       });
@@ -713,7 +700,6 @@ describe('Exercise Routes', () => {
         kpis: [
           {
             _id: kpi._id.toString(),
-            goalValue: -1, // Invalid negative value
             unit: '', // Missing unit
             performanceGoal: 'invalid' // Invalid performance goal
           }
@@ -759,13 +745,11 @@ describe('Exercise Routes', () => {
       kpis = await Promise.all([
         KPI.create({
           exerciseId: exercises[0]._id,
-          goalValue: 10,
           unit: 'repetitions',
           performanceGoal: 'maximize'
         }),
         KPI.create({
           exerciseId: exercises[1]._id,
-          goalValue: 15,
           unit: 'minutes',
           performanceGoal: 'minimize'
         })
@@ -787,7 +771,6 @@ describe('Exercise Routes', () => {
                 kpis: expect.arrayContaining([
                   expect.objectContaining({
                     _id: kpis[0]._id.toString(),
-                    goalValue: kpis[0].goalValue
                   })
                 ])
               }),
@@ -797,7 +780,6 @@ describe('Exercise Routes', () => {
                 kpis: expect.arrayContaining([
                   expect.objectContaining({
                     _id: kpis[1]._id.toString(),
-                    goalValue: kpis[1].goalValue
                   })
                 ])
               })
@@ -877,7 +859,6 @@ describe('Exercise Routes', () => {
 
       kpi = await KPI.create({
         exerciseId: exercise._id,
-        goalValue: 10,
         unit: 'repetitions',
         performanceGoal: 'maximize'
       });
@@ -1014,7 +995,6 @@ describe('Exercise Routes', () => {
 
       kpi = await KPI.create({
         exerciseId: exercise._id,
-        goalValue: 10,
         unit: 'repetitions',
         performanceGoal: 'maximize'
       });
@@ -1039,7 +1019,6 @@ describe('Exercise Routes', () => {
               createdBy: coach._id.toString(),
               kpis: [{
                 _id: kpi._id.toString(),
-                goalValue: kpi.goalValue,
                 unit: kpi.unit,
                 performanceGoal: kpi.performanceGoal,
                 exerciseId: exercise._id.toString()
@@ -1087,7 +1066,6 @@ describe('Exercise Routes', () => {
 
       kpi = await KPI.create({
         exerciseId: exercise._id,
-        goalValue: 10,
         unit: 'repetitions',
         performanceGoal: 'maximize'
       });
@@ -1124,7 +1102,6 @@ describe('Exercise Routes', () => {
                 media: exercise.media,
                 kpis: [{
                   _id: kpi._id.toString(),
-                  goalValue: kpi.goalValue,
                   unit: kpi.unit,
                   performanceGoal: kpi.performanceGoal,
                   exerciseId: exercise._id.toString()

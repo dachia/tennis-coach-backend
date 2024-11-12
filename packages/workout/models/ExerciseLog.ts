@@ -17,7 +17,6 @@ export interface IExerciseLog extends Document {
   exerciseTitle: string;
   exerciseDescription: string;
   // Denormalized KPI data
-  kpiGoalValue?: number;
   kpiUnit: string;
   kpiPerformanceGoal?: PerformanceGoal;
 }
@@ -57,7 +56,6 @@ const exerciseLogSchema = new Schema({
   exerciseTitle: { type: String, required: true },
   exerciseDescription: { type: String, required: true },
   // Denormalized KPI data
-  kpiGoalValue: { type: Number },
   kpiUnit: { type: String, required: true },
   kpiPerformanceGoal: { 
     type: String,

@@ -123,10 +123,10 @@ describe("Exercise Flow", () => {
         kpis: [
           {
             ...fetchedExercise.kpis.find((k: KPIDTO) => k.unit === 'repetitions'),
-            goalValue: 15,
+            unit: 'repetitions',
+            performanceGoal: 'maximize'
           },
           {
-            goalValue: 20,
             unit: 'minutes',
             performanceGoal: 'minimize'
           }
@@ -149,12 +149,10 @@ describe("Exercise Flow", () => {
       expect(exerciseWithKpis).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            goalValue: 15,
             unit: 'repetitions',
             performanceGoal: 'maximize'
           }),
           expect.objectContaining({
-            goalValue: 20,
             unit: 'minutes',
             performanceGoal: 'minimize'
           })

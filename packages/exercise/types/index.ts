@@ -23,7 +23,6 @@ export interface ExerciseDTO {
 
 export interface KPIDTO {
   _id: string;
-  goalValue?: number;
   unit: string;
   performanceGoal?: PerformanceGoal;
   exerciseId: string;

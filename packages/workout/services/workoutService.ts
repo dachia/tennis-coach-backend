@@ -105,7 +105,6 @@ export class WorkoutService {
                 duration: 0,
                 exerciseTitle: exercise.title,
                 exerciseDescription: exercise.description,
-                kpiGoalValue: kpi.goalValue,
                 kpiUnit: kpi.unit,
                 kpiPerformanceGoal: kpi.performanceGoal,
                 status: ExerciseLogStatus.PENDING,
