@@ -18,6 +18,8 @@ import {
 } from '../validation';
 import { AuthTransportClient } from '../../shared/transport/helpers/authTransport';
 import { mapExerciseLog, mapWorkout } from '../mappers/responseMappers';
+import { EventRoutes } from '../../shared/events/constants';
+import { WorkoutEvents } from '../../shared/events/types/workout';
 
 export class WorkoutService {
   constructor(
@@ -110,10 +112,10 @@ export class WorkoutService {
       }
     }
 
-    await this.eventService.publishDomainEvent({
-      eventName: 'workout.created',
+    await this.eventService.publishDomainEvent<WorkoutEvents.WorkoutCreated>({
+      eventName: EventRoutes.Workout.CREATED,
       payload: {
-        workoutId: workout._id,
+        workoutId: workout._id.toString(),
         templateId: validatedData.templateId
       }
     });
@@ -160,9 +162,15 @@ export class WorkoutService {
       status: ExerciseLogStatus.COMPLETED,
     });
 
-    await this.eventService.publishDomainEvent({
-      eventName: 'exerciseLog.created',
-      payload: { exerciseLogId: exerciseLog._id }
+    await this.eventService.publishDomainEvent<WorkoutEvents.ExerciseLogCreated>({
+      eventName: EventRoutes.ExerciseLog.CREATED,
+      payload: {
+        exerciseLogId: exerciseLog._id.toString(),
+        workoutId: validatedData.workoutId,
+        exerciseId: validatedData.exerciseId,
+        kpiId: validatedData.kpiId,
+        userId: data.userId
+      }
     });
 
     return { exerciseLog: mapExerciseLog(exerciseLog) };
@@ -189,9 +197,13 @@ export class WorkoutService {
       throw new DomainError('Workout not found or unauthorized');
     }
 
-    await this.eventService.publishDomainEvent({
-      eventName: 'workout.updated',
-      payload: { workoutId: workout._id }
+    await this.eventService.publishDomainEvent<WorkoutEvents.WorkoutUpdated>({
+      eventName: EventRoutes.Workout.UPDATED,
+      payload: {
+        workoutId: workout._id.toString(),
+        status: validatedData.status,
+        endTimestamp: validatedData.endTimestamp
+      }
     });
 
     return { workout: mapWorkout(workout) };
@@ -218,9 +230,15 @@ export class WorkoutService {
       throw new DomainError('Exercise log not found or unauthorized');
     }
 
-    await this.eventService.publishDomainEvent({
-      eventName: 'exerciseLog.updated',
-      payload: { exerciseLogId: exerciseLog._id }
+    await this.eventService.publishDomainEvent<WorkoutEvents.ExerciseLogUpdated>({
+      eventName: EventRoutes.ExerciseLog.UPDATED,
+      payload: {
+        exerciseLogId: exerciseLog._id.toString(),
+        actualValue: validatedData.actualValue,
+        status: validatedData.status,
+        kpiId: exerciseLog.kpiId.toString(),
+        userId: exerciseLog.traineeId.toString()
+      }
     });
 
     return { exerciseLog: mapExerciseLog(exerciseLog) };

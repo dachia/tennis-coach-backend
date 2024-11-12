@@ -1,5 +1,5 @@
 import { BaseRequest } from './base';
-import { ResourceType, PerformanceGoal } from '../../../exercise/types';
+import { ResourceType, PerformanceGoal } from "../../constants/PerformanceGoal";
 import { ResponsePayload } from '../../utils/response.utils';
 
 export namespace ExerciseTransport {

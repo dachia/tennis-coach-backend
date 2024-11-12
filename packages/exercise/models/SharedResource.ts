@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { ResourceType } from '../types';
+import { ResourceType } from "../../shared/constants/PerformanceGoal";
 
 export interface ISharedResource extends Document {
   _id: mongoose.Types.ObjectId;

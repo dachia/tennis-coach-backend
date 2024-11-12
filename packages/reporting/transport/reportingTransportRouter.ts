@@ -1,3 +1,5 @@
+import { EventRoutes } from '../../shared/events/constants';
+import { WorkoutEvents } from '../../shared/events/types/workout';
 import { Transport, TransportRouter } from '../../shared/transport';
 import { ReportingService } from '../services/reportingService';
 import { CalculateProgressComparisonParams, CalculateProgressComparisonResponseDTO, CalculateTotalProgressParams, CalculateTotalProgressResponseDTO } from '../types';
@@ -14,6 +16,26 @@ export class ReportingTransportRouter {
   }
 
   private registerRoutes() {
+    this.router.register<WorkoutEvents.ExerciseLogUpdated['payload'], void>(
+      EventRoutes.ExerciseLog.UPDATED,
+      async (payload) => {
+        await this.reportingService.calculateProgressComparison({
+          logId: payload.exerciseLogId,
+          kpiId: payload.kpiId,
+          userId: payload.userId
+        });
+      }
+    );
+    this.router.register<WorkoutEvents.ExerciseLogCreated['payload'], void>(
+      EventRoutes.ExerciseLog.CREATED,
+      async (payload) => {
+        await this.reportingService.calculateProgressComparison({
+          logId: payload.exerciseLogId,
+          kpiId: payload.kpiId,
+          userId: payload.userId
+        });
+      }
+    );
     this.router.register<CalculateProgressComparisonParams, CalculateProgressComparisonResponseDTO>(
       'progress.calculate.comparison',
       async (payload) => {

@@ -1,6 +1,7 @@
 import { BaseRequest } from './base';
 import { WorkoutStatus, ExerciseLogStatus } from '../../../workout/types';
 import { ResponsePayload } from '../../utils';
+import { PerformanceGoal } from "../../constants/PerformanceGoal";
 
 export namespace WorkoutTransport {
   // Common interfaces
@@ -14,6 +15,9 @@ export namespace WorkoutTransport {
     status: ExerciseLogStatus;
     traineeId: string;
     logDate?: Date;
+    createdAt: Date;
+    kpiPerformanceGoal: PerformanceGoal;
+    kpiUnit: string;
   }
 
   export interface Workout {

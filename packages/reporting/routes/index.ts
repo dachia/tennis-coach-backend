@@ -14,6 +14,20 @@ export function buildRoutes(container: Container) {
     config.jwtSecret
   );
 
+  router.get(
+    '/progress-comparison',
+    authMiddleware,
+    requireRole([UserRole.TRAINEE, UserRole.COACH]),
+    reportingController.getProgressComparison.bind(reportingController)
+  );
+
+  router.get(
+    '/progress-comparisons',
+    authMiddleware,
+    requireRole([UserRole.TRAINEE, UserRole.COACH]),
+    reportingController.getProgressComparisons.bind(reportingController)
+  );
+
   router.post(
     '/progress-comparison/calculate',
     authMiddleware,

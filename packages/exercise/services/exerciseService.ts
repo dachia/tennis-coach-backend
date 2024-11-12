@@ -3,7 +3,6 @@ import { IKPI, KPI } from '../models/KPI';
 import { ITrainingTemplate, TrainingTemplate } from '../models/TrainingTemplate';
 import { ISharedResource, SharedResource } from '../models/SharedResource';
 import {
-  ResourceType,
   CreateExerciseDTO,
   CreateTemplateDTO,
   ShareResourceDTO,
@@ -12,6 +11,7 @@ import {
   UpdateTemplateDTO,
   UpdateExerciseWithKPIsDTO,
 } from '../types';
+import { ResourceType } from "../../shared/constants/PerformanceGoal";
 import { AuthError, EventService } from '../../shared';
 import { DomainError } from '../../shared/errors/DomainError';
 import {

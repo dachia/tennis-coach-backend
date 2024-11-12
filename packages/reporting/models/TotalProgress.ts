@@ -1,12 +1,15 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ITotalProgress extends Document {
+  _id: mongoose.Types.ObjectId;
   exerciseId: mongoose.Types.ObjectId;
   kpiId: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   progressValue: number;
   startDate: Date;
   endDate: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const totalProgressSchema = new Schema({

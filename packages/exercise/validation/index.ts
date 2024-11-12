@@ -1,11 +1,11 @@
 import * as yup from 'yup';
-import { PerformanceGoal, ResourceType } from '../types';
+import { PerformanceGoal, ResourceType } from "../../shared/constants/PerformanceGoal";
 
 export const kpiSchema = yup.object({
   unit: yup.string().required('Unit is required'),
   performanceGoal: yup.string()
     .oneOf(Object.values(PerformanceGoal), 'Invalid performance goal')
-    .optional()
+    .required('Performance goal is required')
 });
 
 export const createExerciseSchema = yup.object({

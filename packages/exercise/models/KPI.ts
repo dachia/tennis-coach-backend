@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { PerformanceGoal } from '../types';
+import { PerformanceGoal } from "../../shared/constants/PerformanceGoal";
 
 export interface IKPI extends Document {
   _id: mongoose.Types.ObjectId;
@@ -18,7 +18,7 @@ const kpiSchema = new Schema({
   performanceGoal: { 
     type: String, 
     enum: Object.values(PerformanceGoal),
-    required: false 
+    required: true 
   }
 }, { timestamps: true });
 

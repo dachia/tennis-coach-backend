@@ -11,7 +11,7 @@ import { User } from '../../auth/models/User';
 import { Exercise } from '../../exercise/models/Exercise';
 import { TrainingTemplate } from '../../exercise/models/TrainingTemplate';
 import { SharedResource } from '../../exercise/models/SharedResource';
-import { ResourceType } from '../../exercise/types';
+import { ResourceType } from "../../shared/constants/PerformanceGoal";
 import { KPI } from '../../exercise/models/KPI';
 
 describe('Exercise Routes', () => {

@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 import { User } from '../../auth/models/User';
 import { Exercise } from '../../exercise/models/Exercise';
 import { SharedResource } from '../../exercise/models/SharedResource';
-import { ResourceType } from '../../exercise/types';
+import { ResourceType } from "../../shared/constants/PerformanceGoal";
 import { createTestContainer } from '../di';
 import { testConfig } from '../config';
 import { bootstrapServer } from '../server';

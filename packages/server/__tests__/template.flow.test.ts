@@ -10,7 +10,7 @@ import { createTestContainer } from '../di';
 import { testConfig } from '../config';
 import { bootstrapServer } from '../server';
 import jwt from 'jsonwebtoken';
-import { ResourceType } from '../../exercise/types';
+import { ResourceType } from "../../shared/constants/PerformanceGoal";
 
 describe("Template Flow", () => {
   let app: Express;

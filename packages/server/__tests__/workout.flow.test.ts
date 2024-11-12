@@ -13,7 +13,7 @@ import { testConfig } from '../config';
 import { bootstrapServer } from '../server';
 import jwt from 'jsonwebtoken';
 import { CoachTrainee } from '../../auth/models/CoachTrainee';
-import { ResourceType } from '../../exercise/types';
+import { ResourceType } from "../../shared/constants/PerformanceGoal";
 
 describe("Complete Workout Flow", () => {
   let app: Express;

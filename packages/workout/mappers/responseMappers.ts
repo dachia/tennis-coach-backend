@@ -45,5 +45,6 @@ export const mapExerciseLog = (log: IExerciseLog) => ({
   exerciseTitle: log.exerciseTitle,
   exerciseDescription: log.exerciseDescription,
   kpiUnit: log.kpiUnit,
-  kpiPerformanceGoal: log.kpiPerformanceGoal
+  kpiPerformanceGoal: log.kpiPerformanceGoal,
+  createdAt: log.createdAt,
 });

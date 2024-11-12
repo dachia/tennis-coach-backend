@@ -15,7 +15,7 @@ import { TrainingTemplate } from '../../exercise/models/TrainingTemplate';
 import { KPI } from '../../exercise/models/KPI';
 import { ExerciseLog } from '../../workout/models/ExerciseLog';
 import { SharedResource } from '../../exercise/models/SharedResource';
-import { PerformanceGoal, ResourceType } from '../../exercise/types';
+import { PerformanceGoal, ResourceType } from "../../shared/constants/PerformanceGoal";
 import { CoachTrainee } from '../../auth/models/CoachTrainee';
 
 describe('Workout Routes', () => {

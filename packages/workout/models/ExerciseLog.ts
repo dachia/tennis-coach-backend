@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { ExerciseLogStatus } from '../types';
-import { PerformanceGoal } from '../../exercise/types';
+import { PerformanceGoal } from "../../shared/constants/PerformanceGoal";
 
 export interface IExerciseLog extends Document {
   _id: mongoose.Types.ObjectId;
@@ -18,7 +18,8 @@ export interface IExerciseLog extends Document {
   exerciseDescription: string;
   // Denormalized KPI data
   kpiUnit: string;
-  kpiPerformanceGoal?: PerformanceGoal;
+  kpiPerformanceGoal: PerformanceGoal;
+  createdAt: Date;
 }
 
 const exerciseLogSchema = new Schema({
@@ -59,7 +60,8 @@ const exerciseLogSchema = new Schema({
   kpiUnit: { type: String, required: true },
   kpiPerformanceGoal: { 
     type: String,
-    enum: Object.values(PerformanceGoal)
+    enum: Object.values(PerformanceGoal),
+    required: true
   },
 }, { timestamps: true });
 

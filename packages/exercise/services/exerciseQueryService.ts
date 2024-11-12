@@ -1,7 +1,7 @@
 import { Exercise, IExercise } from '../models/Exercise';
 import { ISharedResource, SharedResource } from '../models/SharedResource';
 import { TrainingTemplate } from '../models/TrainingTemplate';
-import { ResourceType } from '../types';
+import { ResourceType } from "../../shared/constants/PerformanceGoal";
 import { DomainError } from '../../shared/errors/DomainError';
 import {
   GetExercisesResponseDTO,

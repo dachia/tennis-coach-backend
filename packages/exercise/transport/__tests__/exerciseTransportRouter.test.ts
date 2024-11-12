@@ -1,7 +1,7 @@
 import { InMemoryTransport } from '../../../shared/transport/inMemoryTransport';
 import { ExerciseTransportRouter } from '../exerciseTransportRouter';
 import { ExerciseService } from '../../services/exerciseService';
-import { ResourceType } from '../../types';
+import { ResourceType } from "../../../shared/constants/PerformanceGoal";
 import { DomainError } from '../../../shared/errors/DomainError';
 import { ExerciseQueryService } from '../../services/exerciseQueryService';
 import { createResponse } from '../../../shared';

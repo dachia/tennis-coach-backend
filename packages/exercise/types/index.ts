@@ -1,12 +1,4 @@
-export enum PerformanceGoal {
-  MAXIMIZE = 'maximize',
-  MINIMIZE = 'minimize'
-}
-
-export enum ResourceType {
-  EXERCISE = 'exercise',
-  TEMPLATE = 'template'
-}
+import { PerformanceGoal, ResourceType } from "../../shared/constants/PerformanceGoal";
 
 export interface ExerciseDTO {
   _id: string;
@@ -24,7 +16,7 @@ export interface ExerciseDTO {
 export interface KPIDTO {
   _id: string;
   unit: string;
-  performanceGoal?: PerformanceGoal;
+  performanceGoal: PerformanceGoal;
   exerciseId: string;
 }
 

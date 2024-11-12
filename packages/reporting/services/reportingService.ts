@@ -1,60 +1,50 @@
 import { IProgressComparison, ProgressComparison } from '../models/ProgressComparison';
-import { TotalProgress } from '../models/TotalProgress';
-import { EventService, Transport } from '../../shared';
+import { WorkoutTransportClient } from '../../shared';
 import { DomainError } from '../../shared/errors/DomainError';
-import { 
-  CalculateProgressComparisonParams, 
+import {
+  CalculateProgressComparisonParams,
   CalculateTotalProgressParams,
   CalculateProgressComparisonResponseDTO,
   CalculateTotalProgressResponseDTO,
-  ProgressComparisonResponseDTO
 } from '../types';
+import { PerformanceGoal } from '../../shared/constants/PerformanceGoal';
 
 export class ReportingService {
   constructor(
     private readonly progressComparisonModel: typeof ProgressComparison,
-    private readonly totalProgressModel: typeof TotalProgress,
-    private readonly eventService: EventService,
-    private readonly transport: Transport
-  ) {}
+    private readonly workoutTransportClient: WorkoutTransportClient
+  ) { }
 
   async calculateProgressComparison(
     params: CalculateProgressComparisonParams
   ): Promise<CalculateProgressComparisonResponseDTO> {
     // 1. Fetch exercise log for the given logId
-    const currentLog = await this.transport.request<any, { exerciseLog: any }>(
-      'exerciseLog.get',
-      {
-        type: 'GET_EXERCISE_LOG',
-        payload: {
-          id: params.logId,
-          userId: params.userId
-        }
-      }
-    );
+    const currentLogResponse = await this.workoutTransportClient.getExerciseLog({
+      id: params.logId,
+      userId: params.userId
+    });
+    const currentLog = currentLogResponse.data?.payload.exerciseLog
 
-    if (!currentLog.exerciseLog) {
+    if (!currentLog) {
       throw new DomainError('Exercise log not found');
+    }
+    if (!currentLog.actualValue) {
+      return { progressComparison: null };
     }
 
     // 2. Fetch previous exercise logs for comparison
-    const previousLogs = await this.transport.request<any, { exerciseLogs: any[] }>(
-      'exerciseLog.getByDateRange',
-      {
-        type: 'GET_EXERCISE_LOGS_BY_DATE_RANGE',
-        payload: {
-          startDate: params.startDate || new Date(0),
-          endDate: new Date(currentLog.exerciseLog.createdAt),
-          userId: params.userId,
-          kpiId: params.kpiId
-        }
-      }
-    );
+    const previousLogsResponse = await this.workoutTransportClient.getExerciseLogsByDateRange({
+      startDate: new Date(0).toISOString(),
+      endDate: new Date(currentLog.createdAt).toISOString(),
+      userId: params.userId,
+      kpiId: params.kpiId
+    });
+    const previousLogs = previousLogsResponse.data?.payload.exerciseLogs;
 
-    // Find the most recent previous log
-    const previousLog = previousLogs.exerciseLogs[previousLogs.exerciseLogs.length - 1];
-    
-    if (!previousLog) {
+    // Find first log that doesn't match current log ID
+    const previousLog = previousLogs?.find(log => log._id !== currentLog._id);
+
+    if (!previousLog || !previousLog.actualValue) {
       return { progressComparison: null };
     }
 
@@ -67,16 +57,19 @@ export class ReportingService {
     });
 
     let comparison: IProgressComparison;
-    
+    const sign = currentLog.kpiPerformanceGoal === PerformanceGoal.MAXIMIZE ? 1 : -1;
+    const change = sign * ((currentLog.actualValue - previousLog.actualValue) / previousLog.actualValue) * 100;
+
+
     if (existingComparison) {
-      existingComparison.comparisonValue = ((currentLog.exerciseLog.actualValue - previousLog.actualValue) / previousLog.actualValue) * 100;
+      existingComparison.comparisonValue = change;
       comparison = await existingComparison.save();
     } else {
       comparison = await new this.progressComparisonModel({
         logId: params.logId,
         kpiId: params.kpiId,
         userId: params.userId,
-        comparisonValue: ((currentLog.exerciseLog.actualValue - previousLog.actualValue) / previousLog.actualValue) * 100,
+        comparisonValue: change,
         comparisonDate: previousLog.createdAt
       }).save() as IProgressComparison;
     }
@@ -104,7 +97,7 @@ export class ReportingService {
     // 2. Calculate overall progress based on KPI type and performance goals
     // 3. Store result in totalProgress collection
     // 4. Return total progress object
-    
+
     throw new Error('Method not implemented');
   }
 } 
