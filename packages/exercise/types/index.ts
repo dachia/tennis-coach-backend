@@ -13,6 +13,7 @@ export interface ExerciseDTO {
   title: string;
   description: string;
   media: string[];
+  tags?: string[];
   createdBy: string;
   isShared?: boolean;
   isArchived: boolean;
@@ -55,6 +56,7 @@ export interface CreateExerciseDTO {
   title: string;
   description: string;
   media?: string[];
+  tags?: string[];
   kpis?: Array<{
     goalValue: number;
     unit: string;
@@ -81,6 +83,7 @@ export interface UpdateExerciseDTO {
   title?: string;
   description?: string;
   media?: string[];
+  tags?: string[];
   userId: string;
 }
 

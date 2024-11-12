@@ -8,6 +8,7 @@ export interface IExercise extends Document {
   media: string[];
   createdBy: mongoose.Types.ObjectId;
   kpis?: IKPI[];
+  tags?: string[];
   isArchived: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -22,6 +23,7 @@ const exerciseSchema = new Schema({
     ref: 'User',
     required: true 
   },
+  tags: [{ type: String, default: [] }],
   isArchived: { type: Boolean, default: false }
 }, { 
   timestamps: true,

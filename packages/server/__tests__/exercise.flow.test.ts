@@ -90,6 +90,7 @@ describe("Exercise Flow", () => {
         title: 'Squat Exercise',
         description: 'Basic squat movement pattern',
         media: [mediaUrl],
+        tags: ['technique', 'strength'],
         kpis: [{
           goalValue: 10,
           unit: 'repetitions',

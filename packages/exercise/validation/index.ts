@@ -18,6 +18,7 @@ export const createExerciseSchema = yup.object({
     .min(10, 'Description must be at least 10 characters')
     .required('Description is required'),
   media: yup.array().of(yup.string().url('Media must be valid URLs')),
+  tags: yup.array().of(yup.string()).default([]),
   kpis: yup.array().of(kpiSchema)
 });
 
@@ -51,7 +52,8 @@ export const updateExerciseSchema = yup.object({
     .max(100, 'Title must not exceed 100 characters'),
   description: yup.string()
     .min(10, 'Description must be at least 10 characters'),
-  media: yup.array().of(yup.string().url('Media must be valid URLs'))
+  media: yup.array().of(yup.string().url('Media must be valid URLs')),
+  tags: yup.array().of(yup.string())
 });
 
 export const updateKpiSchema = yup.object({
@@ -79,6 +81,7 @@ export const updateExerciseWithKPIsSchema = yup.object({
   description: yup.string()
     .min(10, 'Description must be at least 10 characters'),
   media: yup.array().of(yup.string().url('Media must be valid URLs')),
+  tags: yup.array().of(yup.string()),
   kpis: yup.array().of(
     yup.object({
       _id: yup.string(),

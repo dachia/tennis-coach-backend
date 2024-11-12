@@ -140,6 +140,100 @@ describe('Exercise Routes', () => {
         version: expect.any(Number)
       });
     });
+
+    it('should create an exercise with tags successfully', async () => {
+      const exerciseData = {
+        title: 'Forehand Practice',
+        description: 'Practice forehand strokes',
+        media: [
+          'https://storage.googleapis.com/bucket-name/video1.mp4'
+        ],
+        tags: ['technique', 'skill', 'beginner'],
+        kpis: [
+          {
+            goalValue: 10,
+            unit: 'repetitions',
+            performanceGoal: 'maximize'
+          }
+        ]
+      };
+
+      const response = await request(app)
+        .post('/exercise/exercise')
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send(exerciseData);
+
+      expect(response.status).toBe(201);
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: expect.any(String),
+          payload: {
+            exercise: expect.objectContaining({
+              title: exerciseData.title,
+              description: exerciseData.description,
+              media: exerciseData.media,
+              tags: exerciseData.tags,
+              kpis: expect.arrayContaining([
+                expect.objectContaining({
+                  goalValue: exerciseData.kpis[0].goalValue,
+                  unit: exerciseData.kpis[0].unit,
+                  performanceGoal: exerciseData.kpis[0].performanceGoal
+                })
+              ])
+            })
+          }
+        },
+        error: null,
+        version: expect.any(Number)
+      });
+    });
+
+    it('should create an exercise without tags successfully', async () => {
+      const exerciseData = {
+        title: 'Forehand Practice',
+        description: 'Practice forehand strokes',
+        media: [
+          'https://storage.googleapis.com/bucket-name/video1.mp4'
+        ],
+        kpis: [
+          {
+            goalValue: 10,
+            unit: 'repetitions',
+            performanceGoal: 'maximize'
+          }
+        ]
+      };
+
+      const response = await request(app)
+        .post('/exercise/exercise')
+        .set('Authorization', `Bearer ${coachToken}`)
+        .send(exerciseData);
+
+      expect(response.status).toBe(201);
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: expect.any(String),
+          payload: {
+            exercise: expect.objectContaining({
+              title: exerciseData.title,
+              description: exerciseData.description,
+              media: exerciseData.media,
+              kpis: expect.arrayContaining([
+                expect.objectContaining({
+                  goalValue: exerciseData.kpis[0].goalValue,
+                  unit: exerciseData.kpis[0].unit,
+                  performanceGoal: exerciseData.kpis[0].performanceGoal
+                })
+              ])
+            })
+          }
+        },
+        error: null,
+        version: expect.any(Number)
+      });
+    });
   });
 
   describe('POST /exercise/template', () => {
