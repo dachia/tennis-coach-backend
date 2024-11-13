@@ -44,5 +44,14 @@ export const TransportRoutes = {
     UPDATE: 'exerciseLog.update',
     GET: 'exerciseLog.get',
     GET_BY_DATE_RANGE: 'exerciseLog.getByDateRange'
+  },
+  Plan: {
+    CREATE: 'plan.create',
+    UPDATE: 'plan.update',
+    DELETE: 'plan.delete',
+    GET_BY_ID: 'plan.get',
+    GET_ALL: 'plan.getAll',
+    GET_TRAINEE_PLANS: 'plan.getTraineePlans',
+    GET_PLANNED_DATES: 'plan.getPlannedDates'
   }
 } as const; 
