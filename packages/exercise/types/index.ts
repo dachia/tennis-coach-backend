@@ -18,6 +18,7 @@ export interface KPIDTO {
   unit: string;
   performanceGoal: PerformanceGoal;
   exerciseId: string;
+  tags?: string[];
 }
 
 export interface TrainingTemplateDTO {
@@ -51,6 +52,7 @@ export interface CreateExerciseDTO {
   kpis?: Array<{
     unit: string;
     performanceGoal: PerformanceGoal;
+    tags?: string[];
   }>;
   userId: string;
 }
@@ -97,6 +99,7 @@ export interface UpdateExerciseWithKPIsDTO extends UpdateExerciseDTO {
     goalValue: number;
     unit: string;
     performanceGoal: PerformanceGoal;
+    tags?: string[];
   }>;
 }
 

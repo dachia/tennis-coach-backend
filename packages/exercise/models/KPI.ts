@@ -6,6 +6,7 @@ export interface IKPI extends Document {
   exerciseId: mongoose.Types.ObjectId;
   unit: string;
   performanceGoal?: PerformanceGoal;
+  tags?: string[];
 }
 
 const kpiSchema = new Schema({
@@ -19,7 +20,8 @@ const kpiSchema = new Schema({
     type: String, 
     enum: Object.values(PerformanceGoal),
     required: true 
-  }
+  },
+  tags: [{ type: String, default: [] }]
 }, { timestamps: true });
 
 export const KPI = mongoose.model<IKPI>('KPI', kpiSchema); 

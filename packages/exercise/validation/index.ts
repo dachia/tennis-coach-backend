@@ -5,7 +5,8 @@ export const kpiSchema = yup.object({
   unit: yup.string().required('Unit is required'),
   performanceGoal: yup.string()
     .oneOf(Object.values(PerformanceGoal), 'Invalid performance goal')
-    .required('Performance goal is required')
+    .required('Performance goal is required'),
+  tags: yup.array().of(yup.string())
 });
 
 export const createExerciseSchema = yup.object({

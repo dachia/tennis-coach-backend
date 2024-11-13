@@ -21,7 +21,8 @@ export const mapKPI = (kpi: any) => ({
   goalValue: kpi.goalValue,
   unit: kpi.unit,
   performanceGoal: kpi.performanceGoal,
-  exerciseId: kpi.exerciseId.toString()
+  exerciseId: kpi.exerciseId.toString(),
+  tags: kpi.tags ?? []
 });
 
 // Main Template Mapper
