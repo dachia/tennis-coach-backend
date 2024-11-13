@@ -1,11 +1,15 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { PerformanceGoal } from '../../shared/constants/PerformanceGoal';
 
 export interface IProgressComparison extends Document {
   _id: mongoose.Types.ObjectId;
   logId: mongoose.Types.ObjectId;
   kpiId: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
+  kpiUnit: string;
+  kpiPerformanceGoal: PerformanceGoal;
   comparisonValue: number;
+  comparisonPercent: number;
   comparisonDate: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -27,7 +31,10 @@ const progressComparisonSchema = new Schema({
     ref: 'User',
     required: true 
   },
+  kpiUnit: { type: String, required: true },
+  kpiPerformanceGoal: { type: String, enum: PerformanceGoal, required: true },
   comparisonValue: { type: Number, required: true },
+  comparisonPercent: { type: Number, required: true },
   comparisonDate: { type: Date, default: Date.now, required: true }
 }, { timestamps: true });
 

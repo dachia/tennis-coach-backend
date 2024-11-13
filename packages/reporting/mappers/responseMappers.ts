@@ -7,7 +7,10 @@ export const mapProgressComparison = (comparison: IProgressComparison) => ({
   logId: comparison.logId.toString(),
   kpiId: comparison.kpiId.toString(),
   userId: comparison.userId.toString(),
+  kpiUnit: comparison.kpiUnit,
+  kpiPerformanceGoal: comparison.kpiPerformanceGoal,
   comparisonValue: comparison.comparisonValue,
+  comparisonPercent: comparison.comparisonPercent,
   comparisonDate: comparison.comparisonDate,
   createdAt: comparison.createdAt,
   updatedAt: comparison.updatedAt

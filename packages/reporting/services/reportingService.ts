@@ -8,6 +8,7 @@ import {
   CalculateTotalProgressResponseDTO,
 } from '../types';
 import { PerformanceGoal } from '../../shared/constants/PerformanceGoal';
+import { mapProgressComparison } from '../mappers/responseMappers';
 
 export class ReportingService {
   constructor(
@@ -58,34 +59,30 @@ export class ReportingService {
 
     let comparison: IProgressComparison;
     const sign = currentLog.kpiPerformanceGoal === PerformanceGoal.MAXIMIZE ? 1 : -1;
-    const change = sign * ((currentLog.actualValue - previousLog.actualValue) / previousLog.actualValue) * 100;
+    const difference = sign * (currentLog.actualValue - previousLog.actualValue);
+    const changePercent = (difference / previousLog.actualValue) * 100;
 
 
     if (existingComparison) {
-      existingComparison.comparisonValue = change;
+      existingComparison.comparisonValue = difference;
+      existingComparison.comparisonPercent = changePercent;
       comparison = await existingComparison.save();
     } else {
       comparison = await new this.progressComparisonModel({
         logId: params.logId,
         kpiId: params.kpiId,
         userId: params.userId,
-        comparisonValue: change,
-        comparisonDate: previousLog.createdAt
+        comparisonValue: difference,
+        comparisonPercent: changePercent,
+        comparisonDate: previousLog.createdAt,
+        kpiPerformanceGoal: currentLog.kpiPerformanceGoal,
+        kpiUnit: currentLog.kpiUnit
       }).save() as IProgressComparison;
     }
 
     // Convert to DTO and return single comparison
     return {
-      progressComparison: {
-        _id: comparison._id.toString(),
-        logId: comparison.logId.toString(),
-        kpiId: comparison.kpiId.toString(),
-        userId: comparison.userId.toString(),
-        comparisonValue: comparison.comparisonValue,
-        comparisonDate: comparison.comparisonDate,
-        createdAt: comparison.createdAt,
-        updatedAt: comparison.updatedAt
-      }
+      progressComparison: mapProgressComparison(comparison)
     };
   }
 

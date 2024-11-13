@@ -12,7 +12,7 @@ import { testConfig } from '../config';
 import { bootstrapServer } from '../server';
 import jwt from 'jsonwebtoken';
 import { CoachTrainee } from '../../auth/models/CoachTrainee';
-import { ResourceType } from "../../shared/constants/PerformanceGoal";
+import { PerformanceGoal, ResourceType } from "../../shared/constants/PerformanceGoal";
 import { KPI } from '../../exercise/models/KPI';
 
 describe("Complete Reporting Flow", () => {
@@ -81,9 +81,8 @@ describe("Complete Reporting Flow", () => {
       description: 'Basic bench press movement',
       media: ['https://example.com/bench.mp4'],
       kpis: [{
-        goalValue: 100,
         unit: 'kg',
-        performanceGoal: 'maximize'
+        performanceGoal: PerformanceGoal.MAXIMIZE
       }]
     };
 
@@ -214,7 +213,10 @@ describe("Complete Reporting Flow", () => {
       logId: secondLogId,
       kpiId: kpiId,
       userId: trainee._id.toString(),
-      comparisonValue: 12.5, // First log value
+      comparisonValue: 10, // First log value
+      comparisonPercent: 12.5,
+      kpiUnit: 'kg',
+      kpiPerformanceGoal: 'maximize',
       comparisonDate: expect.any(String)
     });
 
