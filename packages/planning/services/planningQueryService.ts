@@ -84,6 +84,7 @@ export class PlanningQueryService {
     } = params;
 
     // Build query based on provided parameters
+    const traineeId_ = traineeId || userId;
     const query: any = {
       startDate: { $lte: endDate },
       $or: [
@@ -92,8 +93,8 @@ export class PlanningQueryService {
       ]
     };
 
-    if (traineeId) {
-      query.traineeId = new mongoose.Types.ObjectId(traineeId);
+    if (traineeId_) {
+      query.traineeId = new mongoose.Types.ObjectId(traineeId_);
     }
     if (exerciseId) {
       query.exerciseId = new mongoose.Types.ObjectId(exerciseId);
@@ -140,14 +141,15 @@ export class PlanningQueryService {
 
       dates.forEach(dateObj => {
         const currentDate = dateObj.date;
-        const dayOfWeek = currentDate.toDateString().slice(0, 3).toLowerCase();
+        const dayOfWeek = currentDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
 
         // Check if plan applies to this date
         const isWithinDateRange = currentDate >= planStartDate && 
           (!planEndDate || currentDate <= planEndDate);
 
+        const match = plan.weekDays?.includes(dayOfWeek as WeekDay);
         const isMatchingWeekDay = plan.recurrenceType === RecurrenceType.WEEKLY
-          ? plan.weekDays?.includes(dayOfWeek as WeekDay)
+          ? match
           : plan.recurrenceType === RecurrenceType.ONCE && 
             currentDate.toDateString() === planStartDate.toDateString();
 

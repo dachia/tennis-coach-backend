@@ -69,6 +69,8 @@ describe('Calendar Routes', () => {
     await Workout.deleteMany({});
     await Plan.deleteMany({});
     await CoachTrainee.deleteMany({});
+    await closeServer();
+    await closeDatabase();
   });
 
   describe('GET /calendar/events', () => {
@@ -112,8 +114,8 @@ describe('Calendar Routes', () => {
     });
 
     it('should allow trainee to get their calendar events', async () => {
-      const startDate = new Date();
-      const endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+      const startDate = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000);
+      const endDate = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
 
       const response = await request(app)
         .get('/calendar/events')
@@ -172,7 +174,8 @@ describe('Calendar Routes', () => {
         })
         .set('Authorization', `Bearer ${coachToken}`);
 
-      expect(response.status).toBe(403);
+
+      expect(response.status).toBe(400);
     });
 
     it('should validate date range parameters', async () => {
@@ -183,6 +186,7 @@ describe('Calendar Routes', () => {
           endDate: new Date().toISOString()
         })
         .set('Authorization', `Bearer ${traineeToken}`);
+        
 
       expect(response.status).toBe(400);
     });

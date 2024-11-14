@@ -1,6 +1,7 @@
 import { WorkoutTransportClient } from '../../shared/transport/helpers/workoutTransport';
 import { PlanningTransportClient } from '../../shared/transport/helpers/planningTransport';
 import { DomainError } from '../../shared/errors';
+import { getCalendarEventsSchema } from '../validation';
 
 interface CalendarEvent {
   id: string;
@@ -27,6 +28,16 @@ export class CalendarQueryService {
   ) {}
 
   async getCalendarEvents(params: GetCalendarEventsParams): Promise<Record<string, CalendarEvent[]>> {
+    // Validate input parameters
+    try {
+      await getCalendarEventsSchema.validate(params, {
+        abortEarly: false,
+        stripUnknown: true
+      });
+    } catch (err: any) {
+      throw new DomainError(err.errors.join(', '));
+    }
+
     const [workouts, plannedDates] = await Promise.all([
       this.fetchWorkouts(params),
       this.fetchPlans(params)
@@ -67,7 +78,7 @@ export class CalendarQueryService {
     const sortedEvents = events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     // Reduce events into a map grouped by date
-    return sortedEvents.reduce((acc, event) => {
+    const groupedEvents = sortedEvents.reduce((acc, event) => {
       const dateKey = event.date.split('T')[0]; // Get YYYY-MM-DD format
       if (!acc[dateKey]) {
         acc[dateKey] = [];
@@ -75,6 +86,7 @@ export class CalendarQueryService {
       acc[dateKey].push(event);
       return acc;
     }, {} as Record<string, CalendarEvent[]>);
+    return groupedEvents;
   }
 
   private async fetchWorkouts(params: GetCalendarEventsParams) {
