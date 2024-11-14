@@ -39,6 +39,7 @@ export const mapExerciseLog = (log: IExerciseLog) => ({
   media: log.media ?? [],
   kpiId: log.kpiId.toString(),
   traineeId: log.traineeId.toString(),
+  notes: log.notes ?? '',
   logDate: log.logDate,
   actualValue: log.actualValue,
   status: log.status,
