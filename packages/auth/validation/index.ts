@@ -1,5 +1,5 @@
 import * as yup from 'yup';
-import { UserRole } from '../types';
+import { UserRole } from "../../shared/constants/UserRole";
 
 export const registerSchema = yup.object({
   email: yup.string().email().required(),

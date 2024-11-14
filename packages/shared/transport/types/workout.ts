@@ -29,6 +29,8 @@ export namespace WorkoutTransport {
     templateId?: string;
     notes?: string;
     traineeId: string;
+    traineeName: string;
+    traineeEmail: string;
   }
 
   // Workout Operations
@@ -95,5 +97,16 @@ export namespace WorkoutTransport {
 
   export interface GetExerciseLogsByDateRangeResponse extends ResponsePayload<{
     exerciseLogs: ExerciseLog[];
+  }> {}
+
+  // Add these interfaces to the WorkoutTransport namespace
+  export interface GetWorkoutsByDateRangeRequest extends BaseRequest {
+    startDate: string;
+    endDate: string;
+    traineeId?: string;
+  }
+
+  export interface GetWorkoutsByDateRangeResponse extends ResponsePayload<{
+    workouts: Workout[];
   }> {}
 } 

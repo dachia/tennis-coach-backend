@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { Express } from 'express';
 import { setupTestDatabase } from '../../shared/tests';
-import { UserRole } from '../../auth/types';
+import { UserRole } from "../../shared/constants/UserRole";
 import mongoose from 'mongoose';
 import { User } from '../../auth/models/User';
 import { Exercise } from '../../exercise/models/Exercise';

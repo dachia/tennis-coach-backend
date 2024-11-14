@@ -1,7 +1,7 @@
 import { InMemoryTransport } from '../../../shared/transport/inMemoryTransport';
 import { AuthTransportRouter } from '../authTransportRouter';
 import { AuthService } from '../../services/authService';
-import { UserRole } from '../../types';
+import { UserRole } from "../../../shared/constants/UserRole";
 import { DomainError } from '../../../shared/errors/DomainError';
 import { createResponse } from '../../../shared';
 

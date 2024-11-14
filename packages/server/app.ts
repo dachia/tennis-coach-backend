@@ -18,6 +18,10 @@ import { ReportingTransportRouter } from '../reporting/transport/reportingTransp
 import { PlanningTransportRouter } from '../planning/transport/planningTransportRouter';
 import { addToContainer as addPlanningServicesToContainer } from '../planning/di';
 import { buildRoutes as buildPlanningRoutes } from '../planning/routes';
+import { addToContainer as addCalendarServicesToContainer } from '../calendar/di';
+import { buildRoutes as buildCalendarRoutes } from '../calendar/routes';
+import { CalendarTransportRouter } from '../calendar/transport/calendarTransportRouter';
+
 interface AppConfig {
   mongoUri: string;
   jwtSecret: string;
@@ -34,6 +38,7 @@ export async function bootstrapApp(config: AppConfig, container: Container) {
   addReportingServicesToContainer(container);
   addMediaServicesToContainer(container);
   addPlanningServicesToContainer(container);
+  addCalendarServicesToContainer(container);
   // Connect to database
   await connectToDatabase(config.mongoUri);
 
@@ -44,19 +49,21 @@ export async function bootstrapApp(config: AppConfig, container: Container) {
   app.use('/reporting', buildReportingRoutes(container));
   app.use('/media', buildMediaRoutes(container));
   app.use('/planning', buildPlanningRoutes(container));
+  app.use('/calendar', buildCalendarRoutes(container));
   // Start transport listeners
   const authTransportRouter = container.get<AuthTransportRouter>('AuthTransportRouter');
   const exerciseTransportRouter = container.get<ExerciseTransportRouter>('ExerciseTransportRouter');
   const workoutTransportRouter = container.get<WorkoutTransportRouter>('WorkoutTransportRouter');
   const reportingTransportRouter = container.get<ReportingTransportRouter>('ReportingTransportRouter');
   const planningTransportRouter = container.get<PlanningTransportRouter>('PlanningTransportRouter');
-  
+  const calendarTransportRouter = container.get<CalendarTransportRouter>('CalendarTransportRouter');
   await Promise.all([
     authTransportRouter.listen(),
     exerciseTransportRouter.listen(),
     workoutTransportRouter.listen(),
     reportingTransportRouter.listen(),
-    planningTransportRouter.listen()
+    planningTransportRouter.listen(),
+    calendarTransportRouter.listen()
   ]);
 
   return app;

@@ -72,6 +72,19 @@ export class WorkoutTransportRouter {
       });
       return createResponse('success', 'Exercise logs fetched successfully', response);
     });
+
+    this.router.register<
+      WorkoutTransport.GetWorkoutsByDateRangeRequest,
+      WorkoutTransport.GetWorkoutsByDateRangeResponse
+    >(TransportRoutes.Workout.GET_BY_DATE_RANGE, async (payload) => {
+      const response = await this.workoutQueryService.getWorkoutsByDateRange({
+        startDate: new Date(payload.startDate),
+        endDate: new Date(payload.endDate),
+        userId: payload.userId,
+        traineeId: payload.traineeId
+      });
+      return createResponse('success', 'Workouts fetched successfully', response);
+    });
   }
 
   async listen() {

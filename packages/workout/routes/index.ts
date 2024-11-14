@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { WorkoutController } from '../controllers/workoutController';
 import { Container } from '../../shared';
 import { createAuthMiddleware, requireRole } from '../../shared/middleware';
-import { UserRole } from '../../auth/types';
+import { UserRole } from "../../shared/constants/UserRole";
 import { User } from '../../auth/models/User';
 
 export function buildRoutes(container: Container) {

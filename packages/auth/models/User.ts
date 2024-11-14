@@ -1,5 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { UserRole } from '../types';
+import { UserRole } from "../../shared/constants/UserRole";
 import bcrypt from 'bcrypt';
 
 export interface IUser extends Document {

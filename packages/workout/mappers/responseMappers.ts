@@ -26,8 +26,8 @@ export const mapWorkout = (
   name: workout.name,
   notes: workout.notes,
   media: workout.media,
-  traineeEmail: workout.traineeEmail,
-  traineeName: workout.traineeName,
+  traineeEmail: workout.traineeEmail ?? '',
+  traineeName: workout.traineeName ?? '',
   exerciseLogs: workout.exerciseLogs?.map(mapExerciseLog) ?? []
 });
 

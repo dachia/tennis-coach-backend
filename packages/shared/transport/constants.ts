@@ -37,7 +37,8 @@ export const TransportRoutes = {
     CREATE: 'workout.create',
     UPDATE: 'workout.update',
     GET: 'workout.get',
-    GET_ALL: 'workouts.get'
+    GET_ALL: 'workouts.get',
+    GET_BY_DATE_RANGE: 'workouts.getByDateRange'
   },
   ExerciseLog: {
     CREATE: 'exerciseLog.create',
@@ -53,5 +54,8 @@ export const TransportRoutes = {
     GET_ALL: 'plan.getAll',
     GET_TRAINEE_PLANS: 'plan.getTraineePlans',
     GET_PLANNED_DATES: 'plan.getPlannedDates'
+  },
+  Calendar: {
+    GET_EVENTS: 'calendar.getEvents'
   }
 } as const; 

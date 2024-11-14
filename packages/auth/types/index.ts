@@ -1,7 +1,4 @@
-export enum UserRole {
-  COACH = 'coach',
-  TRAINEE = 'trainee'
-}
+import { UserRole } from "../../shared/constants/UserRole";
 
 export interface LoginDTO {
   email: string;

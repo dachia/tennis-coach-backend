@@ -5,7 +5,7 @@ import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
 import { setupTestDatabase } from '../../shared/tests';
 import { User } from '../../auth/models/User';
-import { UserRole } from '../../auth/types';
+import { UserRole } from "../../shared/constants/UserRole";
 import { testConfig } from '../config';
 import { createTestContainer } from '../di';
 import { bootstrapServer } from '../server';

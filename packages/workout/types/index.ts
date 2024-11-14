@@ -20,6 +20,8 @@ export interface WorkoutDTO {
   templateId?: string;
   notes?: string;
   media?: string[];
+  traineeName: string;
+  traineeEmail: string;
 }
 
 export interface ExerciseLogDTO {
@@ -97,8 +99,6 @@ export interface EnrichedExerciseLogDTO extends ExerciseLogDTO {
 }
 
 export interface EnrichedWorkoutDTO extends WorkoutDTO {
-  traineeEmail?: string;
-  traineeName?: string;
   exerciseLogs: EnrichedExerciseLogDTO[];
   exercises: {
     exerciseId: string;

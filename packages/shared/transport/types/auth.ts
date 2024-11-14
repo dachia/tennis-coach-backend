@@ -1,5 +1,5 @@
 import { BaseRequest } from './base';
-import { UserRole } from '../../../auth/types';
+import { UserRole } from "../../constants/UserRole";
 import { ResponsePayload } from '../../utils/response.utils';
 
 export namespace AuthTransport {

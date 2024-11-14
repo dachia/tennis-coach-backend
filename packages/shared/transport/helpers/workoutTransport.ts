@@ -47,4 +47,11 @@ export class WorkoutTransportClient {
       WorkoutTransport.GetExerciseLogsByDateRangeResponse
     >(this.transport, TransportRoutes.ExerciseLog.GET_BY_DATE_RANGE, payload);
   }
+
+  async getWorkoutsByDateRange(payload: WorkoutTransport.GetWorkoutsByDateRangeRequest) {
+    return createTypedRequest<
+      WorkoutTransport.GetWorkoutsByDateRangeRequest,
+      WorkoutTransport.GetWorkoutsByDateRangeResponse
+    >(this.transport, TransportRoutes.Workout.GET_BY_DATE_RANGE, payload);
+  }
 } 
