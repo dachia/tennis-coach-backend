@@ -84,6 +84,7 @@ export const updateExerciseWithKPIsSchema = yup.object({
   kpis: yup.array().of(
     yup.object({
       _id: yup.string(),
+      tags: yup.array().of(yup.string()),
       unit: yup.string().required('Unit is required'),
       performanceGoal: yup.string()
         .oneOf(Object.values(PerformanceGoal), 'Invalid performance goal')

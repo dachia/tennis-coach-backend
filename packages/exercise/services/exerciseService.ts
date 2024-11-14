@@ -358,6 +358,7 @@ export class ExerciseService {
       const kpiPromises = kpis.map(async kpi => {
         const kpiData = {
           unit: kpi.unit,
+          tags: kpi.tags,
           performanceGoal: kpi.performanceGoal,
           exerciseId: id
         };
