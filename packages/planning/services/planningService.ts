@@ -24,6 +24,7 @@ export class PlanningService {
 
   async createPlan(data: CreatePlanDTO) {
     let validatedData;
+    const traineeId = data.traineeId || data.userId;
     try {
       validatedData = await createPlanSchema.validate(data, {
         abortEarly: false,
@@ -35,7 +36,7 @@ export class PlanningService {
 
     // Get trainee information for denormalization
     const userResponse = await this.authTransportClient.getUsersByIds({
-      ids: [data.traineeId],
+      ids: [traineeId],
       userId: data.userId
     });
     
@@ -45,23 +46,25 @@ export class PlanningService {
     }
 
     // If user is not the trainee, verify coach-trainee relationship
-    if (data.userId !== data.traineeId) {
+    if (data.userId !== traineeId) {
       const relationshipResponse = await this.authTransportClient.getTraineesByCoach({
         coachId: data.userId,
         userId: data.userId
       });
       
       const isTraineeOfCoach = relationshipResponse.data?.payload.trainees
-        .some(t => t._id === data.traineeId);
+        .some(t => t._id === traineeId);
       
       if (!isTraineeOfCoach) {
         throw new DomainError('Not authorized to create plan for this trainee');
       }
     }
+    let templateResponse;
+    let exercisesResponse;
 
     // If template provided, verify it exists and is accessible
     if (validatedData.templateId) {
-      const templateResponse = await this.exerciseTransportClient.getTemplate({
+      templateResponse = await this.exerciseTransportClient.getTemplate({
         id: validatedData.templateId,
         userId: data.userId
       });
@@ -73,7 +76,7 @@ export class PlanningService {
 
     // If individual exercises provided, verify they exist and are accessible
     if (validatedData.exerciseId) {
-      const exercisesResponse = await this.exerciseTransportClient.getExercisesByIds({
+      exercisesResponse = await this.exerciseTransportClient.getExercisesByIds({
         ids: [validatedData.exerciseId],
         userId: data.userId
       });
@@ -82,10 +85,13 @@ export class PlanningService {
         throw new DomainError('Exercise not found or not accessible');
       }
     }
+    const name = templateResponse?.data?.payload.template?.title || exercisesResponse?.data?.payload.exercises[0].title;
 
     const plan = await this.planModel.create({
       ...validatedData,
-      coachId: data.userId !== data.traineeId ? data.userId : undefined,
+      name, 
+      coachId: data.userId !== traineeId ? data.userId : undefined,
+      traineeId,
       traineeName: trainee.name,
       traineeEmail: trainee.email
     });
@@ -119,9 +125,9 @@ export class PlanningService {
     }
 
     // Verify authorization
-    if (data.userId !== plan.traineeId.toString() && 
-        data.userId !== plan.coachId?.toString()) {
-      throw new DomainError('Not authorized to update this plan');
+    if (data.userId.toString() !== plan.traineeId.toString() && 
+        data.userId.toString() !== plan.coachId?.toString()) {
+      throw new DomainError('Not authorized to update this plan', 403);
     }
 
     // Update plan

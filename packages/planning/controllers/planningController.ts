@@ -77,4 +77,51 @@ export class PlanningController {
       createResponse('success', 'Trainee plans retrieved successfully', result)
     );
   }
+
+  async getPlannedDates(req: AuthRequest, res: Response) {
+    const { startDate, endDate, traineeId, exerciseId, templateId } = req.query;
+
+    const result = await this.planningQueryService.getPlannedDates({
+      traineeId: traineeId as string,
+      exerciseId: exerciseId as string,
+      templateId: templateId as string,
+      startDate: startDate ? new Date(startDate as string) : undefined,
+      endDate: endDate ? new Date(endDate as string) : undefined,
+      userId: req.user._id
+    });
+
+    res.json(
+      createResponse('success', 'Planned dates retrieved successfully', { plannedDates: result })
+    );
+  }
+
+  async scheduleWorkout(req: AuthRequest, res: Response) {
+    const result = await this.planningService.scheduleWorkout({
+      ...req.body,
+      userId: req.user._id
+    });
+
+    res.status(201).json(
+      createResponse('success', 'Workout scheduled successfully', result)
+    );
+  }
+
+  async getPlansForUser(req: AuthRequest, res: Response) {
+    const result = await this.planningQueryService.getPlansForUser(req.user._id);
+
+    res.json(
+      createResponse('success', 'Plans retrieved successfully', result)
+    );
+  }
+
+  async getPlansForTrainee(req: AuthRequest, res: Response) {
+    const result = await this.planningQueryService.getPlansForTrainee(
+      req.params.traineeId,
+      req.user._id
+    );
+
+    res.json(
+      createResponse('success', 'Trainee plans retrieved successfully', result)
+    );
+  }
 } 

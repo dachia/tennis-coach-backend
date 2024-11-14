@@ -90,4 +90,10 @@ export class PlanningTransportRouter {
       return createResponse('success', 'Planned dates fetched successfully', { plannedDates });
     });
   }
+
+  public listen() {
+    return this.router.listen();
+  }
+  
+  
 } 

@@ -15,7 +15,9 @@ import { AuthTransportRouter } from '../auth/transport/authTransportRouter';
 import { ExerciseTransportRouter } from '../exercise/transport/exerciseTransportRouter';
 import { WorkoutTransportRouter } from '../workout/transport/workoutTransportRouter';
 import { ReportingTransportRouter } from '../reporting/transport/reportingTransportRouter';
-
+import { PlanningTransportRouter } from '../planning/transport/planningTransportRouter';
+import { addToContainer as addPlanningServicesToContainer } from '../planning/di';
+import { buildRoutes as buildPlanningRoutes } from '../planning/routes';
 interface AppConfig {
   mongoUri: string;
   jwtSecret: string;
@@ -31,6 +33,7 @@ export async function bootstrapApp(config: AppConfig, container: Container) {
   addWorkoutServicesToContainer(container);
   addReportingServicesToContainer(container);
   addMediaServicesToContainer(container);
+  addPlanningServicesToContainer(container);
   // Connect to database
   await connectToDatabase(config.mongoUri);
 
@@ -40,18 +43,20 @@ export async function bootstrapApp(config: AppConfig, container: Container) {
   app.use('/workout', buildWorkoutRoutes(container));
   app.use('/reporting', buildReportingRoutes(container));
   app.use('/media', buildMediaRoutes(container));
-  
+  app.use('/planning', buildPlanningRoutes(container));
   // Start transport listeners
   const authTransportRouter = container.get<AuthTransportRouter>('AuthTransportRouter');
   const exerciseTransportRouter = container.get<ExerciseTransportRouter>('ExerciseTransportRouter');
   const workoutTransportRouter = container.get<WorkoutTransportRouter>('WorkoutTransportRouter');
   const reportingTransportRouter = container.get<ReportingTransportRouter>('ReportingTransportRouter');
+  const planningTransportRouter = container.get<PlanningTransportRouter>('PlanningTransportRouter');
   
   await Promise.all([
     authTransportRouter.listen(),
     exerciseTransportRouter.listen(),
     workoutTransportRouter.listen(),
-    reportingTransportRouter.listen()
+    reportingTransportRouter.listen(),
+    planningTransportRouter.listen()
   ]);
 
   return app;

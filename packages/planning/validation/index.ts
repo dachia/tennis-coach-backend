@@ -2,7 +2,7 @@ import * as yup from 'yup';
 import { RecurrenceType, WeekDay } from '../../shared/types';
 
 export const createPlanSchema = yup.object({
-  traineeId: yup.string().required('Trainee ID is required'),
+  traineeId: yup.string(),
   templateId: yup.string(),
   exerciseId: yup.string(),
   recurrenceType: yup.string()
@@ -21,7 +21,6 @@ export const createPlanSchema = yup.object({
 });
 
 export const updatePlanSchema = yup.object({
-  name: yup.string().trim(),
   recurrenceType: yup.string().oneOf(Object.values(RecurrenceType)),
   weekDays: yup.array()
     .of(yup.string().oneOf(Object.values(WeekDay)))
