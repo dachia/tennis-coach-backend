@@ -38,6 +38,14 @@ interface TotalProgressDTO {
   endDate: Date;
 }
 
+interface GetProgressComparisonsParams {
+  userId: string;
+  exerciseId: string;
+  kpiId: string;
+  startDate?: Date;
+  endDate?: Date;
+}
+
 export class ReportingQueryService {
   constructor(
     private readonly progressComparisonModel: typeof ProgressComparison,
@@ -59,20 +67,23 @@ export class ReportingQueryService {
     return { progressComparison: mapProgressComparison(comparison) };
   }
 
-  async getProgressComparisons(
-    userId: string,
-    kpiId: string,
-    startDate?: Date,
-    endDate?: Date
-  ) {
-    const comparisons = await this.progressComparisonModel.find({
-      userId,
-      kpiId,
-      // createdAt: {
-      //   $gte: startDate,
-      //   $lte: endDate
-      // }
-    }).sort({ createdAt: 1 });
+  async getProgressComparisons(params: GetProgressComparisonsParams) {
+    const query: any = {
+      userId: params.userId,
+      exerciseId: params.exerciseId,
+      // kpiId: params.kpiId,
+    };
+
+    if (params.startDate && params.endDate) {
+      query.createdAt = {
+        $gte: params.startDate,
+        $lte: params.endDate
+      };
+    }
+
+    const comparisons = await this.progressComparisonModel
+      .find(query)
+      .sort({ createdAt: 1 });
 
     return { progressComparisons: mapProgressComparisons(comparisons) };
   }

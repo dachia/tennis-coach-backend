@@ -20,12 +20,13 @@ export class ReportingController {
   }
 
   async getProgressComparisons(req: AuthRequest, res: Response) {
-    const result = await this.reportingQueryService.getProgressComparisons(
-      req.user._id,
-      req.query.kpiId as string,
-      req.query.startDate ? new Date(req.query.startDate as string) : undefined,
-      req.query.endDate ? new Date(req.query.endDate as string) : undefined
-    );
+    const result = await this.reportingQueryService.getProgressComparisons({
+      userId: req.user._id,
+      exerciseId: req.query.exerciseId as string,
+      kpiId: req.query.kpiId as string,
+      startDate: req.query.startDate ? new Date(req.query.startDate as string) : undefined,
+      endDate: req.query.endDate ? new Date(req.query.endDate as string) : undefined
+    });
     res.json(createResponse('success', 'Progress comparisons fetched successfully', result));
   }
 

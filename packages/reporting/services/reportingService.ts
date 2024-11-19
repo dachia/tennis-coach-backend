@@ -41,9 +41,10 @@ export class ReportingService {
       kpiId: params.kpiId
     });
     const previousLogs = previousLogsResponse.data?.payload.exerciseLogs;
+    // console.log('previousLogs', previousLogs);
 
     // Find first log that doesn't match current log ID
-    const previousLog = previousLogs?.find(log => log._id !== currentLog._id);
+    const previousLog = previousLogs?.length! > 1 ? previousLogs![previousLogs!.length - 2] : null;
 
     if (!previousLog || !previousLog.actualValue) {
       return { progressComparison: null };
@@ -54,14 +55,13 @@ export class ReportingService {
       logId: params.logId,
       kpiId: params.kpiId,
       userId: params.userId,
-      comparisonDate: previousLog.createdAt
+      comparisonDate: currentLog.logDate
     });
 
     let comparison: IProgressComparison;
     const sign = currentLog.kpiPerformanceGoal === PerformanceGoal.MAXIMIZE ? 1 : -1;
     const difference = sign * (currentLog.actualValue - previousLog.actualValue);
     const changePercent = (difference / previousLog.actualValue) * 100;
-
 
     if (existingComparison) {
       existingComparison.comparisonValue = difference;
@@ -74,8 +74,9 @@ export class ReportingService {
         userId: params.userId,
         comparisonValue: difference,
         comparisonPercent: changePercent,
-        comparisonDate: previousLog.createdAt,
+        comparisonDate: currentLog.logDate,
         kpiPerformanceGoal: currentLog.kpiPerformanceGoal,
+        exerciseId: currentLog.exerciseId,
         kpiUnit: currentLog.kpiUnit
       }).save() as IProgressComparison;
     }

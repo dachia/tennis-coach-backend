@@ -278,7 +278,7 @@ export class WorkoutService {
       exerciseId: exercise._id,
       kpiId: kpi._id,
       traineeId: userId,
-      logDate: new Date(),
+      logDate: workout.startTimestamp,
       exerciseTitle: exercise.title,
       exerciseDescription: exercise.description,
       kpiUnit: kpi.unit,

@@ -4,6 +4,7 @@ import { PerformanceGoal } from '../../shared/constants/PerformanceGoal';
 export interface IProgressComparison extends Document {
   _id: mongoose.Types.ObjectId;
   logId: mongoose.Types.ObjectId;
+  exerciseId: mongoose.Types.ObjectId;
   kpiId: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
   kpiUnit: string;
@@ -20,6 +21,11 @@ const progressComparisonSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'KPI',
     required: true 
+  },
+  exerciseId: { 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Exercise',
+    required: true
   },
   logId: { 
     type: mongoose.Schema.Types.ObjectId, 
