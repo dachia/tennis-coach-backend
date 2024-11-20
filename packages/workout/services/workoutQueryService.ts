@@ -191,6 +191,15 @@ export class WorkoutQueryService {
     return { workouts: enrichedWorkouts };
   }
 
+  async getExerciseLogsByExerciseId(exerciseId: string, userId: string) {
+    const exerciseLogs = await this.exerciseLogModel.find({
+      exerciseId,
+      traineeId: userId
+    }).sort({ logDate: -1 });
+
+    return { exerciseLogs: exerciseLogs.map(mapExerciseLog) };
+  }
+
   private async enrichWorkoutResponse(workouts: IWorkout[]): Promise<EnrichedWorkoutDTO[]> {
     if (!workouts.length) return [];
 

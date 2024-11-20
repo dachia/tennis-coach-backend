@@ -93,5 +93,12 @@ export function buildRoutes(container: Container) {
     workoutController.addExerciseToWorkout.bind(workoutController)
   );
 
+  router.get(
+    '/logs/exercise/:exerciseId',
+    authMiddleware,
+    requireRole([UserRole.TRAINEE, UserRole.COACH]),
+    workoutController.getExerciseLogsByExerciseId.bind(workoutController)
+  );
+
   return router;
 } 

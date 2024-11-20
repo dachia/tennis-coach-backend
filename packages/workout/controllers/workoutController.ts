@@ -144,4 +144,15 @@ export class WorkoutController {
       createResponse('success', 'Exercise added to workout successfully', result)
     );
   }
+
+  async getExerciseLogsByExerciseId(req: AuthRequest, res: Response) {
+    const result = await this.workoutQueryService.getExerciseLogsByExerciseId(
+      req.params.exerciseId,
+      req.user._id
+    );
+
+    res.json(
+      createResponse('success', 'Exercise logs retrieved successfully', result)
+    );
+  }
 } 

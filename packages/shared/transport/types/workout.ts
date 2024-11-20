@@ -109,4 +109,12 @@ export namespace WorkoutTransport {
   export interface GetWorkoutsByDateRangeResponse extends ResponsePayload<{
     workouts: Workout[];
   }> {}
+
+  export interface GetExerciseLogsByExerciseIdRequest extends BaseRequest {
+    exerciseId: string;
+  }
+
+  export interface GetExerciseLogsByExerciseIdResponse extends ResponsePayload<{
+    exerciseLogs: ExerciseLog[];
+  }> {}
 } 
