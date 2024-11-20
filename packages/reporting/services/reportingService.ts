@@ -66,6 +66,9 @@ export class ReportingService {
     if (existingComparison) {
       existingComparison.comparisonValue = difference;
       existingComparison.comparisonPercent = changePercent;
+      existingComparison.comparisonDate = new Date();
+      existingComparison.logDate = currentLog.logDate!;
+      existingComparison.actualValue = currentLog.actualValue!;
       comparison = await existingComparison.save();
     } else {
       comparison = await new this.progressComparisonModel({
@@ -74,7 +77,9 @@ export class ReportingService {
         userId: params.userId,
         comparisonValue: difference,
         comparisonPercent: changePercent,
-        comparisonDate: currentLog.logDate,
+        comparisonDate: new Date(),
+        logDate: currentLog.logDate,
+        actualValue: currentLog.actualValue,
         kpiPerformanceGoal: currentLog.kpiPerformanceGoal,
         exerciseId: currentLog.exerciseId,
         kpiUnit: currentLog.kpiUnit

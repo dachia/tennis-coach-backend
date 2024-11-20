@@ -41,7 +41,12 @@ export interface ProgressComparisonResponseDTO {
   kpiId: string;
   userId: string;
   comparisonValue: number;
+  comparisonPercent: number;
   comparisonDate: Date;
+  logDate: Date;
+  actualValue: number;
+  kpiUnit: string;
+  kpiPerformanceGoal: string;
   createdAt: Date;
   updatedAt: Date;
 }

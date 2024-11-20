@@ -12,6 +12,8 @@ export const mapProgressComparison = (comparison: IProgressComparison) => ({
   comparisonValue: comparison.comparisonValue,
   comparisonPercent: comparison.comparisonPercent,
   comparisonDate: comparison.comparisonDate,
+  logDate: comparison.logDate,
+  actualValue: comparison.actualValue,
   createdAt: comparison.createdAt,
   updatedAt: comparison.updatedAt
 });
