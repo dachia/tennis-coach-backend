@@ -44,7 +44,12 @@ describe('ReportingTransportRouter', () => {
           comparisonValue: 25,
           comparisonDate: new Date(),
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          comparisonPercent: 25,
+          logDate: new Date(),
+          actualValue: 25,
+          kpiUnit: 'unit',
+          kpiPerformanceGoal: 'goal'
         }
       };
 

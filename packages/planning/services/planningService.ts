@@ -153,8 +153,8 @@ export class PlanningService {
     }
 
     // Verify authorization
-    if (userId !== plan.traineeId.toString() && 
-        userId !== plan.coachId?.toString()) {
+    if (userId.toString() !== plan.traineeId.toString() && 
+        userId.toString() !== plan.coachId?.toString()) {
       throw new DomainError('Not authorized to delete this plan');
     }
 
