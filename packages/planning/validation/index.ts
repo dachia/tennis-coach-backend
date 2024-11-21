@@ -17,7 +17,13 @@ export const createPlanSchema = yup.object({
     }),
   startDate: yup.date().required('Start date is required'),
   endDate: yup.date()
-    .min(yup.ref('startDate'), 'End date must be after start date').optional()
+    .nullable()
+    .transform((value, originalValue) => {
+      // If the original value is an empty string, return undefined
+      return originalValue === '' ? undefined : value;
+    })
+    .min(yup.ref('startDate'), 'End date must be after start date')
+    .optional()
 });
 
 export const updatePlanSchema = yup.object({
@@ -30,7 +36,13 @@ export const updatePlanSchema = yup.object({
     }),
   startDate: yup.date(),
   endDate: yup.date()
+    .nullable()
+    .transform((value, originalValue) => {
+      // If the original value is an empty string, return undefined
+      return originalValue === '' ? undefined : value;
+    })
     .min(yup.ref('startDate'), 'End date must be after start date')
+    .optional()
 });
 
 export const createScheduledPlanSchema = yup.object({

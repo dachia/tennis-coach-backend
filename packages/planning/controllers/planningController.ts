@@ -124,4 +124,15 @@ export class PlanningController {
       createResponse('success', 'Trainee plans retrieved successfully', result)
     );
   }
+
+  async getPlansByExerciseId(req: AuthRequest, res: Response) {
+    const result = await this.planningQueryService.getPlansByExerciseId(
+      req.params.exerciseId,
+      req.user._id
+    );
+
+    res.json(
+      createResponse('success', 'Plans retrieved successfully', result)
+    );
+  }
 } 

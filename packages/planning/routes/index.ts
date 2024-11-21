@@ -65,6 +65,12 @@ export function buildRoutes(container: Container) {
     planningController.getPlannedDates.bind(planningController)
   );
 
+  router.get(
+    '/plans/exercise/:exerciseId',
+    authMiddleware,
+    planningController.getPlansByExerciseId.bind(planningController)
+  );
+
   // Scheduling routes
   router.post(
     '/schedule',

@@ -116,7 +116,8 @@ describe('Planning Routes', () => {
         recurrenceType: RecurrenceType.WEEKLY,
         weekDays: ["monday", "wednesday", "friday"], // Mon, Wed, Fri
         startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 1 week later
+        endDate: ""
+        // endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 1 week later
       };
 
       const response = await request(app)
@@ -264,6 +265,72 @@ describe('Planning Routes', () => {
 
       expect(response.status).toBe(403);
       expect(response.body.error.message).toBe('Not authorized to update this plan');
+    });
+  });
+
+  describe('GET /planning/plans/exercise/:exerciseId', () => {
+    let exercise: any;
+    let plan: any;
+
+    beforeEach(async () => {
+      exercise = await Exercise.create({
+        title: 'Test Exercise',
+        description: 'Test Description',
+        media: ['https://example.com/test.mp4'],
+        createdBy: coach._id
+      });
+
+      plan = await Plan.create({
+        name: 'Test Plan',
+        traineeId: trainee._id,
+        coachId: coach._id,
+        exerciseId: exercise._id,
+        recurrenceType: RecurrenceType.WEEKLY,
+        weekDays: ["monday", "wednesday", "friday"],
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        traineeName: trainee.name,
+        traineeEmail: trainee.email
+      });
+    });
+
+    it('should get plans by exercise id for trainee', async () => {
+      const response = await request(app)
+        .get(`/planning/plans/exercise/${exercise._id}`)
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.payload.plans).toHaveLength(1);
+      expect(response.body.data.payload.plans[0]).toMatchObject({
+        _id: plan._id.toString(),
+        traineeId: trainee._id.toString(),
+        exerciseId: exercise._id.toString()
+      });
+    });
+
+    it('should get plans by exercise id for coach', async () => {
+      const response = await request(app)
+        .get(`/planning/plans/exercise/${exercise._id}`)
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.payload.plans).toHaveLength(1);
+      expect(response.body.data.payload.plans[0]).toMatchObject({
+        _id: plan._id.toString(),
+        traineeId: trainee._id.toString(),
+        coachId: coach._id.toString(),
+        exerciseId: exercise._id.toString()
+      });
+    });
+
+    it('should return empty array when no plans found', async () => {
+      const nonExistentId = new mongoose.Types.ObjectId();
+      const response = await request(app)
+        .get(`/planning/plans/exercise/${nonExistentId}`)
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.payload.plans).toHaveLength(0);
     });
   });
 }); 

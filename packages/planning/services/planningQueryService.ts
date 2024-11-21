@@ -162,4 +162,16 @@ export class PlanningQueryService {
     // Remove dates with no plans
     return dates.filter(date => date.plans.length > 0);
   }
+
+  async getPlansByExerciseId(exerciseId: string, userId: string) {
+    const plans = await this.planModel.find({
+      exerciseId,
+      $or: [
+        { traineeId: userId },
+        { coachId: userId }
+      ]
+    }).sort({ startDate: 1 });
+
+    return { plans: plans.map(plan => mapPlan(plan)) };
+  }
 } 
