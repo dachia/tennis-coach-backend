@@ -5,10 +5,12 @@ export interface CalendarEvent {
   id: string;
   title: string;
   date: string; // ISO date string
-  type: 'workout' | 'plan';
+  type: 'workout' | 'plan' | 'exerciseLog';
   traineeId: string;
   traineeName: string;
   traineeEmail: string;
+  exerciseId?: string;
+  templateId?: string;
   status?: string;
 }
 

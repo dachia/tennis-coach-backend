@@ -1,5 +1,5 @@
 import { CalendarEvent } from '../../shared/transport/types/calendar';
-import { WorkoutDTO } from '../../workout/types';
+import { ExerciseLogDTO, WorkoutDTO } from '../../workout/types';
 import { PlanDTO } from '../../shared/types';
 
 interface PlannedDate {
@@ -23,9 +23,22 @@ export const mapPlanToCalendarEvent = (plan: PlanDTO, date: Date): CalendarEvent
   title: plan.name,
   date: date.toISOString(),
   type: 'plan',
+  exerciseId: plan.exerciseId,
+  templateId: plan.templateId,
   traineeId: plan.traineeId,
   traineeName: plan.traineeName,
-  traineeEmail: plan.traineeEmail
+  traineeEmail: plan.traineeEmail,
+});
+
+export const mapExerciseLogToCalendarEvent = (exerciseLog: ExerciseLogDTO): CalendarEvent => ({
+  id: exerciseLog._id,
+  title: exerciseLog.exerciseTitle ?? '',
+  date: exerciseLog.logDate.toISOString(),
+  type: 'exerciseLog',
+  exerciseId: exerciseLog.exerciseId,
+  traineeId: exerciseLog.traineeId,
+  traineeName: exerciseLog.traineeName ?? '',
+  traineeEmail: exerciseLog.traineeEmail ?? '',
 });
 
 export const mapToCalendarEvents = (

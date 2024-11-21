@@ -7,6 +7,7 @@ import { dateRangeSchema } from '../validation';
 import * as yup from 'yup';
 import { AuthTransportClient } from '../../shared/transport/helpers/authTransport';
 import { groupExerciseLogsByExerciseId, mapExerciseLog, mapWorkout } from '../mappers/responseMappers';
+import { FilterQuery } from 'mongoose';
 
 export class WorkoutQueryService {
   constructor(
@@ -32,10 +33,10 @@ export class WorkoutQueryService {
     startDate: Date;
     endDate: Date;
     userId: string;
-    kpiId: string;
+    kpiId?: string;
   }) {
     const exerciseLogDateRangeSchema = dateRangeSchema.shape({
-      kpiId: yup.string().required('KPI ID is required')
+      kpiId: yup.string().optional()
     });
 
     let validatedData;
@@ -45,20 +46,22 @@ export class WorkoutQueryService {
         stripUnknown: true
       });
     } catch (err: any) {
-      console.log(err);
       throw new DomainError(err.message);
     }
 
     const { startDate, endDate, userId, kpiId } = validatedData;
-
-    const exerciseLogs = await this.exerciseLogModel.find({
+    const query: FilterQuery<IExerciseLog> = {
       traineeId: userId,
-      kpiId: kpiId,
       logDate: {
         $gte: startDate,
         $lte: endDate
       }
-    }).sort({ logDate: 1 });
+    };
+    if (kpiId) {
+      query.kpiId = kpiId;
+    }
+
+    const exerciseLogs = await this.exerciseLogModel.find(query).sort({ logDate: 1, createdAt: 1 });
 
     return { exerciseLogs: exerciseLogs.map(mapExerciseLog) };
   }

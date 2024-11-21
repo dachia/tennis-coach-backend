@@ -100,7 +100,7 @@ export namespace WorkoutTransport {
   export interface GetExerciseLogsByDateRangeRequest extends BaseRequest {
     startDate: string;
     endDate: string;
-    kpiId: string;
+    kpiId?: string;
   }
 
   export interface GetExerciseLogsByDateRangeResponse extends ResponsePayload<{

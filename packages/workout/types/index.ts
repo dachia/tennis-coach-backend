@@ -35,6 +35,12 @@ export interface ExerciseLogDTO {
   status: ExerciseLogStatus;
   notes?: string;
   media?: string[];
+  exerciseTitle?: string;
+  exerciseDescription?: string;
+  kpiUnit?: string;
+  kpiPerformanceGoal?: string;
+  traineeName?: string;
+  traineeEmail?: string;
 }
 
 export interface ProgressComparisonDTO {

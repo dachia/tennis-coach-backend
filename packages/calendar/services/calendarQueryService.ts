@@ -2,17 +2,8 @@ import { WorkoutTransportClient } from '../../shared/transport/helpers/workoutTr
 import { PlanningTransportClient } from '../../shared/transport/helpers/planningTransport';
 import { DomainError } from '../../shared/errors';
 import { getCalendarEventsSchema } from '../validation';
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  date: string;
-  type: 'workout' | 'plan';
-  traineeId: string;
-  traineeName: string;
-  traineeEmail: string;
-  status?: string;
-}
+import { mapPlanToCalendarEvent, mapExerciseLogToCalendarEvent } from '../mappers/responseMappers';
+import { CalendarEvent } from '../../shared/transport/types/calendar';
 
 interface GetCalendarEventsParams {
   startDate: Date;
@@ -38,40 +29,37 @@ export class CalendarQueryService {
       throw new DomainError(err.errors.join(', '));
     }
 
-    const [workouts, plannedDates] = await Promise.all([
-      this.fetchWorkouts(params),
-      this.fetchPlans(params)
+    const [plannedDates, exerciseLogs] = await Promise.all([
+      this.fetchPlans(params),
+      this.fetchExerciseLogs(params)
     ]);
 
     const events: CalendarEvent[] = [];
 
     // Map workouts to calendar events
-    workouts.forEach(workout => {
-      events.push({
-        id: workout._id,
-        title: workout.name,
-        date: workout.startTimestamp.toISOString(),
-        type: 'workout',
-        traineeId: workout.traineeId,
-        traineeName: workout.traineeName,
-        traineeEmail: workout.traineeEmail,
-        status: workout.status
-      });
-    });
+    // workouts.forEach(workout => {
+    //   events.push({
+    //     id: workout._id,
+    //     title: workout.name,
+    //     date: workout.startTimestamp.toISOString(),
+    //     type: 'workout',
+    //     traineeId: workout.traineeId,
+    //     traineeName: workout.traineeName,
+    //     traineeEmail: workout.traineeEmail,
+    //     status: workout.status
+    //   });
+    // });
 
     // Map plans to calendar events
     plannedDates.forEach(dateObj => {
       dateObj.plans.forEach(plan => {
-        events.push({
-          id: plan._id,
-          title: plan.name,
-          date: dateObj.date,
-          type: 'plan',
-          traineeId: plan.traineeId,
-          traineeName: plan.traineeName,
-          traineeEmail: plan.traineeEmail
-        });
+        events.push(mapPlanToCalendarEvent(plan, new Date(dateObj.date)));
       });
+    });
+
+    // Map exercise logs to calendar events
+    exerciseLogs.forEach(log => {
+      events.push(mapExerciseLogToCalendarEvent(log));
     });
 
     // Sort events by date
@@ -119,5 +107,20 @@ export class CalendarQueryService {
     }
 
     return response.data.payload.plannedDates;
+  }
+  
+  private async fetchExerciseLogs(params: GetCalendarEventsParams) {
+    const now = new Date();
+    const response = await this.workoutTransportClient.getExerciseLogsByDateRange({
+      startDate: params.startDate.toISOString(),
+      endDate: now.toISOString(),
+      userId: params.userId,
+    });
+    
+    if (!response.data?.payload.exerciseLogs) {
+      throw new DomainError('Failed to fetch exercise logs');
+    }
+
+    return response.data.payload.exerciseLogs;
   }
 } 
