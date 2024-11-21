@@ -26,6 +26,7 @@ describe("Complete Workout Flow", () => {
   let trainee: any;
   let exercise: any;
   let template: any;
+  let kpi: any;
 
   beforeAll(async () => {
     const { uri, closeDatabase: closeDatabaseFn } = await setupTestDatabase();

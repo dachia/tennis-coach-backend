@@ -9,6 +9,7 @@ export namespace ExerciseTransport {
     unit: string;
     performanceGoal: PerformanceGoal;
     exerciseId?: string;
+    tags?: string[];
   }
 
   export interface Exercise {

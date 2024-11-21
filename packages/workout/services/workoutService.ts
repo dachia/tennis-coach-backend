@@ -100,6 +100,7 @@ export class WorkoutService {
                 exerciseDescription: exercise.description,
                 kpiUnit: kpi.unit,
                 kpiPerformanceGoal: kpi.performanceGoal,
+                kpiTags: kpi.tags,
                 status: ExerciseLogStatus.PENDING,
               })
             )
@@ -159,6 +160,7 @@ export class WorkoutService {
       exerciseDescription: exercise.description,
       kpiUnit: kpiData?.unit,
       kpiPerformanceGoal: kpiData?.performanceGoal,
+      kpiTags: kpiData?.tags,
       status: ExerciseLogStatus.COMPLETED,
     });
 
@@ -283,6 +285,7 @@ export class WorkoutService {
       exerciseDescription: exercise.description,
       kpiUnit: kpi.unit,
       kpiPerformanceGoal: kpi.performanceGoal,
+      kpiTags: kpi.tags,
       actualValue: 0,
       duration: 0,
       status: ExerciseLogStatus.PENDING,

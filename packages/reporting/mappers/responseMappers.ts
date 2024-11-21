@@ -14,8 +14,10 @@ export const mapProgressComparison = (comparison: IProgressComparison) => ({
   comparisonDate: comparison.comparisonDate,
   logDate: comparison.logDate,
   actualValue: comparison.actualValue,
+  notes: comparison.notes,
   createdAt: comparison.createdAt,
-  updatedAt: comparison.updatedAt
+  updatedAt: comparison.updatedAt,
+  kpiTags: comparison.kpiTags
 });
 
 // Main Total Progress Mapper

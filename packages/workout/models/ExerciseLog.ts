@@ -19,7 +19,10 @@ export interface IExerciseLog extends Document {
   // Denormalized KPI data
   kpiUnit: string;
   kpiPerformanceGoal: PerformanceGoal;
+  kpiTags?: string[];
   createdAt: Date;
+  traineeName?: string;
+  traineeEmail?: string;
 }
 
 const exerciseLogSchema = new Schema({
@@ -63,6 +66,9 @@ const exerciseLogSchema = new Schema({
     enum: Object.values(PerformanceGoal),
     required: true
   },
+  kpiTags: [{ type: String }],
+  traineeName: { type: String },
+  traineeEmail: { type: String }
 }, { timestamps: true });
 
 export const ExerciseLog = mongoose.model<IExerciseLog>('ExerciseLog', exerciseLogSchema); 

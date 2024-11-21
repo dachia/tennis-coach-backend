@@ -9,15 +9,22 @@ export namespace WorkoutTransport {
     _id: string;
     workoutId: string;
     exerciseId: string;
-    kpiId?: string;
-    actualValue?: number;
-    duration?: number;
-    status: ExerciseLogStatus;
+    kpiId: string;
     traineeId: string;
-    logDate?: Date;
-    createdAt: Date;
-    kpiPerformanceGoal: PerformanceGoal;
+    logDate: Date;
+    actualValue: number;
+    status: ExerciseLogStatus;
+    notes?: string;
+    media?: string[];
+    // Denormalized data
+    exerciseTitle: string;
+    exerciseDescription: string;
     kpiUnit: string;
+    kpiPerformanceGoal: PerformanceGoal;
+    kpiTags?: string[];
+    traineeName?: string;
+    traineeEmail?: string;
+    createdAt: Date;
   }
 
   export interface Workout {
@@ -64,6 +71,7 @@ export namespace WorkoutTransport {
     kpiId?: string;
     actualValue: number;
     duration?: number;
+    kpiTags?: string[];
   }
 
   export interface CreateExerciseLogResponse extends ResponsePayload<{

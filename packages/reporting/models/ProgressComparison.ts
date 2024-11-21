@@ -9,11 +9,13 @@ export interface IProgressComparison extends Document {
   userId: mongoose.Types.ObjectId;
   kpiUnit: string;
   kpiPerformanceGoal: PerformanceGoal;
+  kpiTags?: string[];
   comparisonValue: number;
   comparisonPercent: number;
   comparisonDate: Date;
   logDate: Date;
   actualValue: number;
+  notes?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -45,7 +47,9 @@ const progressComparisonSchema = new Schema({
   comparisonPercent: { type: Number, required: true },
   comparisonDate: { type: Date, default: Date.now, required: true },
   logDate: { type: Date, required: true },
-  actualValue: { type: Number, required: true }
+  actualValue: { type: Number, required: true },
+  notes: { type: String },
+  kpiTags: [{ type: String }],
 }, { timestamps: true });
 
 export const ProgressComparison = mongoose.model<IProgressComparison>('ProgressComparison', progressComparisonSchema); 
