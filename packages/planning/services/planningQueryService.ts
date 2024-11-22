@@ -119,7 +119,7 @@ export class PlanningQueryService {
           throw new DomainError('Not authorized to view plans for this trainee');
         }
       } else {
-        query.traineeId = { $in: trainees?.map(t => t._id) };
+        query.traineeId = { $in: [trainees?.map(t => t._id), userId] };
       }
     }
 
