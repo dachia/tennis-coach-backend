@@ -79,6 +79,12 @@ export function buildRoutes(container: Container) {
     planningController.scheduleWorkout.bind(planningController)
   );
 
+  router.get(
+    '/plans/today',
+    authMiddleware,
+    requireRole([UserRole.TRAINEE, UserRole.COACH]),
+    planningController.getPlansForToday.bind(planningController)
+  );
 
   return router;
 } 

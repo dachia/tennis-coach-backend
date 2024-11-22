@@ -203,7 +203,8 @@ export class PlanningService {
       traineeId: plan.traineeId.toString(),
       startDate: scheduledDate,
       endDate: scheduledDate,
-      userId: data.userId
+      userId: data.userId,
+      userRole: data.userRole
     });
 
     // Check if plan is available on the requested date

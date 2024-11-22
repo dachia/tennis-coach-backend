@@ -87,7 +87,8 @@ export class PlanningController {
       templateId: templateId as string,
       startDate: startDate ? new Date(startDate as string) : undefined,
       endDate: endDate ? new Date(endDate as string) : undefined,
-      userId: req.user._id
+      userId: req.user._id,
+      userRole: req.user.role
     });
 
     res.json(
@@ -133,6 +134,17 @@ export class PlanningController {
 
     res.json(
       createResponse('success', 'Plans retrieved successfully', result)
+    );
+  }
+
+  async getPlansForToday(req: AuthRequest, res: Response) {
+    const result = await this.planningQueryService.getPlansForToday(
+      req.user._id,
+      req.user.role
+    );
+
+    res.json(
+      createResponse('success', 'Today\'s plans retrieved successfully', result)
     );
   }
 } 

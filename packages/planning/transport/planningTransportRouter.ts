@@ -78,7 +78,8 @@ export class PlanningTransportRouter {
         ...payload,
         startDate: payload.startDate ? new Date(payload.startDate) : undefined,
         endDate: payload.endDate ? new Date(payload.endDate) : undefined,
-        userId: payload.userId
+        userId: payload.userId,
+        userRole: payload.userRole
       });
 
       // Convert dates to ISO strings for transport

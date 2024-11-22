@@ -6,10 +6,12 @@ import { mapPlanToCalendarEvent, mapExerciseLogToCalendarEvent } from '../mapper
 import { CalendarEvent } from '../../shared/transport/types/calendar';
 import { PlanningTransport } from '../../shared/transport/types/planning';
 import { WorkoutTransport } from '../../shared/transport/types/workout';
+import { UserRole } from '../../shared';
 
 interface GetCalendarEventsParams {
   startDate: Date;
   endDate: Date;
+  userRole: UserRole;
   userId: string;
   traineeId?: string;
   exerciseId?: string;
@@ -103,6 +105,7 @@ export class CalendarQueryService {
       startDate: now.toISOString(),
       endDate: params.endDate.toISOString(),
       userId: params.userId,
+      userRole: params.userRole,
       traineeId: params.traineeId
     }
     if (params.exerciseId) {

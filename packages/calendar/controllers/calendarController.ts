@@ -15,6 +15,7 @@ export class CalendarController {
       startDate: new Date(startDate as string),
       endDate: new Date(endDate as string),
       userId: req.user._id,
+      userRole: req.user.role,
       traineeId: traineeId as string,
       exerciseId: exerciseId as string,
       templateId: templateId as string

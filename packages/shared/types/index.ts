@@ -1,3 +1,5 @@
+import { UserRole } from "../constants";
+
 export enum RecurrenceType {
   ONCE = 'once',
   WEEKLY = 'weekly'
@@ -65,4 +67,5 @@ export interface CreateScheduledPlanDTO {
   planId: string;
   scheduledDate: Date;
   userId: string; // scheduledBy
+  userRole: UserRole;
 } 

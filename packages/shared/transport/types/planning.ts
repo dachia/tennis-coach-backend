@@ -1,6 +1,7 @@
 import { BaseRequest } from './base';
 import { PlanDTO, CreatePlanDTO, UpdatePlanDTO, ScheduledPlanDTO } from '../../types';
 import { ResponsePayload } from '../../utils';
+import { UserRole } from '../../constants';
 export namespace PlanningTransport {
   // Request/Response interfaces for Plan operations
   export interface CreatePlanRequest extends BaseRequest, CreatePlanDTO {}
@@ -58,6 +59,7 @@ export namespace PlanningTransport {
     templateId?: string;
     startDate?: string; // ISO date string
     endDate?: string; // ISO date string
+    userRole: UserRole;
   }
 
   export interface GetPlannedDatesResponse extends ResponsePayload<{

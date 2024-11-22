@@ -4,6 +4,7 @@ import { AuthTransportClient } from '../../shared/transport/helpers/authTranspor
 import { DomainError } from '../../shared/errors';
 import mongoose from 'mongoose';
 import { PlanDTO, RecurrenceType, WeekDay } from '../../shared/types';
+import { UserRole } from '../../shared';
 
 interface PlannedDate {
   date: Date;
@@ -17,13 +18,14 @@ interface GetPlannedDatesParams {
   startDate?: Date;
   endDate?: Date;
   userId: string;
+  userRole: UserRole;
 }
 
 export class PlanningQueryService {
   constructor(
     private readonly planModel: typeof Plan,
     private readonly authTransportClient: AuthTransportClient
-  ) {}
+  ) { }
 
   async getPlanById(id: string, userId: string) {
     const plan = await this.planModel.findById(id);
@@ -32,8 +34,8 @@ export class PlanningQueryService {
     }
 
     // Verify authorization
-    if (userId !== plan.traineeId.toString() && 
-        userId !== plan.coachId?.toString()) {
+    if (userId !== plan.traineeId.toString() &&
+      userId !== plan.coachId?.toString()) {
       throw new DomainError('Not authorized to view this plan');
     }
 
@@ -58,10 +60,10 @@ export class PlanningQueryService {
       coachId,
       userId: coachId
     });
-    
+
     const isTraineeOfCoach = relationshipResponse.data?.payload.trainees
       .some(t => t._id === traineeId);
-    
+
     if (!isTraineeOfCoach) {
       throw new DomainError('Not authorized to view plans for this trainee');
     }
@@ -84,7 +86,6 @@ export class PlanningQueryService {
     } = params;
 
     // Build query based on provided parameters
-    const traineeId_ = traineeId || userId;
     const query: any = {
       startDate: { $lte: endDate },
       $or: [
@@ -92,35 +93,42 @@ export class PlanningQueryService {
         { endDate: null }
       ]
     };
+    
 
-    if (traineeId_) {
-      query.traineeId = new mongoose.Types.ObjectId(traineeId_);
-    }
+    if (traineeId) {
+      query.traineeId = new mongoose.Types.ObjectId(traineeId);
+    } 
     if (exerciseId) {
       query.exerciseId = new mongoose.Types.ObjectId(exerciseId);
     }
     if (templateId) {
       query.templateId = new mongoose.Types.ObjectId(templateId);
     }
-
-    // Verify authorization if traineeId is provided
-    if (traineeId && traineeId !== userId) {
+    if (params.userRole === UserRole.COACH) {
       const relationshipResponse = await this.authTransportClient.getTraineesByCoach({
         coachId: userId,
         userId
       });
-      
-      const isTraineeOfCoach = relationshipResponse.data?.payload.trainees
-        .some(t => t._id === traineeId);
-      
-      if (!isTraineeOfCoach) {
-        throw new DomainError('Not authorized to view plans for this trainee');
+      const trainees = relationshipResponse.data?.payload.trainees;
+      if (traineeId) {
+        const isTraineeOfCoach = trainees?.some(t => t._id.toString() === traineeId);
+
+        if (!isTraineeOfCoach) {
+          throw new DomainError('Not authorized to view plans for this trainee');
+        }
+      } else {
+        query.traineeId = { $in: trainees?.map(t => t._id) };
       }
+    }
+
+    // Verify authorization if traineeId is provided
+    if (traineeId && traineeId !== userId) {
+
     }
 
     const plans = await this.planModel.find(query).sort({ startDate: 1 });
     const mappedPlans = plans.map(plan => mapPlan(plan));
-    
+
     // Generate all dates between start and end date
     const dates: PlannedDate[] = [];
     const currentDate = new Date(startDate);
@@ -144,14 +152,14 @@ export class PlanningQueryService {
         const dayOfWeek = currentDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
 
         // Check if plan applies to this date
-        const isWithinDateRange = currentDate >= planStartDate && 
+        const isWithinDateRange = currentDate >= planStartDate &&
           (!planEndDate || currentDate <= planEndDate);
 
         const match = plan.weekDays?.includes(dayOfWeek as WeekDay);
         const isMatchingWeekDay = plan.recurrenceType === RecurrenceType.WEEKLY
           ? match
-          : plan.recurrenceType === RecurrenceType.ONCE && 
-            currentDate.toDateString() === planStartDate.toDateString();
+          : plan.recurrenceType === RecurrenceType.ONCE &&
+          currentDate.toDateString() === planStartDate.toDateString();
 
         if (isWithinDateRange && isMatchingWeekDay) {
           dateObj.plans.push(plan);
@@ -173,5 +181,21 @@ export class PlanningQueryService {
     }).sort({ startDate: 1 });
 
     return { plans: plans.map(plan => mapPlan(plan)) };
+  }
+
+  async getPlansForToday(userId: string, userRole: UserRole) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const plannedDates = await this.getPlannedDates({
+      userId,
+      userRole,
+      startDate: today,
+      endDate: today
+    });
+
+    return { plans: plannedDates[0]?.plans || [] };
   }
 } 

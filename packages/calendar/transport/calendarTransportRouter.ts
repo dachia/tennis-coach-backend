@@ -24,6 +24,7 @@ export class CalendarTransportRouter {
         startDate: new Date(payload.startDate),
         endDate: new Date(payload.endDate),
         userId: payload.userId,
+        userRole: payload.userRole,
         traineeId: payload.traineeId
       });
 

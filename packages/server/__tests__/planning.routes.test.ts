@@ -15,7 +15,7 @@ import { TrainingTemplate } from '../../exercise/models/TrainingTemplate';
 import { SharedResource } from '../../exercise/models/SharedResource';
 import { ResourceType } from '../../shared/constants/PerformanceGoal';
 import { CoachTrainee } from '../../auth/models/CoachTrainee';
-import { RecurrenceType } from '../../shared/types';
+import { RecurrenceType, WeekDay } from '../../shared/types';
 
 describe('Planning Routes', () => {
   let app: Express;
@@ -327,6 +327,75 @@ describe('Planning Routes', () => {
       const nonExistentId = new mongoose.Types.ObjectId();
       const response = await request(app)
         .get(`/planning/plans/exercise/${nonExistentId}`)
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.payload.plans).toHaveLength(0);
+    });
+  });
+
+  describe('GET /planning/plans/today', () => {
+    let exercise: any;
+    let plan: any;
+
+    beforeEach(async () => {
+      exercise = await Exercise.create({
+        title: 'Test Exercise',
+        description: 'Test Description',
+        media: ['https://example.com/test.mp4'],
+        createdBy: coach._id
+      });
+
+      // Create a plan for today
+      plan = await Plan.create({
+        name: 'Today\'s Plan',
+        traineeId: trainee._id,
+        coachId: coach._id,
+        exerciseId: exercise._id,
+        recurrenceType: RecurrenceType.WEEKLY,
+        weekDays: [new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase() as WeekDay],
+        startDate: new Date(new Date().setHours(0, 0, 0, 0)),
+        traineeName: trainee.name,
+        traineeEmail: trainee.email
+      });
+      
+    });
+
+    it('should get plans for today as trainee', async () => {
+      const response = await request(app)
+        .get('/planning/plans/today')
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.payload.plans).toHaveLength(1);
+      expect(response.body.data.payload.plans[0]).toMatchObject({
+        _id: plan._id.toString(),
+        traineeId: trainee._id.toString(),
+        exerciseId: exercise._id.toString()
+      });
+    });
+
+    it('should get plans for today as coach', async () => {
+      const response = await request(app)
+        .get('/planning/plans/today')
+        .set('Authorization', `Bearer ${coachToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.payload.plans).toHaveLength(1);
+      expect(response.body.data.payload.plans[0]).toMatchObject({
+        _id: plan._id.toString(),
+        traineeId: trainee._id.toString(),
+        coachId: coach._id.toString(),
+        exerciseId: exercise._id.toString()
+      });
+    });
+
+    it('should return empty array when no plans for today', async () => {
+      // Delete existing plan
+      await Plan.deleteMany({});
+      
+      const response = await request(app)
+        .get('/planning/plans/today')
         .set('Authorization', `Bearer ${traineeToken}`);
 
       expect(response.status).toBe(200);

@@ -1,5 +1,6 @@
 import { BaseRequest } from './base';
 import { ResponsePayload } from '../../utils/response.utils';
+import { UserRole } from '../../constants';
 
 export interface CalendarEvent {
   id: string;
@@ -19,6 +20,7 @@ export namespace CalendarTransport {
     startDate: string; // ISO date string
     endDate: string; // ISO date string
     userId: string;
+    userRole: UserRole;
     traineeId?: string;
   }
 
