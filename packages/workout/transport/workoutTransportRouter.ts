@@ -87,6 +87,18 @@ export class WorkoutTransportRouter {
       });
       return createResponse('success', 'Workouts fetched successfully', response);
     });
+
+    this.router.register<
+      WorkoutTransport.AddExerciseToWorkoutRequest,
+      WorkoutTransport.AddExerciseToWorkoutResponse
+    >(TransportRoutes.Workout.ADD_EXERCISE, async (payload) => {
+      const response = await this.workoutService.addExerciseToWorkout(
+        payload.workoutId,
+        payload.exerciseId,
+        payload.userId
+      );
+      return createResponse('success', 'Exercise added to workout successfully', response);
+    });
   }
 
   async listen() {

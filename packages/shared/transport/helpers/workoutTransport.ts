@@ -61,4 +61,11 @@ export class WorkoutTransportClient {
       WorkoutTransport.GetExerciseLogsByExerciseIdResponse
     >(this.transport, TransportRoutes.ExerciseLog.GET_BY_EXERCISE_ID, payload);
   }
+
+  async addExerciseToWorkout(payload: WorkoutTransport.AddExerciseToWorkoutRequest) {
+    return createTypedRequest<
+      WorkoutTransport.AddExerciseToWorkoutRequest,
+      WorkoutTransport.AddExerciseToWorkoutResponse
+    >(this.transport, TransportRoutes.Workout.ADD_EXERCISE, payload);
+  }
 } 

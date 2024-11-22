@@ -5,6 +5,7 @@ import { DomainError } from '../../shared/errors';
 import mongoose from 'mongoose';
 import { PlanDTO, RecurrenceType, WeekDay } from '../../shared/types';
 import { UserRole } from '../../shared';
+import { ScheduledPlan } from '../models/ScheduledPlan';
 
 interface PlannedDate {
   date: Date;
@@ -24,6 +25,7 @@ interface GetPlannedDatesParams {
 export class PlanningQueryService {
   constructor(
     private readonly planModel: typeof Plan,
+    private readonly scheduledPlanModel: typeof ScheduledPlan,
     private readonly authTransportClient: AuthTransportClient
   ) { }
 
@@ -81,7 +83,7 @@ export class PlanningQueryService {
       exerciseId,
       templateId,
       startDate = new Date(),
-      endDate = new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000), // Default to 30 days from start
+      endDate = new Date(startDate.getTime() + 30 * 24 * 60 * 60 * 1000),
       userId
     } = params;
 
@@ -121,13 +123,28 @@ export class PlanningQueryService {
       }
     }
 
-    // Verify authorization if traineeId is provided
-    if (traineeId && traineeId !== userId) {
-
-    }
 
     const plans = await this.planModel.find(query).sort({ startDate: 1 });
     const mappedPlans = plans.map(plan => mapPlan(plan));
+
+    // Get all scheduled plans within the date range
+    const scheduledPlans = await this.scheduledPlanModel.find({
+      planId: { $in: plans.map(p => p._id) },
+      scheduledDate: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    });
+
+    // Create a Set of scheduled plan IDs and dates for efficient lookup
+    const scheduledPlanMap = new Map<string, Set<string>>();
+    scheduledPlans.forEach(sp => {
+      const dateKey = sp.scheduledDate.toISOString().split('T')[0];
+      if (!scheduledPlanMap.has(sp.planId.toString())) {
+        scheduledPlanMap.set(sp.planId.toString(), new Set());
+      }
+      scheduledPlanMap.get(sp.planId.toString())?.add(dateKey);
+    });
 
     // Generate all dates between start and end date
     const dates: PlannedDate[] = [];
@@ -142,13 +159,21 @@ export class PlanningQueryService {
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    // Populate plans for each date
+    // Populate plans for each date, excluding scheduled plans
     mappedPlans.forEach(plan => {
       const planStartDate = new Date(plan.startDate);
       const planEndDate = plan.endDate ? new Date(plan.endDate) : null;
+      const scheduledDates = scheduledPlanMap.get(plan._id) || new Set();
 
       dates.forEach(dateObj => {
         const currentDate = dateObj.date;
+        const dateKey = currentDate.toISOString().split('T')[0];
+        
+        // Skip if plan is already scheduled for this date
+        if (scheduledDates.has(dateKey)) {
+          return;
+        }
+
         const dayOfWeek = currentDate.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
 
         // Check if plan applies to this date

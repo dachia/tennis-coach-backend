@@ -1,6 +1,6 @@
 import { Container } from '../shared/di/container';
 import { EventService } from '../shared/events/eventService';
-import { Transport } from '../shared/transport';
+import { Transport, WorkoutTransportClient } from '../shared/transport';
 import { AuthTransportClient } from '../shared/transport/helpers/authTransport';
 import { ExerciseTransportClient } from '../shared/transport/helpers/exerciseTransport';
 import { PlanningController } from './controllers/planningController';
@@ -17,9 +17,10 @@ export function addToContainer(container: Container) {
   const authTransportClient = new AuthTransportClient(transport);
   const planningQueryService = new PlanningQueryService(
     Plan,
+    ScheduledPlan,
     authTransportClient
   );
-
+  const workoutTransportClient = new WorkoutTransportClient(transport);
 
   const planningService = new PlanningService(
     Plan,
@@ -27,7 +28,8 @@ export function addToContainer(container: Container) {
     planningQueryService,
     eventService,
     exerciseTransportClient,
-    authTransportClient
+    authTransportClient,
+    workoutTransportClient
   );
 
   const planningController = new PlanningController(

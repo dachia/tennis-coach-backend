@@ -38,7 +38,8 @@ export const TransportRoutes = {
     UPDATE: 'workout.update',
     GET: 'workout.get',
     GET_ALL: 'workouts.get',
-    GET_BY_DATE_RANGE: 'workouts.getByDateRange'
+    GET_BY_DATE_RANGE: 'workouts.getByDateRange',
+    ADD_EXERCISE: 'workout.addExercise'
   },
   ExerciseLog: {
     CREATE: 'exerciseLog.create',

@@ -147,4 +147,15 @@ export class PlanningController {
       createResponse('success', 'Today\'s plans retrieved successfully', result)
     );
   }
+
+  async createWorkoutsForUnscheduledPlans(req: AuthRequest, res: Response) {
+    const result = await this.planningService.createWorkoutsForUnscheduledPlans({
+      ...req.body,
+      userId: req.user._id
+    });
+
+    res.json(
+      createResponse('success', 'Workouts created successfully', result)
+    );
+  }
 } 

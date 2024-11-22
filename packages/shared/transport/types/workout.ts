@@ -127,4 +127,13 @@ export namespace WorkoutTransport {
   export interface GetExerciseLogsByExerciseIdResponse extends ResponsePayload<{
     exerciseLogs: ExerciseLog[];
   }> {}
+
+  export interface AddExerciseToWorkoutRequest extends BaseRequest {
+    workoutId: string;
+    exerciseId: string;
+  }
+
+  export interface AddExerciseToWorkoutResponse extends ResponsePayload<{
+    exerciseLogs: ExerciseLog[];
+  }> {}
 } 

@@ -16,6 +16,8 @@ import { SharedResource } from '../../exercise/models/SharedResource';
 import { ResourceType } from '../../shared/constants/PerformanceGoal';
 import { CoachTrainee } from '../../auth/models/CoachTrainee';
 import { RecurrenceType, WeekDay } from '../../shared/types';
+import { Workout } from '../../workout/models/Workout';
+import { ExerciseLog } from '../../workout/models/ExerciseLog';
 
 describe('Planning Routes', () => {
   let app: Express;
@@ -400,6 +402,169 @@ describe('Planning Routes', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.data.payload.plans).toHaveLength(0);
+    });
+  });
+
+  describe('POST /planning/plans/unscheduled', () => {
+    let exercises: any[];
+    let templates: any[];
+    let plans: any[];
+
+    beforeEach(async () => {
+      // Create multiple exercises
+      exercises = await Promise.all([
+        Exercise.create({
+          title: 'Exercise 1',
+          description: 'Description 1',
+          media: ['https://example.com/test1.mp4'],
+          createdBy: coach._id
+        }),
+        Exercise.create({
+          title: 'Exercise 2',
+          description: 'Description 2',
+          media: ['https://example.com/test2.mp4'],
+          createdBy: coach._id
+        })
+      ]);
+
+      // Create multiple templates
+      templates = await Promise.all([
+        TrainingTemplate.create({
+          title: 'Template 1',
+          description: 'Description 1',
+          exerciseIds: [exercises[0]._id],
+          createdBy: coach._id
+        }),
+        TrainingTemplate.create({
+          title: 'Template 2',
+          description: 'Description 2',
+          exerciseIds: [exercises[1]._id],
+          createdBy: coach._id
+        })
+      ]);
+
+      // Share resources with trainee
+      await Promise.all([
+        ...exercises.map(exercise => 
+          SharedResource.create({
+            resourceId: exercise._id,
+            resourceType: ResourceType.EXERCISE,
+            sharedById: coach._id,
+            sharedWithId: trainee._id
+          })
+        ),
+        ...templates.map(template => 
+          SharedResource.create({
+            resourceId: template._id,
+            resourceType: ResourceType.TEMPLATE,
+            sharedById: coach._id,
+            sharedWithId: trainee._id
+          })
+        )
+      ]);
+
+      // Create plans for today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const weekDay = today.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase() as WeekDay;
+
+      plans = await Promise.all([
+        // Exercise plans
+        Plan.create({
+          name: 'Exercise Plan 1',
+          traineeId: trainee._id,
+          exerciseId: exercises[0]._id,
+          recurrenceType: RecurrenceType.WEEKLY,
+          weekDays: [weekDay],
+          startDate: today,
+          traineeName: trainee.name,
+          traineeEmail: trainee.email
+        }),
+        Plan.create({
+          name: 'Exercise Plan 2',
+          traineeId: trainee._id,
+          exerciseId: exercises[1]._id,
+          recurrenceType: RecurrenceType.WEEKLY,
+          weekDays: [weekDay],
+          startDate: today,
+          traineeName: trainee.name,
+          traineeEmail: trainee.email
+        }),
+        // Template plans
+        Plan.create({
+          name: 'Template Plan 1',
+          traineeId: trainee._id,
+          templateId: templates[0]._id,
+          recurrenceType: RecurrenceType.WEEKLY,
+          weekDays: [weekDay],
+          startDate: today,
+          traineeName: trainee.name,
+          traineeEmail: trainee.email
+        }),
+        Plan.create({
+          name: 'Template Plan 2',
+          traineeId: trainee._id,
+          templateId: templates[1]._id,
+          recurrenceType: RecurrenceType.WEEKLY,
+          weekDays: [weekDay],
+          startDate: today,
+          traineeName: trainee.name,
+          traineeEmail: trainee.email
+        })
+      ]);
+    });
+
+    it('should create workouts and scheduled plan entries for all unscheduled plans', async () => {
+      const response = await request(app)
+        .post('/planning/plans/unscheduled')
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.payload).toMatchObject({
+        exercisePlansCreated: 2,
+        templatePlansCreated: 2,
+        exerciseWorkoutId: expect.any(String),
+        templateWorkoutIds: expect.any(Array)
+      });
+
+      // Verify workouts were created
+      const workouts = await Workout.find({ traineeId: trainee._id });
+      expect(workouts).toHaveLength(3); // 1 workout with 2 exercises + 2 template workouts
+
+      // Verify scheduled plan entries were created
+      const scheduledPlans = await ScheduledPlan.find({
+        scheduledBy: trainee._id,
+        scheduledDate: {
+          $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          $lt: new Date(new Date().setHours(23, 59, 59, 999))
+        }
+      });
+      expect(scheduledPlans).toHaveLength(4); // All plans should be scheduled
+
+      // Verify each plan was scheduled
+      const scheduledPlanIds = scheduledPlans.map(sp => sp.planId.toString());
+      plans.forEach(plan => {
+        expect(scheduledPlanIds).toContain(plan._id.toString());
+      });
+    });
+
+    it('should not create workouts for already scheduled plans', async () => {
+      // First, schedule one of the plans
+      await ScheduledPlan.create({
+        planId: plans[0]._id,
+        scheduledDate: new Date(new Date().setHours(0, 0, 0, 0)),
+        scheduledBy: trainee._id
+      });
+
+      const response = await request(app)
+        .post('/planning/plans/unscheduled')
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.payload).toMatchObject({
+        exercisePlansCreated: 1, // Only one exercise plan should be created
+        templatePlansCreated: 2  // Both template plans should be created
+      });
     });
   });
 }); 

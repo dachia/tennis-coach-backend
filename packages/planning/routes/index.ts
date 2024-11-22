@@ -85,6 +85,13 @@ export function buildRoutes(container: Container) {
     requireRole([UserRole.TRAINEE, UserRole.COACH]),
     planningController.getPlansForToday.bind(planningController)
   );
+  
+  router.post(
+    '/plans/unscheduled',
+    authMiddleware,
+    requireRole([UserRole.TRAINEE, UserRole.COACH]),
+    planningController.createWorkoutsForUnscheduledPlans.bind(planningController)
+  );
 
   return router;
 } 

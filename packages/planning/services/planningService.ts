@@ -11,6 +11,8 @@ import { ScheduledPlan } from '../models/ScheduledPlan';
 import { CreateScheduledPlanDTO } from '../../shared/types';
 import { createScheduledPlanSchema } from '../validation';
 import { PlanningQueryService } from '../services/planningQueryService';
+import { WorkoutTransportClient } from '../../shared/transport/helpers/workoutTransport';
+import { UserRole } from '../../shared';
 
 export class PlanningService {
   constructor(
@@ -19,8 +21,9 @@ export class PlanningService {
     private readonly planningQueryService: PlanningQueryService,
     private readonly eventService: EventService,
     private readonly exerciseTransportClient: ExerciseTransportClient,
-    private readonly authTransportClient: AuthTransportClient
-  ) {}
+    private readonly authTransportClient: AuthTransportClient,
+    private readonly workoutTransportClient: WorkoutTransportClient
+  ) { }
 
   async createPlan(data: CreatePlanDTO) {
     let validatedData;
@@ -39,7 +42,7 @@ export class PlanningService {
       ids: [traineeId],
       userId: data.userId
     });
-    
+
     const trainee = userResponse.data?.payload.users[0];
     if (!trainee) {
       throw new DomainError('Trainee not found');
@@ -51,10 +54,10 @@ export class PlanningService {
         coachId: data.userId,
         userId: data.userId
       });
-      
+
       const isTraineeOfCoach = relationshipResponse.data?.payload.trainees
         .some(t => t._id === traineeId);
-      
+
       if (!isTraineeOfCoach) {
         throw new DomainError('Not authorized to create plan for this trainee');
       }
@@ -68,7 +71,7 @@ export class PlanningService {
         id: validatedData.templateId,
         userId: data.userId
       });
-      
+
       if (!templateResponse.data?.payload.template) {
         throw new DomainError('Template not found or not accessible');
       }
@@ -80,7 +83,7 @@ export class PlanningService {
         ids: [validatedData.exerciseId],
         userId: data.userId
       });
-      
+
       if (!exercisesResponse.data?.payload.exercises) {
         throw new DomainError('Exercise not found or not accessible');
       }
@@ -89,7 +92,7 @@ export class PlanningService {
 
     const plan = await this.planModel.create({
       ...validatedData,
-      name, 
+      name,
       coachId: data.userId !== traineeId ? data.userId : undefined,
       traineeId,
       traineeName: trainee.name,
@@ -125,8 +128,8 @@ export class PlanningService {
     }
 
     // Verify authorization
-    if (data.userId.toString() !== plan.traineeId.toString() && 
-        data.userId.toString() !== plan.coachId?.toString()) {
+    if (data.userId.toString() !== plan.traineeId.toString() &&
+      data.userId.toString() !== plan.coachId?.toString()) {
       throw new DomainError('Not authorized to update this plan', 403);
     }
 
@@ -153,8 +156,8 @@ export class PlanningService {
     }
 
     // Verify authorization
-    if (userId.toString() !== plan.traineeId.toString() && 
-        userId.toString() !== plan.coachId?.toString()) {
+    if (userId.toString() !== plan.traineeId.toString() &&
+      userId.toString() !== plan.coachId?.toString()) {
       throw new DomainError('Not authorized to delete this plan');
     }
 
@@ -190,8 +193,8 @@ export class PlanningService {
     }
 
     // Check authorization
-    if (data.userId !== plan.traineeId.toString() && 
-        data.userId !== plan.coachId?.toString()) {
+    if (data.userId !== plan.traineeId.toString() &&
+      data.userId !== plan.coachId?.toString()) {
       throw new DomainError('Not authorized to schedule this plan');
     }
 
@@ -208,7 +211,7 @@ export class PlanningService {
     });
 
     // Check if plan is available on the requested date
-    const isValidDate = plannedDates.some(dateObj => 
+    const isValidDate = plannedDates.some(dateObj =>
       dateObj.plans.some(p => p._id === data.planId)
     );
 
@@ -235,5 +238,109 @@ export class PlanningService {
     });
 
     return { scheduledPlan: mapScheduledPlan(scheduledPlan) };
+  }
+
+  async createWorkoutsForUnscheduledPlans(params: { traineeId?: string, userId: string, userRole: UserRole }) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Get all scheduled plans for today
+    const scheduledPlanIds = await this.scheduledPlanModel
+      .find({ scheduledDate: today })
+      .distinct('planId');
+
+    // Get all plans that should run today and aren't scheduled
+    const plannedDates = await this.planningQueryService.getPlannedDates({
+      traineeId: params.traineeId,
+      startDate: today,
+      endDate: today,
+      userId: params.userId,
+      userRole: params.userRole
+    });
+
+    const unscheduledPlans = plannedDates[0]?.plans.filter(plan =>
+      !scheduledPlanIds.map(id => id.toString()).includes(plan._id.toString())
+    ) || [];
+
+    // Process exercise plans and template plans separately
+    const exercisePlans = unscheduledPlans.filter(plan => plan.exerciseId);
+    const templatePlans = unscheduledPlans.filter(plan => plan.templateId);
+    let exerciseWorkoutId: string | null = null;
+
+    // Create workouts for individual exercises
+    if (exercisePlans.length > 0) {
+      const workoutResponse = await this.workoutTransportClient.createWorkout({
+        userId: params.userId,
+        name: `Exercise Plan ${today.toDateString()}`,
+        workoutDate: today,
+        startTimestamp: new Date()
+      });
+      const workout = workoutResponse.data?.payload.workout;
+      if (!workout) {
+        throw new DomainError('Failed to create workout');
+      }
+      exerciseWorkoutId = workout._id.toString();
+      await Promise.all([
+        // Add exercises to workout
+        ...exercisePlans.map(plan => this.workoutTransportClient.addExerciseToWorkout({
+          userId: params.userId,
+          workoutId: exerciseWorkoutId!,
+          exerciseId: plan.exerciseId!,
+        })),
+        // Create scheduled plan entries
+        ...exercisePlans.map(plan => this.scheduledPlanModel.create({
+          planId: plan._id,
+          scheduledDate: today,
+          scheduledBy: params.userId
+        }))
+      ]);
+    }
+
+    // Create workouts for templates
+    let templateWorkoutIds: string[] = [];
+    if (templatePlans.length > 0) {
+      await Promise.all(templatePlans.map(async plan => {
+        // Create workout
+        const workoutResponse = await this.workoutTransportClient.createWorkout({
+          name: plan.name,
+          userId: params.userId,
+          templateId: plan.templateId!,
+          workoutDate: today,
+          startTimestamp: new Date()
+        });
+        const workout = workoutResponse.data?.payload.workout;
+        if (!workout) {
+          throw new DomainError('Failed to create workout');
+        }
+        templateWorkoutIds.push(workout._id.toString());
+
+        // Create scheduled plan entry
+        await this.scheduledPlanModel.create({
+          planId: plan._id,
+          scheduledDate: today,
+          scheduledBy: params.userId
+        });
+      }));
+    }
+
+    // Publish events for all scheduled plans
+    await Promise.all(unscheduledPlans.map(plan => 
+      this.eventService.publishDomainEvent({
+        eventName: 'plan.scheduled',
+        payload: {
+          planId: plan._id.toString(),
+          traineeId: plan.traineeId.toString(),
+          coachId: plan.coachId?.toString(),
+          scheduledDate: today.toISOString()
+        }
+      })
+    ));
+
+    return {
+      exercisePlansCreated: exercisePlans.length,
+      templatePlansCreated: templatePlans.length,
+      exerciseWorkoutId,
+      templateWorkoutIds
+    };
   }
 } 
