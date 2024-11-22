@@ -68,7 +68,9 @@ export class WorkoutTransportRouter {
         startDate: new Date(payload.startDate),
         endDate: new Date(payload.endDate),
         userId: payload.userId,
-        kpiId: payload.kpiId
+        kpiId: payload.kpiId,
+        exerciseId: payload.exerciseId,
+        templateId: payload.templateId
       });
       return createResponse('success', 'Exercise logs fetched successfully', response);
     });

@@ -9,13 +9,15 @@ export class CalendarController {
   ) {}
 
   async getCalendarEvents(req: AuthRequest, res: Response) {
-    const { startDate, endDate, traineeId } = req.query;
+    const { startDate, endDate, traineeId, exerciseId, templateId } = req.query;
 
     const result = await this.calendarQueryService.getCalendarEvents({
       startDate: new Date(startDate as string),
       endDate: new Date(endDate as string),
       userId: req.user._id,
-      traineeId: traineeId as string
+      traineeId: traineeId as string,
+      exerciseId: exerciseId as string,
+      templateId: templateId as string
     });
 
     res.json(

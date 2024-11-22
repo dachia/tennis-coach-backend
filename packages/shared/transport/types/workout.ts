@@ -100,6 +100,8 @@ export namespace WorkoutTransport {
   export interface GetExerciseLogsByDateRangeRequest extends BaseRequest {
     startDate: string;
     endDate: string;
+    exerciseId?: string;
+    templateId?: string;
     kpiId?: string;
   }
 

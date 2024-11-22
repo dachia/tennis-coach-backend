@@ -4,12 +4,16 @@ import { DomainError } from '../../shared/errors';
 import { getCalendarEventsSchema } from '../validation';
 import { mapPlanToCalendarEvent, mapExerciseLogToCalendarEvent } from '../mappers/responseMappers';
 import { CalendarEvent } from '../../shared/transport/types/calendar';
+import { PlanningTransport } from '../../shared/transport/types/planning';
+import { WorkoutTransport } from '../../shared/transport/types/workout';
 
 interface GetCalendarEventsParams {
   startDate: Date;
   endDate: Date;
   userId: string;
   traineeId?: string;
+  exerciseId?: string;
+  templateId?: string;
 }
 
 export class CalendarQueryService {
@@ -95,12 +99,19 @@ export class CalendarQueryService {
 
   private async fetchPlans(params: GetCalendarEventsParams) {
     const now = new Date();
-    const response = await this.planningTransportClient.getPlannedDates({
+    const query: PlanningTransport.GetPlannedDatesRequest = {
       startDate: now.toISOString(),
       endDate: params.endDate.toISOString(),
       userId: params.userId,
       traineeId: params.traineeId
-    });
+    }
+    if (params.exerciseId) {
+      query.exerciseId = params.exerciseId;
+    }
+    if (params.templateId) {
+      query.templateId = params.templateId;
+    }
+    const response = await this.planningTransportClient.getPlannedDates(query);
 
     if (!response.data?.payload.plannedDates) {
       throw new DomainError('Failed to fetch planned dates');
@@ -111,11 +122,15 @@ export class CalendarQueryService {
   
   private async fetchExerciseLogs(params: GetCalendarEventsParams) {
     const now = new Date();
-    const response = await this.workoutTransportClient.getExerciseLogsByDateRange({
+    const query: WorkoutTransport.GetExerciseLogsByDateRangeRequest = {
       startDate: params.startDate.toISOString(),
       endDate: now.toISOString(),
       userId: params.userId,
-    });
+    }
+    if (params.exerciseId) {
+      query.exerciseId = params.exerciseId;
+    }
+    const response = await this.workoutTransportClient.getExerciseLogsByDateRange(query);
     
     if (!response.data?.payload.exerciseLogs) {
       throw new DomainError('Failed to fetch exercise logs');

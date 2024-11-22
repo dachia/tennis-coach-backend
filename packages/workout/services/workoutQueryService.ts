@@ -34,9 +34,13 @@ export class WorkoutQueryService {
     endDate: Date;
     userId: string;
     kpiId?: string;
+    exerciseId?: string;
+    templateId?: string;
   }) {
     const exerciseLogDateRangeSchema = dateRangeSchema.shape({
-      kpiId: yup.string().optional()
+      kpiId: yup.string().optional(),
+      exerciseId: yup.string().optional(),
+      templateId: yup.string().optional()
     });
 
     let validatedData;
@@ -49,7 +53,7 @@ export class WorkoutQueryService {
       throw new DomainError(err.message);
     }
 
-    const { startDate, endDate, userId, kpiId } = validatedData;
+    const { startDate, endDate, userId, kpiId, exerciseId, templateId } = validatedData;
     const query: FilterQuery<IExerciseLog> = {
       traineeId: userId,
       logDate: {
@@ -59,6 +63,12 @@ export class WorkoutQueryService {
     };
     if (kpiId) {
       query.kpiId = kpiId;
+    }
+    if (exerciseId) {
+      query.exerciseId = exerciseId;
+    }
+    if (templateId) {
+      query.templateId = templateId;
     }
 
     const exerciseLogs = await this.exerciseLogModel.find(query).sort({ logDate: 1, createdAt: 1 });

@@ -11,5 +11,9 @@ export const getCalendarEventsSchema = yup.object({
   userId: yup.string()
     .required('User ID is required'),
   traineeId: yup.string()
+    .optional(),
+  exerciseId: yup.string()
+    .optional(),
+  templateId: yup.string()
     .optional()
 }); 
