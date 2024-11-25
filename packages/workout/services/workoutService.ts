@@ -319,4 +319,49 @@ export class WorkoutService {
 
     return { success: true };
   }
+
+  async deleteWorkout(id: string, userId: string) {
+    const workout = await this.workoutModel.findOne({
+      _id: id,
+      traineeId: userId
+    });
+
+    if (!workout) {
+      throw new DomainError('Workout not found or unauthorized', 404);
+    }
+
+    // Delete all exercise logs for this workout
+    const exerciseLogs = await this.exerciseLogModel.find({
+      workoutId: workout._id
+    });
+
+    
+    // Delete exercise logs and publish events
+    await Promise.all(exerciseLogs.map(async (log) => {
+      await this.exerciseLogModel.findByIdAndDelete(log._id);
+      await this.eventService.publishDomainEvent<WorkoutEvents.ExerciseLogDeleted>({
+        eventName: EventRoutes.ExerciseLog.DELETED,
+        payload: {
+          exerciseLogId: log._id.toString(),
+          workoutId: log.workoutId.toString(),
+          exerciseId: log.exerciseId.toString(),
+          kpiId: log.kpiId.toString(),
+          userId: log.traineeId.toString()
+        }
+      });
+    }));
+
+    // Delete the workout
+    await this.workoutModel.findByIdAndDelete(workout._id);
+
+    await this.eventService.publishDomainEvent<WorkoutEvents.WorkoutDeleted>({
+      eventName: EventRoutes.Workout.DELETED,
+      payload: {
+        workoutId: workout._id.toString(),
+        userId: workout.traineeId.toString()
+      }
+    });
+
+    return { success: true };
+  }
 } 

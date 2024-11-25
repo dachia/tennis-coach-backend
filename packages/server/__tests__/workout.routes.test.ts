@@ -908,4 +908,87 @@ describe('Workout Routes', () => {
       expect(response.body.error.message).toBe('Exercise log not found or unauthorized');
     });
   });
+
+  describe('DELETE /workout/workout/:id', () => {
+    let workout: any;
+    let exerciseLog: any;
+
+    beforeEach(async () => {
+      workout = await Workout.create({
+        traineeId: trainee._id,
+        name: "Test Workout",
+        workoutDate: new Date(),
+        startTimestamp: new Date(),
+        status: WorkoutStatus.IN_PROGRESS,
+        traineeName: trainee.name,
+        traineeEmail: trainee.email
+      });
+
+      exerciseLog = await ExerciseLog.create({
+        workoutId: workout._id,
+        exerciseId: new mongoose.Types.ObjectId(),
+        kpiId: new mongoose.Types.ObjectId(),
+        traineeId: trainee._id,
+        logDate: new Date(),
+        actualValue: 10,
+        duration: 300,
+        status: ExerciseLogStatus.COMPLETED,
+        kpiPerformanceGoal: PerformanceGoal.MAXIMIZE,
+        kpiUnit: 'Test Unit',
+        exerciseTitle: 'Test Exercise',
+        exerciseDescription: 'Test Description'
+      });
+    });
+
+    it('should delete a workout and its exercise logs successfully', async () => {
+      const response = await request(app)
+        .delete(`/workout/workout/${workout._id}`)
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: 'Workout deleted successfully',
+          payload: {
+            success: true
+          }
+        }
+      });
+
+      // Verify workout was deleted
+      const deletedWorkout = await Workout.findById(workout._id);
+      expect(deletedWorkout).toBeNull();
+
+      // Verify exercise logs were deleted
+      const deletedLog = await ExerciseLog.findById(exerciseLog._id);
+      expect(deletedLog).toBeNull();
+
+      // Wait for events to propagate
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Verify progress comparison was deleted
+      const deletedComparisonResponse = await request(app)
+        .get(`/reporting/progress-comparison`)
+        .query({
+          logId: exerciseLog._id,
+          kpiId: exerciseLog.kpiId,
+          userId: trainee._id
+        })
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(deletedComparisonResponse.status).toBe(200);
+      expect(deletedComparisonResponse.body.data.payload).toBeNull();
+    });
+
+    it('should return 404 when deleting non-existent workout', async () => {
+      const nonExistentId = new mongoose.Types.ObjectId();
+      const response = await request(app)
+        .delete(`/workout/workout/${nonExistentId}`)
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.error.message).toBe('Workout not found or unauthorized');
+    });
+  });
 });

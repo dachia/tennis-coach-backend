@@ -107,5 +107,12 @@ export function buildRoutes(container: Container) {
     workoutController.deleteExerciseLog.bind(workoutController)
   );
 
+  router.delete(
+    '/workout/:id',
+    authMiddleware,
+    requireRole([UserRole.TRAINEE, UserRole.COACH]),
+    workoutController.deleteWorkout.bind(workoutController)
+  );
+
   return router;
 } 

@@ -166,4 +166,15 @@ export class WorkoutController {
       createResponse('success', 'Exercise log deleted successfully', { success: true })
     );
   }
+
+  async deleteWorkout(req: AuthRequest, res: Response) {
+    const result = await this.workoutService.deleteWorkout(
+      req.params.id,
+      req.user._id
+    );
+
+    res.json(
+      createResponse('success', 'Workout deleted successfully', result)
+    );
+  }
 } 

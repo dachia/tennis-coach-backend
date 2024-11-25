@@ -37,10 +37,16 @@ export namespace WorkoutEvents {
     userId: string;
   }> { }
 
+  export interface WorkoutDeleted extends DomainEvent<"workout.deleted", {
+    workoutId: string;
+    userId: string;
+  }> { }
+
   export type WorkoutDomainEvents =
     | WorkoutCreated
     | WorkoutUpdated
     | ExerciseLogCreated
     | ExerciseLogUpdated
-    | ExerciseLogDeleted;
+    | ExerciseLogDeleted
+    | WorkoutDeleted;
 } 
