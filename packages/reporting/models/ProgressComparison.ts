@@ -16,6 +16,7 @@ export interface IProgressComparison extends Document {
   logDate: Date;
   actualValue: number;
   notes?: string;
+  comparedToLogs: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -50,6 +51,11 @@ const progressComparisonSchema = new Schema({
   actualValue: { type: Number, required: true },
   notes: { type: String },
   kpiTags: [{ type: String }],
+  comparedToLogs: [{ 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ExerciseLog',
+    required: true 
+  }],
 }, { timestamps: true });
 
 export const ProgressComparison = mongoose.model<IProgressComparison>('ProgressComparison', progressComparisonSchema); 

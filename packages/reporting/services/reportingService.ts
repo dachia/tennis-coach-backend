@@ -9,6 +9,7 @@ import {
 } from '../types';
 // import { PerformanceGoal } from '../../shared/constants/PerformanceGoal';
 import { mapProgressComparison } from '../mappers/responseMappers';
+import mongoose from 'mongoose';
 
 export class ReportingService {
   constructor(
@@ -60,6 +61,7 @@ export class ReportingService {
       comparisonValue: difference,
       comparisonPercent: changePercent,
       comparisonDate: new Date(),
+      comparedToLogs: previousLog ? [new mongoose.Types.ObjectId(previousLog._id)] : []
     }
 
     if (existingComparison) {
@@ -70,6 +72,7 @@ export class ReportingService {
       existingComparison.actualValue = currentLog.actualValue!;
       existingComparison.notes = currentLog.notes;
       existingComparison.kpiTags = currentLog.kpiTags;
+      existingComparison.comparedToLogs = comparisonData.comparedToLogs
       comparison = await existingComparison.save();
     } else {
       comparison = await new this.progressComparisonModel({
@@ -110,11 +113,40 @@ export class ReportingService {
     kpiId: string;
     userId: string;
   }) {
-    await this.progressComparisonModel.deleteMany({
-      logId: params.logId,
-      kpiId: params.kpiId,
-      userId: params.userId
+    // Find all progress comparisons that reference this log
+    const affectedComparisons = await this.progressComparisonModel.find({
+      $or: [
+        { // Direct comparisons for this log
+          logId: params.logId,
+          kpiId: params.kpiId,
+          userId: params.userId
+        },
+        { // Comparisons that use this log as a reference
+          comparedToLogs: new mongoose.Types.ObjectId(params.logId),
+          kpiId: params.kpiId,
+          userId: params.userId
+        }
+      ]
     });
+
+    // Delete all affected comparisons
+    await this.progressComparisonModel.deleteMany({
+      _id: { $in: affectedComparisons.map(c => c._id) }
+    });
+
+    // Recalculate comparisons for logs that referenced the deleted log
+    const logsToRecalculate = affectedComparisons
+      .filter(c => c.logId.toString() !== params.logId) // Exclude the deleted log
+      .map(c => c.logId.toString());
+
+    // Trigger recalculation for each affected log
+    await Promise.all(logsToRecalculate.map(logId => 
+      this.calculateProgressComparison({
+        logId,
+        kpiId: params.kpiId,
+        userId: params.userId
+      })
+    ));
 
     return true;
   }
