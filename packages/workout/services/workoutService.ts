@@ -295,4 +295,28 @@ export class WorkoutService {
 
     return { exerciseLogs: exerciseLogs.map(mapExerciseLog) };
   }
+
+  async deleteExerciseLog(id: string, userId: string) {
+    const exerciseLog = await this.exerciseLogModel.findOneAndDelete({
+      _id: id,
+      traineeId: userId
+    });
+
+    if (!exerciseLog) {
+      throw new DomainError('Exercise log not found or unauthorized', 404);
+    }
+
+    await this.eventService.publishDomainEvent<WorkoutEvents.ExerciseLogDeleted>({
+      eventName: EventRoutes.ExerciseLog.DELETED,
+      payload: {
+        exerciseLogId: exerciseLog._id.toString(),
+        workoutId: exerciseLog.workoutId.toString(),
+        exerciseId: exerciseLog.exerciseId.toString(),
+        kpiId: exerciseLog.kpiId.toString(),
+        userId: exerciseLog.traineeId.toString()
+      }
+    });
+
+    return { success: true };
+  }
 } 

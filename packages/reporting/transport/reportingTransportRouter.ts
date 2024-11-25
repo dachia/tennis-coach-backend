@@ -49,6 +49,17 @@ export class ReportingTransportRouter {
         return this.reportingService.calculateTotalProgress(payload);
       }
     );
+
+    this.router.register<WorkoutEvents.ExerciseLogDeleted['payload'], void>(
+      EventRoutes.ExerciseLog.DELETED,
+      async (payload) => {
+        await this.reportingService.deleteProgressData({
+          logId: payload.exerciseLogId,
+          kpiId: payload.kpiId,
+          userId: payload.userId
+        });
+      }
+    );
   }
 
   async listen() {

@@ -220,6 +220,38 @@ describe("Complete Reporting Flow", () => {
       comparisonDate: expect.any(String)
     });
 
+    // Delete the second exercise log
+    const deleteResponse = await request(app)
+      .delete(`/workout/log/${secondLogId}`)
+      .set('Authorization', `Bearer ${traineeToken}`);
+
+    expect(deleteResponse.status).toBe(200);
+    expect(deleteResponse.body).toMatchObject({
+      status: 'success',
+      data: {
+        message: 'Exercise log deleted successfully',
+        payload: {
+          success: true
+        }
+      }
+    });
+
+    // Wait for events to propagate
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Verify progress comparison was deleted
+    const deletedComparisonResponse = await request(app)
+      .get(`/reporting/progress-comparison`)
+      .query({
+        logId: secondLogId,
+        kpiId: kpiId,
+        userId: trainee._id
+      })
+      .set('Authorization', `Bearer ${traineeToken}`);
+
+    expect(deletedComparisonResponse.status).toBe(200);
+    expect(deletedComparisonResponse.body.data.payload).toBeNull();
+
     // 6. Check total progress
     // const totalProgressResponse = await request(app)
     //   .get(`/reporting/total-progress`)

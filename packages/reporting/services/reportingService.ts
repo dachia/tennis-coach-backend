@@ -104,4 +104,18 @@ export class ReportingService {
 
     throw new Error('Method not implemented');
   }
+
+  async deleteProgressData(params: {
+    logId: string;
+    kpiId: string;
+    userId: string;
+  }) {
+    await this.progressComparisonModel.deleteMany({
+      logId: params.logId,
+      kpiId: params.kpiId,
+      userId: params.userId
+    });
+
+    return true;
+  }
 } 

@@ -823,4 +823,89 @@ describe('Workout Routes', () => {
       });
     });
   });
+
+  describe('DELETE /workout/log/:id', () => {
+    let workout: any;
+    let exerciseLog: any;
+
+    beforeEach(async () => {
+      workout = await Workout.create({
+        traineeId: trainee._id,
+        name: "Workout",
+        workoutDate: new Date(),
+        startTimestamp: new Date(),
+        status: WorkoutStatus.IN_PROGRESS,
+        traineeName: trainee.name,
+        traineeEmail: trainee.email
+      });
+
+      exerciseLog = await ExerciseLog.create({
+        workoutId: workout._id,
+        exerciseId: new mongoose.Types.ObjectId(),
+        kpiId: new mongoose.Types.ObjectId(),
+        traineeId: trainee._id,
+        logDate: new Date(),
+        actualValue: 10,
+        duration: 300,
+        status: ExerciseLogStatus.COMPLETED,
+        kpiPerformanceGoal: PerformanceGoal.MAXIMIZE,
+        kpiUnit: 'Test Unit',
+        exerciseTitle: 'Test Exercise',
+        exerciseDescription: 'Test Description'
+      });
+    });
+
+    it('should delete an exercise log successfully', async () => {
+      const response = await request(app)
+        .delete(`/workout/log/${exerciseLog._id}`)
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        status: 'success',
+        data: {
+          message: 'Exercise log deleted successfully',
+          payload: {
+            success: true
+          }
+        },
+        error: null,
+        version: expect.any(Number)
+      });
+
+      // Verify exercise log was deleted
+      const deletedLog = await ExerciseLog.findById(exerciseLog._id);
+      expect(deletedLog).toBeNull();
+    });
+
+    it('should return 404 when deleting non-existent exercise log', async () => {
+      const nonExistentId = new mongoose.Types.ObjectId();
+      const response = await request(app)
+        .delete(`/workout/log/${nonExistentId}`)
+        .set('Authorization', `Bearer ${traineeToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.error.message).toBe('Exercise log not found or unauthorized');
+    });
+
+    it('should return 404 when unauthorized user tries to delete', async () => {
+      const unauthorizedTrainee = await User.create({
+        email: 'unauthorized@example.com',
+        password: 'password123',
+        name: 'Unauthorized Trainee',
+        role: UserRole.TRAINEE
+      });
+      const unauthorizedToken = jwt.sign(
+        { sub: unauthorizedTrainee._id, role: unauthorizedTrainee.role },
+        testConfig.jwtSecret
+      );
+
+      const response = await request(app)
+        .delete(`/workout/log/${exerciseLog._id}`)
+        .set('Authorization', `Bearer ${unauthorizedToken}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body.error.message).toBe('Exercise log not found or unauthorized');
+    });
+  });
 });

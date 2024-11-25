@@ -6,6 +6,7 @@ export const EventRoutes = {
   },
   ExerciseLog: {
     CREATED: 'exerciseLog.created',
-    UPDATED: 'exerciseLog.updated'
+    UPDATED: 'exerciseLog.updated',
+    DELETED: 'exerciseLog.deleted'
   }
 } as const; 
