@@ -20,10 +20,10 @@ export const testConfig = {
   mongoUri: 'mongodb://localhost:27017/test',
   aws: {
     s3: {
-      bucketName: 'tennis-coach-test-bucket',
+      bucketName: 'text',
       region: 'eu-central-1',
-      accessKeyId: 'AKIA3UV2BUSHCRRFLC4X',
-      secretAccessKey: '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',
+      accessKeyId: 'text',
+      secretAccessKey: 'text',
       maxFileSize: 1000000
     }
   }
